@@ -1,4 +1,6 @@
+// src/routes/.well-known/openid_configuration/+server.ts
 import { json } from '@sveltejs/kit';
+// @ts-ignore
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url }) => {

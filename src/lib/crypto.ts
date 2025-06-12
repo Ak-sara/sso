@@ -1,4 +1,7 @@
+
 import jwt from 'jsonwebtoken';
+import type {SignOptions} from 'jsonwebtoken';
+import type { StringValue } from "ms";
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 
@@ -25,12 +28,13 @@ export function generateClientSecret(): string {
     return crypto.randomBytes(32).toString('base64url');
 }
 
-export function createJWT(payload: string | object | Buffer, expiresIn: string = '1h'): string {
-    return jwt.sign(payload, JWT_SECRET, {
+export function createJWT(payload: string | object | Buffer, expiresIn:(number | StringValue | undefined) = '1h'): string {
+    let opt:SignOptions={
         issuer: JWT_ISSUER,
         expiresIn,
         algorithm: 'HS256'
-    });
+    };
+    return jwt.sign(payload, JWT_SECRET, opt);
 }
 
 export function verifyJWT(token: string): jwt.JwtPayload | string | null {
