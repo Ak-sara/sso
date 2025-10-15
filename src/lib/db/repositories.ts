@@ -18,7 +18,7 @@ const accessTokens = new Map<string, AccessToken>();
 
 // ============== User Repository ==============
 export class UserRepository {
-	private get collection() {
+	get collection() {
 		return getDB().collection<User>('users');
 	}
 
@@ -51,6 +51,13 @@ export class UserRepository {
 		await this.collection.updateOne(
 			{ _id: new ObjectId(userId) },
 			{ $set: { lastLogin: new Date() } }
+		);
+	}
+
+	async updatePassword(userId: string, hashedPassword: string): Promise<void> {
+		await this.collection.updateOne(
+			{ _id: new ObjectId(userId) },
+			{ $set: { password: hashedPassword, updatedAt: new Date() } }
 		);
 	}
 

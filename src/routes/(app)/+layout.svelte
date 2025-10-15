@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import type { LayoutData } from './$types';
 
+	interface Props {
+		data: LayoutData;
+	}
+
+	let { data }: Props = $props();
 	let isSidebarOpen = $state(true);
 	let showUserMenu = $state(false);
 	let expandedGroups = $state<Record<string, boolean>>({
@@ -8,6 +14,14 @@
 		organization: true,
 		integration: true,
 	});
+
+	const user = $derived(data.user);
+	const userInitial = $derived(user?.firstName?.[0] || user?.email?.[0].toUpperCase() || 'U');
+	const userName = $derived(
+		user?.firstName && user?.lastName
+			? `${user.firstName} ${user.lastName}`
+			: user?.firstName || user?.username || 'User'
+	);
 
 	interface NavItem {
 		name: string;
@@ -232,16 +246,16 @@
 							class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 transition-colors"
 						>
 							<div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center">
-								<span class="text-white text-sm font-medium">A</span>
+								<span class="text-white text-sm font-medium">{userInitial}</span>
 							</div>
 							<div class="hidden md:block text-left">
-								<p class="text-sm font-medium text-gray-700">Administrator</p>
-								<p class="text-xs text-gray-500">admin@ias.co.id</p>
+								<p class="text-sm font-medium text-gray-700">{userName}</p>
+								<p class="text-xs text-gray-500">{user?.email}</p>
 							</div>
 						</button>
 
 						{#if showUserMenu}
-							<div class="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 border border-gray-200">
+							<div class="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 border border-gray-200 z-50">
 								<a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
 									👤 Profil Saya
 								</a>
@@ -249,9 +263,11 @@
 									⚙️ Pengaturan
 								</a>
 								<hr class="my-1" />
-								<button class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
-									🚪 Keluar
-								</button>
+								<form method="POST" action="/logout">
+									<button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+										🚪 Keluar
+									</button>
+								</form>
 							</div>
 						{/if}
 					</div>
