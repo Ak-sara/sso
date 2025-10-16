@@ -8,11 +8,32 @@ export const POST: RequestHandler = async ({ request }) => {
 	try {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData.entries());
+
+		console.log('🔐 Token endpoint - Received data:', {
+			...data,
+			client_secret: data.client_secret ? '***' : undefined
+		});
+
 		const validatedData = tokenSchema.parse(data);
+
+		console.log('🔐 Token endpoint - Validated data:', {
+			grant_type: validatedData.grant_type,
+			client_id: validatedData.client_id,
+			has_code: !!validatedData.code,
+			has_redirect_uri: !!validatedData.redirect_uri,
+			has_code_verifier: !!validatedData.code_verifier
+		});
 
 		// Verify client credentials
 		const client = await oauthStore.getClient(validatedData.client_id);
-		if (!client || client.client_secret !== validatedData.client_secret) {
+		if (!client) {
+			throw error(401, 'Invalid client credentials');
+		}
+
+		// Verify client secret using Argon2
+		const { verify } = await import('argon2');
+		const isValidSecret = await verify(client.client_secret, validatedData.client_secret);
+		if (!isValidSecret) {
 			throw error(401, 'Invalid client credentials');
 		}
 
@@ -85,9 +106,7 @@ export const POST: RequestHandler = async ({ request }) => {
 					sub: user.id,
 					email: user.email,
 					name: user.name,
-					aud: validatedData.client_id,
-					iat: Math.floor(Date.now() / 1000),
-					exp: Math.floor(Date.now() / 1000) + 3600 // 1 hour
+					aud: validatedData.client_id
 				};
 				idToken = createJWT(idTokenPayload, '1h');
 			}

@@ -21,6 +21,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// Ensure database is connected
 	await ensureDBConnection();
 
+	// Disable CSRF protection for OAuth endpoints (they use client credentials instead)
+	if (event.url.pathname.startsWith('/oauth/') || event.url.pathname.startsWith('/.well-known/')) {
+		const response = await resolve(event, {
+			filterSerializedResponseHeaders: (name) => name === 'content-type'
+		});
+		return response;
+	}
+
 	// Check for session
 	const sessionId = sessionManager.getSessionCookie(event.cookies);
 
