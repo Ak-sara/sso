@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { getDB } from '$lib/db/connection';
 import { generateClientId, generateClientSecret } from '$lib/crypto';
-import { hash } from 'argon2';
+import { hash } from '@node-rs/argon2';
 
 export const load: PageServerLoad = async () => {
 	const db = getDB();

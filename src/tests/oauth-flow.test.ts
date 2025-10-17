@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { oauthStore } from '$lib/db/repositories';
 import { getDB } from '$lib/db/connection';
-import { hash } from 'argon2';
+import { hash } from '@node-rs/argon2';
 import { v4 as uuidv4 } from 'uuid';
 import { generateAuthorizationCode, generateAccessToken, generateRefreshToken } from '$lib/crypto';
 

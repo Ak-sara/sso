@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { getDB } from '$lib/db/connection';
-import { hash } from 'argon2';
+import { hash } from '@node-rs/argon2';
 import { fail } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async () => {

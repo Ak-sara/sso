@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import type { LayoutData } from './$types';
+	import { getBrandingCSS } from '$lib/branding-utils';
 
 	interface Props {
 		data: LayoutData;
@@ -16,6 +17,12 @@
 	});
 
 	const user = $derived(data.user);
+	const branding = $derived(data.branding);
+	const brandingCSS = $derived(branding ? getBrandingCSS(branding) : '');
+	const appName = $derived(branding?.appName || 'Aksara SSO');
+	const logoSrc = $derived(branding?.logoBase64 || '/ias-logo.png');
+	const primaryColor = $derived(branding?.primaryColor || '#4f46e5');
+
 	const userInitial = $derived(user?.firstName?.[0] || user?.email?.[0].toUpperCase() || 'U');
 	const userName = $derived(
 		user?.firstName && user?.lastName
@@ -96,21 +103,32 @@
 	}
 </script>
 
+<svelte:head>
+	{#if brandingCSS}
+		{@html `<style>${brandingCSS}</style>`}
+	{/if}
+	{#if branding?.faviconBase64}
+		<link rel="icon" href={branding.faviconBase64} />
+	{/if}
+	<title>{appName}</title>
+</svelte:head>
+
 <div class="min-h-screen bg-gray-100">
 	<!-- Sidebar -->
 	<aside
-		class="fixed inset-y-0 left-0 z-50 bg-indigo-900 text-white transform transition-all duration-200 ease-in-out {isSidebarOpen ? 'w-64 translate-x-0' : 'w-16 -translate-x-full md:translate-x-0'}"
+		class="fixed inset-y-0 left-0 z-50 text-white transform transition-all duration-200 ease-in-out {isSidebarOpen ? 'w-64 translate-x-0' : 'w-16 -translate-x-full md:translate-x-0'}"
+		style="background-color: var(--brand-primary, #4f46e5)"
 	>
 		<div class="flex flex-col h-full">
 			<!-- Logo -->
 			<div class="flex items-center justify-between h-16 px-4 border-b border-indigo-800">
 				{#if isSidebarOpen}
 					<div class="flex items-center space-x-2">
-						<span class="text-2xl">🔐</span>
-						<span class="text-xl font-bold">Aksara SSO</span>
+						<img src={logoSrc} alt="{appName} logo" style="height:32px"/>
+						<span class="text-xl font-bold">{appName}</span>
 					</div>
 				{:else}
-					<span class="text-2xl">🔐</span>
+					<img src={logoSrc} alt="{appName} logo" style="height:32px"/>
 				{/if}
 			</div>
 
@@ -230,9 +248,9 @@
 
 				<div class="flex items-center space-x-2">
 					<!-- Current Realm Badge -->
-					<div class="hidden sm:flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-md text-sm">
+					<div class="hidden sm:flex items-center px-3 py-1.5 rounded-md text-sm" style="background-color: rgba(var(--brand-primary-rgb), 0.1); color: var(--brand-primary)">
 						<span class="mr-1">🌐</span>
-						<span class="font-medium">IAS Realm</span>
+						<span class="font-medium">{appName}</span>
 					</div>
 
 					<button class="p-2 rounded-md hover:bg-gray-100 transition-colors" title="Notifikasi">
@@ -245,7 +263,7 @@
 							onclick={toggleUserMenu}
 							class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 transition-colors"
 						>
-							<div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center">
+							<div class="w-8 h-8 rounded-full flex items-center justify-center brand-bg-primary">
 								<span class="text-white text-sm font-medium">{userInitial}</span>
 							</div>
 							<div class="hidden md:block text-left">

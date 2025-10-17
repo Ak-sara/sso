@@ -1,4 +1,4 @@
-import { hash, verify } from 'argon2';
+import { hash, verify } from '@node-rs/argon2';
 
 export interface PasswordValidation {
 	isValid: boolean;

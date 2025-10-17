@@ -1,0 +1,154 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ias-sso-secret
+  namespace: development
+type: Opaque
+stringData:
+  MONGODB_URI: "mongodb+srv://root:pass123word@devday.wmveufv.mongodb.net/?retryWrites=true&w=majority&appName=DevDay"
+  MONGODB_DB: "aksara_sso"
+  JWT_SECRET: "dev-jwt-secret-key-change-in-production"
+  SESSION_SECRET: "dev-session-secret-key-change-in-production"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ias-sso
+  namespace: development
+  labels:
+    app: ias-sso
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ias-sso
+  template:
+    metadata:
+      labels:
+        app: ias-sso
+      annotations:
+        eks.amazonaws.com/security-groups: sg-0c68d65790df0389d
+    spec:
+      nodeSelector:
+        topology.kubernetes.io/zone: ap-southeast-3a
+      containers:
+      - name: ias-sso
+        image: 851725647704.dkr.ecr.ap-southeast-3.amazonaws.com/ias-sso:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3001
+          name: http
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+        env:
+        - name: PORT
+          value: "3001"
+        - name: HOST
+          value: "0.0.0.0"
+        - name: NODE_ENV
+          value: "production"
+        - name: ORIGIN
+          value: "https://sso.ias.id"
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: ias-sso-secret
+              key: MONGODB_URI
+        - name: MONGODB_DB
+          valueFrom:
+            secretKeyRef:
+              name: ias-sso-secret
+              key: MONGODB_DB
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ias-sso-secret
+              key: JWT_SECRET
+        - name: SESSION_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ias-sso-secret
+              key: SESSION_SECRET
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3001
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ias-sso-hpa
+  namespace: development
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ias-sso
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ias-sso-service
+  namespace: development
+  labels:
+    app: ias-sso
+spec:
+  type: ClusterIP
+  selector:
+    app: ias-sso
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3001
+    protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+---
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: ias-sso-tgb
+  namespace: development
+spec:
+  ipAddressType: ipv4
+  serviceRef:
+    name: ias-sso-service
+    port: 80
+  targetGroupARN: arn:aws:elasticloadbalancing:ap-southeast-3:851725647704:targetgroup/TG-EKS-SSO/95322320680678f8
+  targetType: ip

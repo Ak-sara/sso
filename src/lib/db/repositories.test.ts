@@ -7,7 +7,7 @@ import {
 	AccessTokenRepository
 } from './repositories';
 import { getDB } from './connection';
-import { hash } from 'argon2';
+import { hash } from '@node-rs/argon2';
 
 describe('UserRepository', () => {
 	let userRepo: UserRepository;

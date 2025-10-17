@@ -1,0 +1,66 @@
+# Dependencies
+node_modules
+
+# Build output
+build
+.svelte-kit
+.output
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Development files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Testing
+coverage
+.nyc_output
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+DOCS
+*.md
+!package.json
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Kubernetes
+deployment.yaml
+*.yaml
+!package.json
+
+# Scripts
+scripts
+
+# Misc
+.editorconfig
+.prettierrc
+.prettierignore
+.eslintrc
+.eslintignore

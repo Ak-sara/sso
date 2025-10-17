@@ -91,6 +91,9 @@
 				</div>
 
 				<div class="mt-4 pt-4 border-t border-gray-200 flex justify-between">
+					<a href="/realms/{realm._id}/branding" class="text-sm text-purple-600 hover:text-purple-900 font-medium">
+						🎨 Branding
+					</a>
 					<button class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">
 						⚙️ Konfigurasi
 					</button>

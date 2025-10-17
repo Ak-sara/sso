@@ -1,5 +1,4 @@
 import { MongoClient, Db } from 'mongodb';
-import { env } from '$env/dynamic/private';
 
 let client: MongoClient | null = null;
 let db: Db | null = null;
@@ -9,9 +8,20 @@ export async function connectDB(): Promise<Db> {
 		return db;
 	}
 
-	// Try to get from SvelteKit env first, fallback to process.env for tests
-	const uri = env.MONGODB_URI || process.env.MONGODB_URI;
-	const dbName = env.MONGODB_DB || process.env.MONGODB_DB;
+	// Get environment variables - works in both SvelteKit and standalone scripts
+	let uri: string | undefined;
+	let dbName: string | undefined;
+
+	// Try SvelteKit env first, fallback to process.env
+	try {
+		const { env } = await import('$env/dynamic/private');
+		uri = env.MONGODB_URI;
+		dbName = env.MONGODB_DB;
+	} catch {
+		// Running outside SvelteKit (e.g., seed script)
+		uri = process.env.MONGODB_URI;
+		dbName = process.env.MONGODB_DB;
+	}
 
 	if (!uri || !dbName) {
 		throw new Error('MONGODB_URI and MONGODB_DB must be set in environment variables');

@@ -1,7 +1,7 @@
 import { getDB } from './connection';
 import type { User, OAuthClient, AuthCode, RefreshToken } from './schemas';
 import { ObjectId } from 'mongodb';
-import { verify } from 'argon2';
+import { verify } from '@node-rs/argon2';
 
 // ============== Access Token Interface ==============
 // We'll store access tokens in memory for performance, but you can move to DB if needed

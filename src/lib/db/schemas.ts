@@ -75,7 +75,7 @@ export const OrganizationSchema = z.object({
 	code: z.string(), // IAS, IASS, IASG, etc
 	name: z.string(),
 	legalName: z.string().optional(),
-	type: z.enum(['parent', 'subsidiary', 'branch']).default('subsidiary'),
+	type: z.enum(['parent', 'subsidiary', 'branch', 'system']).default('subsidiary'),
 	parentId: z.string().optional(), // Reference to parent organization
 	description: z.string().optional(),
 	logo: z.string().url().optional(),
@@ -86,6 +86,24 @@ export const OrganizationSchema = z.object({
 	taxId: z.string().optional(),
 	isActive: z.boolean().default(true),
 	settings: z.record(z.any()).optional(),
+
+	// Branding configuration (for white-labeling)
+	branding: z.object({
+		appName: z.string().optional(), // "IAS SSO", "Customer Portal", etc
+		logoBase64: z.string().optional(), // Base64 encoded image: "data:image/png;base64,..."
+		faviconBase64: z.string().optional(), // Base64 encoded favicon
+		primaryColor: z.string().optional(), // Hex color: "#339999"
+		secondaryColor: z.string().optional(), // Hex color: "#ee6a57"
+		accentColor: z.string().optional(), // Hex color: "#fbaf43"
+		backgroundColor: z.string().optional(), // Background color for login page
+		textColor: z.string().optional(), // Text color on colored backgrounds
+		loginBackgroundBase64: z.string().optional(), // Login page background image
+		emailFromName: z.string().optional(), // Email sender name
+		emailFromAddress: z.string().email().optional(), // Email sender address
+		supportEmail: z.string().email().optional(),
+		supportUrl: z.string().url().optional(),
+	}).optional(),
+
 	createdAt: z.date().default(() => new Date()),
 	updatedAt: z.date().default(() => new Date()),
 });

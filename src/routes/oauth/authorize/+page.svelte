@@ -1,12 +1,38 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { enhance } from '$app/forms';
+	import { getBrandingCSS } from '$lib/branding-utils';
 
 	export let data: PageData;
+
+	// Default branding if not available
+	const defaultBranding = {
+		appName: 'Aksara SSO',
+		primaryColor: '#4f46e5',
+		secondaryColor: '#7c3aed',
+		accentColor: '#06b6d4',
+		backgroundColor: '#f9fafb',
+		textColor: '#ffffff'
+	};
+
+	$: branding = data.branding || defaultBranding;
+	$: brandingCSS = getBrandingCSS(branding);
+	$: primaryColor = branding.primaryColor || '#4f46e5';
 </script>
+
+<svelte:head>
+	<title>{branding.appName} - Sign In</title>
+	{#if branding.faviconBase64}
+		<link rel="icon" type="image/png" href={branding.faviconBase64} />
+	{/if}
+	{@html `<style>${brandingCSS}</style>`}
+</svelte:head>
 
 <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
 	<div class="sm:mx-auto sm:w-full sm:max-w-md">
+		{#if branding.logoBase64}
+			<img class="mx-auto h-16 w-auto" src={branding.logoBase64} alt={branding.appName} />
+		{/if}
 		<h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
 			{#if data.isLoggedIn}
 				Authorize Application
@@ -58,7 +84,7 @@
 					<div>
 						<button
 							type="submit"
-							class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+							class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white brand-bg-primary brand-bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
 						>
 							Sign in
 						</button>
@@ -85,13 +111,13 @@
 					<form method="POST" use:enhance class="space-y-4">
 						<button
 							type="submit"
-							class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+							class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white brand-bg-primary brand-bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
 						>
 							Authorize
 						</button>
 
 						<a
-							href={data.params.redirect_uri}
+							href="{data.params.redirect_uri}?error=access_denied&error_description=User+cancelled+authorization{data.params.state ? `&state=${data.params.state}` : ''}"
 							class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
 						>
 							Cancel

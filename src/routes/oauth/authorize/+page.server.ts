@@ -3,14 +3,15 @@ import type { PageServerLoad, Actions } from './$types';
 import { authorizeSchema } from '$lib/validation.js';
 import { oauthStore } from '$lib/store.js';
 import { generateAuthorizationCode } from '$lib/crypto.js';
-import argon2 from 'argon2';
+import { verify } from '@node-rs/argon2';
+import { getBrandingForClient } from '$lib/branding.js';
 
 export const load: PageServerLoad = async ({ url, cookies }) => {
     const params = Object.fromEntries(url.searchParams.entries());
-    
+
     try {
         const validatedParams = authorizeSchema.parse(params);
-        
+
         // Check if client exists
         const client = await oauthStore.getClient(validatedParams.client_id);
         if (!client) {
@@ -22,6 +23,9 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
             throw error(400, 'Invalid redirect_uri');
         }
 
+        // Get branding for this client
+        const branding = await getBrandingForClient(validatedParams.client_id);
+
         // Check if user is logged in
         const userId = cookies.get('user_id');
         if (userId) {
@@ -31,6 +35,7 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
                     params: validatedParams,
                     client,
                     user,
+                    branding,
                     isLoggedIn: true
                 };
             }
@@ -39,9 +44,14 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
         return {
             params: validatedParams,
             client,
+            branding,
             isLoggedIn: false
         };
     } catch (err) {
+        console.error('❌ OAuth authorize error:', err);
+        if (err instanceof Error) {
+            throw error(400, `Invalid request: ${err.message}`);
+        }
         throw error(400, 'Invalid request parameters');
     }
 };
@@ -61,7 +71,7 @@ export const actions: Actions = {
             }
 
             const user = await oauthStore.getUserByEmail(email);
-            if (!user || !(await argon2.verify(user.password, password))) {
+            if (!user || !(await verify(user.password, password))) {
                 return { error: 'Invalid credentials' };
             }
 

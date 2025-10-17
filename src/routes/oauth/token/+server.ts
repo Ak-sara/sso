@@ -31,7 +31,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// Verify client secret using Argon2
-		const { verify } = await import('argon2');
+		const { verify } = await import('@node-rs/argon2');
 		const isValidSecret = await verify(client.client_secret, validatedData.client_secret);
 		if (!isValidSecret) {
 			throw error(401, 'Invalid client credentials');

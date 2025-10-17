@@ -2,7 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { oauthStore } from '$lib/store.js';
 import { generateClientId, generateClientSecret } from '$lib/crypto.js';
 import { v4 as uuidv4 } from 'uuid';
-import argon2 from 'argon2';
+import { hash } from '@node-rs/argon2';
 
 export const load: PageServerLoad = async () => {
     // In production, add proper admin authentication
@@ -25,7 +25,7 @@ export const actions: Actions = {
             return { error: 'User already exists' };
         }
 
-        const hashedPassword = await argon2.hash(password);
+        const hashedPassword = await hash(password);
         const user = {
             id: uuidv4(),
             email,
