@@ -3,6 +3,7 @@ import { getDB } from '$lib/db/connection';
 import { ObjectId } from 'mongodb';
 import { fail, redirect } from '@sveltejs/kit';
 import { hash } from '@node-rs/argon2';
+import { identityRepository } from '$lib/db/identity-repository';
 
 export const actions = {
 	default: async ({ request }) => {
@@ -47,112 +48,81 @@ export const actions = {
 			return fail(400, { error: 'Field yang wajib diisi belum lengkap', data });
 		}
 
-		// Check if employeeId already exists
-		const existingEmployee = await db.collection('employees').findOne({ employeeId: data.employeeId });
+		// Check if employeeId (NIK) already exists
+		const existingEmployee = await identityRepository.findByEmployeeId(data.employeeId);
 		if (existingEmployee) {
 			return fail(400, { error: `NIK ${data.employeeId} sudah digunakan` });
 		}
 
-		// Check if email already exists
-		const existingEmail = await db.collection('employees').findOne({ email: data.email });
-		if (existingEmail) {
-			return fail(400, { error: `Email ${data.email} sudah digunakan` });
+		// Check if email already exists (if provided)
+		if (data.email) {
+			const existingEmail = await identityRepository.findByEmail(data.email);
+			if (existingEmail) {
+				return fail(400, { error: `Email ${data.email} sudah digunakan` });
+			}
 		}
 
 		try {
-			let userId: ObjectId | null = null;
+			// Hash password
+			const passwordHash = await hash(data.password || `temp${data.employeeId}`, {
+				memoryCost: 19456,
+				timeCost: 2,
+				outputLen: 32,
+				parallelism: 1
+			});
 
-			// Create SSO account if requested
-			if (data.createSSOAccount) {
-				if (!data.username || !data.password) {
-					return fail(400, { error: 'Username dan password harus diisi untuk membuat akun SSO' });
-				}
+			// Create unified identity (employee with SSO access)
+			// Note: All employees now have identities by default, but can be inactive
+			const identity = await identityRepository.create({
+				identityType: 'employee',
+				username: data.username || data.email || data.employeeId, // Email or NIK as username
+				email: data.email || undefined,
+				password: passwordHash,
+				isActive: data.createSSOAccount, // Only active if SSO explicitly requested
+				emailVerified: false,
+				roles: data.roles,
 
-				// Check if username already exists
-				const existingUser = await db.collection('users').findOne({ username: data.username });
-				if (existingUser) {
-					return fail(400, { error: `Username ${data.username} sudah digunakan` });
-				}
-
-				// Hash password
-				const passwordHash = await hash(data.password, {
-					memoryCost: 19456,
-					timeCost: 2,
-					outputLen: 32,
-					parallelism: 1
-				});
-
-				// Create SSO user
-				const userResult = await db.collection('users').insertOne({
-					username: data.username,
-					email: data.email,
-					passwordHash,
-					roles: data.roles,
-					firstName: data.firstName,
-					lastName: data.lastName,
-					enabled: true,
-					emailVerified: false,
-					requirePasswordChange: true, // Force password change on first login
-					createdAt: new Date(),
-					updatedAt: new Date()
-				});
-
-				userId = userResult.insertedId;
-			}
-
-			// Create employee record
-			const employeeResult = await db.collection('employees').insertOne({
-				employeeId: data.employeeId,
+				// Personal Info
 				firstName: data.firstName,
 				lastName: data.lastName,
 				fullName: `${data.firstName} ${data.lastName}`,
-				email: data.email,
-				phone: data.phone || null,
-				gender: data.gender || null,
-				dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
+				phone: data.phone || undefined,
+				gender: data.gender as any,
+				dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
 
-				// Employment
-				employmentType: data.employmentType,
+				// Employee-specific fields
+				employeeId: data.employeeId,
+				organizationId: data.organizationId,
+				orgUnitId: data.orgUnitId || undefined,
+				positionId: data.positionId || undefined,
+				employmentType: data.employmentType as any,
 				employmentStatus: 'active',
 				joinDate: new Date(data.joinDate),
-				probationEndDate: data.probationEndDate ? new Date(data.probationEndDate) : null,
-				contractEndDate: null,
-				terminationDate: null,
-				terminationReason: null,
-
-				// Assignment
-				organizationId: data.organizationId ? new ObjectId(data.organizationId) : null,
-				orgUnitId: data.orgUnitId ? new ObjectId(data.orgUnitId) : null,
-				positionId: data.positionId ? new ObjectId(data.positionId) : null,
-				workLocation: data.workLocation || null,
-				region: data.region || null,
+				probationEndDate: data.probationEndDate ? new Date(data.probationEndDate) : undefined,
+				workLocation: data.workLocation || undefined,
+				region: data.region || undefined,
+				isRemote: false,
 				secondaryAssignments: [],
-
-				// SSO Link
-				userId: userId,
-
-				// Custom Properties
 				customProperties: data.customProperties,
 
-				// Metadata
 				createdAt: new Date(),
 				updatedAt: new Date(),
-				createdBy: 'system', // TODO: Get from session
-				updatedBy: 'system'
+				createdBy: 'system' // TODO: Get from session
 			});
 
 			// Log audit trail
 			await db.collection('audit_log').insertOne({
 				timestamp: new Date(),
 				action: 'employee.onboarding',
-				resourceType: 'employee',
-				resourceId: employeeResult.insertedId.toString(),
-				userId: 'system', // TODO: Get from session
+				resourceType: 'identity',
+				resourceId: identity._id?.toString(),
+				identityId: identity._id?.toString(), // Updated field name
 				details: {
 					employeeId: data.employeeId,
 					fullName: `${data.firstName} ${data.lastName}`,
 					ssoAccountCreated: data.createSSOAccount,
-					username: data.username || null
+					username: identity.username,
+					isActive: identity.isActive
 				},
 				ipAddress: null,
 				userAgent: null
@@ -160,7 +130,8 @@ export const actions = {
 
 			// Create assignment history entry
 			await db.collection('employee_history').insertOne({
-				employeeId: employeeResult.insertedId,
+				identityId: identity._id,
+				employeeId: data.employeeId,
 				eventType: 'onboarding',
 				eventDate: new Date(data.joinDate),
 				organizationId: data.organizationId ? new ObjectId(data.organizationId) : null,
@@ -179,8 +150,8 @@ export const actions = {
 			// TODO: Notify HR team
 			// TODO: Trigger SCIM provisioning to connected apps
 
-			// Redirect to employee detail page
-			throw redirect(303, `/employees/${employeeResult.insertedId}`);
+			// Redirect to identity detail page
+			throw redirect(303, `/identities/${identity._id}`);
 
 		} catch (error) {
 			console.error('Onboarding error:', error);

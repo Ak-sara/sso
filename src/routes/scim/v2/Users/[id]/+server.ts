@@ -7,7 +7,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { ObjectId } from 'mongodb';
 import { requireScimAuthEnhanced } from '$lib/scim/auth-enhanced';
-import { employeeRepository, orgUnitRepository, positionRepository } from '$lib/db/repositories';
+import { identityRepository, orgUnitRepository, positionRepository } from '$lib/db/repositories';
 import { employeeToScimUser, createScimError } from '$lib/scim/utils';
 import type { ScimUser, ScimPatchRequest } from '$lib/scim/schemas';
 
@@ -33,7 +33,7 @@ export const GET: RequestHandler = async (event) => {
 		}
 
 		// Get employee
-		const employee = await employeeRepository.findById(id);
+		const employee = await identityRepository.findById(id);
 
 		if (!employee) {
 			throw error(
@@ -89,7 +89,7 @@ export const PUT: RequestHandler = async (event) => {
 		const scimUser: ScimUser = await request.json();
 
 		// Get existing employee
-		const existingEmployee = await employeeRepository.findById(id);
+		const existingEmployee = await identityRepository.findById(id);
 		if (!existingEmployee) {
 			throw error(
 				404,
@@ -120,7 +120,7 @@ export const PUT: RequestHandler = async (event) => {
 		}
 
 		// Update employee
-		const updatedEmployee = await employeeRepository.update(id, updates);
+		const updatedEmployee = await identityRepository.update(id, updates);
 
 		if (!updatedEmployee) {
 			throw error(
@@ -176,7 +176,7 @@ export const PATCH: RequestHandler = async (event) => {
 		const patchRequest: ScimPatchRequest = await request.json();
 
 		// Get existing employee
-		const existingEmployee = await employeeRepository.findById(id);
+		const existingEmployee = await identityRepository.findById(id);
 		if (!existingEmployee) {
 			throw error(
 				404,
@@ -213,7 +213,7 @@ export const PATCH: RequestHandler = async (event) => {
 		}
 
 		// Update employee
-		const updatedEmployee = await employeeRepository.update(id, updates);
+		const updatedEmployee = await identityRepository.update(id, updates);
 
 		if (!updatedEmployee) {
 			throw error(
@@ -267,7 +267,7 @@ export const DELETE: RequestHandler = async (event) => {
 		}
 
 		// Instead of hard delete, we deactivate
-		const updatedEmployee = await employeeRepository.update(id, {
+		const updatedEmployee = await identityRepository.update(id, {
 			status: 'terminated'
 		});
 

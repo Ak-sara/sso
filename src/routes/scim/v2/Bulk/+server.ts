@@ -8,7 +8,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { requireScimAuthEnhanced, logScimRequest } from '$lib/scim/auth-enhanced';
-import { employeeRepository, orgUnitRepository } from '$lib/db/repositories';
+import { identityRepository, orgUnitRepository } from '$lib/db/repositories';
 import { employeeToScimUser, orgUnitToScimGroup, createScimError } from '$lib/scim/utils';
 import { SCIM_SCHEMAS } from '$lib/scim/schemas';
 import { ObjectId } from 'mongodb';
@@ -242,7 +242,7 @@ async function processUserOperation(
 	switch (operation.method) {
 		case 'POST': {
 			// Create user
-			const newEmployee = await employeeRepository.create({
+			const newEmployee = await identityRepository.create({
 				employeeId: operation.data.externalId || `EMP-${Date.now()}`,
 				firstName: operation.data.name?.givenName || '',
 				lastName: operation.data.name?.familyName || '',
@@ -269,7 +269,7 @@ async function processUserOperation(
 				throw new Error('Invalid user ID');
 			}
 
-			const updatedEmployee = await employeeRepository.update(resourceId, {
+			const updatedEmployee = await identityRepository.update(resourceId, {
 				firstName: operation.data.name?.givenName,
 				lastName: operation.data.name?.familyName,
 				email: operation.data.emails?.[0]?.value,
@@ -308,7 +308,7 @@ async function processUserOperation(
 				}
 			}
 
-			const updatedEmployee = await employeeRepository.update(resourceId, updates);
+			const updatedEmployee = await identityRepository.update(resourceId, updates);
 
 			if (!updatedEmployee) {
 				throw new Error('User not found');
@@ -331,7 +331,7 @@ async function processUserOperation(
 				throw new Error('Invalid user ID');
 			}
 
-			await employeeRepository.update(resourceId, { status: 'terminated' });
+			await identityRepository.update(resourceId, { status: 'terminated' });
 
 			return {
 				method: 'DELETE',

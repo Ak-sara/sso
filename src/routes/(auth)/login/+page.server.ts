@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { userRepository } from '$lib/db/repositories';
+import { identityRepository } from '$lib/db/identity-repository';
 import { passwordService } from '$lib/auth/password';
 import { sessionManager } from '$lib/auth/session';
 import type { Actions, PageServerLoad } from './$types';
@@ -25,24 +25,24 @@ export const actions: Actions = {
 			});
 		}
 
-		// Try to find user by email or NIK
-		const user = await userRepository.findByEmailOrNIK(username);
+		// Try to find identity by email, username, or employeeId (NIK)
+		const identity = await identityRepository.findByEmailOrNIK(username);
 
-		if (!user) {
+		if (!identity) {
 			return fail(401, {
 				error: 'Username/Email/NIK atau password salah',
 				email: username,
 			});
 		}
 
-		if (!user.isActive) {
+		if (!identity.isActive) {
 			return fail(403, {
 				error: 'Akun Anda tidak aktif. Silakan hubungi administrator.',
-				email,
+				email: username,
 			});
 		}
 
-		const isPasswordValid = await passwordService.verifyPassword(user.password, password);
+		const isPasswordValid = await passwordService.verifyPassword(identity.password, password);
 
 		if (!isPasswordValid) {
 			return fail(401, {
@@ -51,16 +51,16 @@ export const actions: Actions = {
 			});
 		}
 
-		await userRepository.updateLastLogin(user._id!.toString());
+		await identityRepository.updateLastLogin(identity._id!.toString());
 
 		const session = await sessionManager.createSession(
-			user._id!.toString(),
-			user.email,
-			user.username,
-			user.roles,
-			user.firstName,
-			user.lastName,
-			user.organizationId
+			identity._id!.toString(),
+			identity.email || identity.username,
+			identity.username,
+			identity.roles,
+			identity.firstName,
+			identity.lastName,
+			identity.organizationId
 		);
 
 		sessionManager.setSessionCookie(cookies, session.sessionId);

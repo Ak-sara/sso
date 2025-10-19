@@ -6,7 +6,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { requireScimAuthEnhanced } from '$lib/scim/auth-enhanced';
-import { employeeRepository } from '$lib/db/repositories';
+import { identityRepository } from '$lib/db/repositories';
 import {
 	employeeToScimUser,
 	createScimError,
@@ -48,24 +48,24 @@ export const GET: RequestHandler = async (event) => {
 			}
 		}
 
-		// Get employees
-		const allEmployees = await employeeRepository.getAll();
-		const filteredEmployees = filterParam
-			? allEmployees.filter((emp) => {
+		// Get employee identities only
+		const allIdentities = await identityRepository.findAll({ identityType: 'employee' });
+		const filteredIdentities = filterParam
+			? allIdentities.filter((identity) => {
 					// Apply filter manually (basic implementation)
 					for (const [key, value] of Object.entries(query)) {
-						if ((emp as any)[key] !== value) return false;
+						if ((identity as any)[key] !== value) return false;
 					}
 					return true;
 				})
-			: allEmployees;
+			: allIdentities;
 
-		const totalResults = filteredEmployees.length;
-		const paginatedEmployees = filteredEmployees.slice(skip, skip + limit);
+		const totalResults = filteredIdentities.length;
+		const paginatedIdentities = filteredIdentities.slice(skip, skip + limit);
 
 		// Convert to SCIM users
 		const scimUsers = await Promise.all(
-			paginatedEmployees.map((emp) => employeeToScimUser(emp, baseUrl))
+			paginatedIdentities.map((identity) => employeeToScimUser(identity, baseUrl))
 		);
 
 		const response: ScimListResponse<ScimUser> = {
@@ -136,8 +136,8 @@ export const POST: RequestHandler = async (event) => {
 				: undefined
 		};
 
-		// Create employee
-		const createdEmployee = await employeeRepository.create(newEmployee as any);
+		// Create employee identity
+		const createdEmployee = await identityRepository.create(newEmployee as any);
 
 		// Convert back to SCIM
 		const baseUrl = `${url.protocol}//${url.host}`;

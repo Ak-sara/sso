@@ -1,22 +1,21 @@
 import { connectDB, disconnectDB } from '../connection';
 import { seedOrganizations } from './organizations';
 import { seedOrgUnits } from './org-units';
-import { seedEmployees } from './employees';
+import { seedIdentities } from './identities';
 import { seedPositions } from './positions';
-import { seedUsers } from './users';
 import { seedOAuthClients } from './oauth-clients';
-import { seedPartners } from './partners';
 import { seedOrgStructureVersions } from './org-structure-versions';
 
 /**
  * Main seed orchestrator - Production-like complete dataset
+ * UPDATED: Now uses unified Identity collection instead of separate Users/Employees/Partners
  */
 export async function seed() {
 	const clear = true;
-	const employeeCount = 1500;
+	const identityCount = 1500; // Number of employee identities to create
 
-	console.log('🌱 Starting database seeding...');
-	console.log(`   Options: clear=${clear}, employeeCount=${employeeCount}`);
+	console.log('🌱 Starting database seeding (UNIFIED IDENTITY MODEL)...');
+	console.log(`   Options: clear=${clear}, identityCount=${identityCount}`);
 
 	try {
 		const db = await connectDB();
@@ -24,14 +23,17 @@ export async function seed() {
 		// Clear collections if requested
 		if (clear) {
 			console.log('🗑️  Clearing collections...');
-			await db.collection('users').deleteMany({});
+			await db.collection('identities').deleteMany({}); // NEW: Unified collection
 			await db.collection('oauth_clients').deleteMany({});
 			await db.collection('organizations').deleteMany({});
 			await db.collection('org_units').deleteMany({});
 			await db.collection('positions').deleteMany({});
+			await db.collection('org_structure_versions').deleteMany({});
+
+			// Legacy collections (will be removed after migration)
+			await db.collection('users').deleteMany({});
 			await db.collection('employees').deleteMany({});
 			await db.collection('partners').deleteMany({});
-			await db.collection('org_structure_versions').deleteMany({});
 		}
 
 		let iasId = '';
@@ -48,61 +50,60 @@ export async function seed() {
 		// Seed positions
 		positionIds = await seedPositions(db, { clear: false, iasId });
 
-		// Seed employees
-		await seedEmployees(db, {
-			count: employeeCount,
+		// Seed identities (replaces seedUsers, seedEmployees, seedPartners)
+		const adminIdentityId = await seedIdentities(db, {
+			count: identityCount,
 			organizationId: iasId,
 			unitMap,
 			positionIds,
-			clear: false
+			clear: true
 		});
-
-		// Seed users
-		const adminUserId = await seedUsers(db, { clear: false, iasId });
 
 		// Seed OAuth clients
 		await seedOAuthClients(db, { clear: false, iasId });
 
-		// Seed partners
-		await seedPartners(db, { clear: false, iasId });
-
 		// Seed org structure versions
-		await seedOrgStructureVersions(db, { clear: false, iasId, adminUserId: adminUserId || undefined });
+		await seedOrgStructureVersions(db, { clear: false, iasId, adminUserId: adminIdentityId || undefined });
 
 		// Create indexes
 		console.log('📇 Creating indexes...');
 
-		// Drop old non-unique email index if exists
-		try {
-			await db.collection('employees').dropIndex('email_1');
-			console.log('   Dropped old email_1 index');
-		} catch (e) {
-			// Index might not exist, that's ok
-		}
+		// NEW: Identities collection indexes
+		await db.collection('identities').createIndex({ email: 1 }, { sparse: true });
+		await db.collection('identities').createIndex({ username: 1 }, { unique: true });
+		await db.collection('identities').createIndex({ employeeId: 1 }, { sparse: true, unique: true });
+		await db.collection('identities').createIndex({ identityType: 1 });
+		await db.collection('identities').createIndex({ organizationId: 1 });
+		await db.collection('identities').createIndex({ isActive: 1 });
+		await db.collection('identities').createIndex({ orgUnitId: 1 }, { sparse: true });
+		await db.collection('identities').createIndex({ employmentStatus: 1 }, { sparse: true });
 
-		await db.collection('users').createIndex({ email: 1 }, { unique: true });
-		await db.collection('users').createIndex({ username: 1 }, { unique: true });
+		// Other collections
 		await db.collection('oauth_clients').createIndex({ clientId: 1 }, { unique: true });
-		await db.collection('employees').createIndex({ employeeId: 1 }, { unique: true });
-		await db.collection('employees').createIndex({ organizationId: 1 });
-		await db.collection('employees').createIndex({ email: 1 }, { unique: true }); // ✅ Now unique!
 		await db.collection('organizations').createIndex({ code: 1 }, { unique: true });
 		await db.collection('org_units').createIndex({ code: 1, organizationId: 1 }, { unique: true });
-		await db.collection('partners').createIndex({ partnerId: 1 }, { unique: true });
+		await db.collection('positions').createIndex({ code: 1, organizationId: 1 }, { unique: true });
 		console.log('✅ Indexes created');
 
+		// Count identities by type
+		const employeeCount = await db.collection('identities').countDocuments({ identityType: 'employee' });
+		const partnerCount = await db.collection('identities').countDocuments({ identityType: 'partner' });
+		const externalCount = await db.collection('identities').countDocuments({ identityType: 'external' });
+
 		console.log('\n✨ Seeding completed successfully!');
-		console.log('\n📊 Summary:');
+		console.log('\n📊 Summary (UNIFIED IDENTITY MODEL):');
 		console.log(`   Organizations: 7 (including MASTER)`);
 		console.log(`   Organizational Units: ${Object.keys(unitMap).length}`);
-		console.log(`   Positions: 6`);
-		console.log(`   Employees: ${employeeCount}`);
-		console.log(`   Users: 1`);
+		console.log(`   Positions: ${positionIds.length}`);
+		console.log(`   Identities (Total): ${employeeCount + partnerCount + externalCount}`);
+		console.log(`     - Employees: ${employeeCount} (${await db.collection('identities').countDocuments({ identityType: 'employee', isActive: true })} active)`);
+		console.log(`     - Partners: ${partnerCount}`);
+		console.log(`     - External: ${externalCount}`);
 		console.log(`   OAuth Clients: 3 (test-client, ofm-client, hr-system)`);
-		console.log(`   Partners: 2`);
 		console.log(`   Org Structure Versions: 3 (2023, 2024, 2025)`);
 		console.log('\n🔑 Login credentials:');
 		console.log('   Email: admin@ias.co.id');
+		console.log('   NIK: IAS00001 (can also login with NIK)');
 		console.log('   Password: password123');
 
 	} catch (error) {
@@ -121,4 +122,4 @@ if (import.meta.main) {
 	});
 }
 
-export { seedOrganizations, seedOrgUnits, seedEmployees };
+export { seedOrganizations, seedOrgUnits, seedIdentities };

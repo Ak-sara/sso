@@ -4,7 +4,7 @@
  */
 
 import type { ObjectId } from 'mongodb';
-import type { Employee, OrgUnit, Position } from '$lib/db/schemas';
+import type { Identity, OrgUnit, Position } from '$lib/db/schemas';
 import type {
 	ScimUser,
 	ScimGroup,
@@ -16,7 +16,7 @@ import type {
 	ScimOrgUnit
 } from './schemas';
 import { SCIM_SCHEMAS, SCIM_ERROR_TYPES } from './schemas';
-import { employeeRepository, orgUnitRepository, positionRepository } from '$lib/db/repositories';
+import { identityRepository, orgUnitRepository, positionRepository } from '$lib/db/repositories';
 
 /**
  * Create SCIM meta object
@@ -63,7 +63,7 @@ export async function getUnitManagerId(unitId: ObjectId | string): Promise<strin
 	const unitIdStr = unitId.toString();
 
 	// Find all employees in this unit
-	const employees = await employeeRepository.findByUnit(unitIdStr);
+	const employees = await identityRepository.findByUnit(unitIdStr);
 
 	// Find the one with manager position
 	for (const emp of employees) {
@@ -84,7 +84,7 @@ export async function getUnitManagerId(unitId: ObjectId | string): Promise<strin
  * Get direct manager ID for an employee
  * Looks up the hierarchy to find the manager of the employee's unit
  */
-export async function getEmployeeManagerId(employee: Employee): Promise<string | undefined> {
+export async function getEmployeeManagerId(employee: Identity): Promise<string | undefined> {
 	if (!employee.assignment?.unitId) return undefined;
 
 	return await getUnitManagerId(employee.assignment.unitId);
@@ -95,7 +95,7 @@ export async function getEmployeeManagerId(employee: Employee): Promise<string |
  */
 export async function getUnitMembers(unitId: ObjectId | string): Promise<ScimGroupMember[]> {
 	const unitIdStr = unitId.toString();
-	const employees = await employeeRepository.findByUnit(unitIdStr);
+	const employees = await identityRepository.findByUnit(unitIdStr);
 
 	return employees.map((emp) => ({
 		value: emp._id?.toString() || '',
@@ -106,10 +106,10 @@ export async function getUnitMembers(unitId: ObjectId | string): Promise<ScimGro
 }
 
 /**
- * Convert Employee to SCIM User
+ * Convert Identity (employee type) to SCIM User
  */
 export async function employeeToScimUser(
-	employee: Employee,
+	employee: Identity,
 	baseUrl?: string
 ): Promise<ScimUser> {
 	const id = employee._id?.toString() || '';

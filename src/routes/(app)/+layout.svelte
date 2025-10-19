@@ -11,8 +11,9 @@
 	let isSidebarOpen = $state(true);
 	let showUserMenu = $state(false);
 	let expandedGroups = $state<Record<string, boolean>>({
-		identity: true,
+		users_access: true,
 		organization: true,
+		data_management: true,
 		integration: true,
 	});
 
@@ -45,13 +46,10 @@
 	const navigation: (NavItem | NavGroup)[] = [
 		{ name: 'Dashboard', href: '/', icon: '📊' },
 		{
-			name: 'Identitas',
+			name: 'Users & Access',
 			icon: '👥',
 			items: [
-				{ name: 'SSO Users', href: '/users', icon: '🔐' },
-				{ name: 'Karyawan', href: '/employees', icon: '👨‍💼' },
-				{ name: 'Data Sync', href: '/employees/sync', icon: '🔄' },
-				{ name: 'Partner/Eksternal', href: '/partners', icon: '🤝' },
+				{ name: 'Identitas', href: '/identities', icon: '🔐' },
 			],
 		},
 		{
@@ -63,7 +61,13 @@
 				{ name: 'Struktur Organisasi', href: '/org-structure', icon: '🌳' },
 				{ name: 'Versi Struktur', href: '/org-structure/versions', icon: '📋' },
 				{ name: 'Posisi/Jabatan', href: '/positions', icon: '💼' },
-				{ name: 'SK Penempatan', href: '/sk-penempatan', icon: '📄' },
+			],
+		},
+		{
+			name: 'Data Management',
+			icon: '📊',
+			items: [
+				{ name: 'Sync & Import', href: '/sync', icon: '🔄' },
 			],
 		},
 		{
@@ -72,11 +76,9 @@
 			items: [
 				{ name: 'OAuth Clients', href: '/clients', icon: '🔑' },
 				{ name: 'SCIM Clients', href: '/scim-clients', icon: '🔐' },
-				{ name: 'SCIM Configuration', href: '/scim', icon: '🔄' },
-				{ name: 'Entra ID Sync', href: '/entraid-sync', icon: '☁️' },
+				{ name: 'Audit Log', href: '/audit', icon: '📋' },
 			],
 		},
-		{ name: 'Audit Log', href: '/audit', icon: '📋' },
 	];
 
 	function toggleSidebar() {
@@ -221,26 +223,24 @@
 					<h1 class="text-xl font-semibold text-gray-900">
 						{#if $page.url.pathname === '/'}
 							Dashboard
-						{:else if $page.url.pathname === '/users'}
-							SSO Users
-						{:else if $page.url.pathname === '/employees'}
-							Manajemen Karyawan
-						{:else if $page.url.pathname === '/partners'}
-							Partner/Eksternal
+						{:else if $page.url.pathname === '/identities' || $page.url.pathname.startsWith('/identities')}
+							Identitas (SSO Accounts)
+						{:else if $page.url.pathname === '/sync'}
+							Sync & Import
 						{:else if $page.url.pathname === '/realms'}
 							Realm/Entitas
 						{:else if $page.url.pathname === '/org-units'}
 							Unit Kerja/Divisi
 						{:else if $page.url.pathname === '/org-structure'}
 							Struktur Organisasi
+						{:else if $page.url.pathname.startsWith('/org-structure/versions')}
+							Versi Struktur
 						{:else if $page.url.pathname === '/positions'}
 							Posisi/Jabatan
 						{:else if $page.url.pathname === '/clients'}
 							OAuth Clients
-						{:else if $page.url.pathname === '/scim'}
-							SCIM Configuration
-						{:else if $page.url.pathname === '/entraid-sync'}
-							Entra ID Sync
+						{:else if $page.url.pathname === '/scim-clients' || $page.url.pathname.startsWith('/scim-clients')}
+							SCIM Clients
 						{:else if $page.url.pathname === '/audit'}
 							Audit Log
 						{/if}

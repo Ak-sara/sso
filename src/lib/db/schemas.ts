@@ -1,7 +1,93 @@
 import { z } from 'zod';
 import type { ObjectId } from 'mongodb';
 
-// ============== User Schema ==============
+// ============== UNIFIED IDENTITY SCHEMA ==============
+// Replaces User, Employee, and Partner schemas
+// One identity = one person (employee, partner, external, service account)
+export const IdentitySchema = z.object({
+	_id: z.custom<ObjectId>().optional(),
+
+	// === CORE IDENTITY (ALL TYPES) ===
+	identityType: z.enum(['employee', 'partner', 'external', 'service_account']),
+
+	// Login credentials
+	username: z.string().min(1), // NIK (for employees) or email or custom
+	email: z.string().email().optional(), // Optional (employees may not have email)
+	password: z.string(), // Hashed with argon2
+
+	// Status
+	isActive: z.boolean().default(true), // true = can login, false = account disabled
+	emailVerified: z.boolean().default(false),
+	roles: z.array(z.string()).default(['user']), // user, admin, hr, manager, etc
+
+	// Personal info (ALL types)
+	firstName: z.string(),
+	lastName: z.string(),
+	fullName: z.string(),
+	phone: z.string().optional(),
+	avatar: z.string().url().optional(),
+
+	// Organization context
+	organizationId: z.string(), // Which realm/org this identity belongs to
+
+	// === EMPLOYEE-SPECIFIC FIELDS (only if identityType === 'employee') ===
+	employeeId: z.string().optional(), // NIK - UNIQUE, can be used as username
+	orgUnitId: z.string().optional(), // Department/division
+	positionId: z.string().optional(), // Job title
+	managerId: z.string().optional(), // Direct manager (another identity's _id)
+
+	// Employment details
+	employmentType: z.enum(['permanent', 'pkwt', 'outsource', 'contract']).optional(),
+	employmentStatus: z.enum(['active', 'probation', 'terminated', 'resigned']).optional(),
+	joinDate: z.date().optional(),
+	endDate: z.date().optional(), // For PKWT/contract
+	probationEndDate: z.date().optional(),
+
+	// Assignment
+	workLocation: z.string().optional(), // CGK, DPS, etc
+	region: z.string().optional(),
+	isRemote: z.boolean().optional(),
+
+	// Demographics
+	dateOfBirth: z.date().optional(),
+	gender: z.enum(['male', 'female', 'other']).optional(),
+	idNumber: z.string().optional(), // KTP
+	taxId: z.string().optional(), // NPWP
+	personalEmail: z.string().email().optional(),
+
+	// Secondary assignments (multi-company)
+	secondaryAssignments: z.array(z.object({
+		organizationId: z.string(),
+		orgUnitId: z.string().optional(),
+		positionId: z.string().optional(),
+		startDate: z.date(),
+		endDate: z.date().optional(),
+		percentage: z.number().optional(),
+	})).default([]),
+
+	// Custom properties (extensible)
+	customProperties: z.record(z.any()).default({}),
+
+	// === PARTNER-SPECIFIC FIELDS (only if identityType === 'partner') ===
+	partnerType: z.enum(['vendor', 'contractor', 'consultant', 'client', 'supplier', 'other']).optional(),
+	companyName: z.string().optional(),
+	contractNumber: z.string().optional(),
+	contractStartDate: z.date().optional(),
+	contractEndDate: z.date().optional(),
+	accessLevel: z.enum(['read', 'write', 'admin']).optional(),
+	allowedModules: z.array(z.string()).default([]),
+
+	// === METADATA ===
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
+	createdBy: z.string().optional(),
+	updatedBy: z.string().optional(),
+	lastLogin: z.date().optional(),
+});
+
+export type Identity = z.infer<typeof IdentitySchema>;
+
+// ============== DEPRECATED: User Schema (kept for migration compatibility) ==============
 export const UserSchema = z.object({
 	_id: z.custom<ObjectId>().optional(),
 	email: z.string().email(),
@@ -34,6 +120,7 @@ export const OAuthClientSchema = z.object({
 	grantTypes: z.array(z.string()).default(['authorization_code', 'refresh_token']),
 	isActive: z.boolean().default(true),
 	organizationId: z.string().optional(),
+	serviceAccountId: z.string().optional(), // Link to service_account identity
 	createdAt: z.date().default(() => new Date()),
 	updatedAt: z.date().default(() => new Date()),
 });
@@ -45,7 +132,7 @@ export const AuthCodeSchema = z.object({
 	_id: z.custom<ObjectId>().optional(),
 	code: z.string(),
 	clientId: z.string(),
-	userId: z.string(),
+	identityId: z.string(), // Changed from userId to identityId
 	redirectUri: z.string().url(),
 	scope: z.string(),
 	codeChallenge: z.string().optional(),
@@ -61,7 +148,7 @@ export const RefreshTokenSchema = z.object({
 	_id: z.custom<ObjectId>().optional(),
 	token: z.string(),
 	clientId: z.string(),
-	userId: z.string(),
+	identityId: z.string(), // Changed from userId to identityId
 	scope: z.string(),
 	expiresAt: z.date(),
 	createdAt: z.date().default(() => new Date()),
@@ -233,7 +320,7 @@ export const PositionSchema = z.object({
 
 export type Position = z.infer<typeof PositionSchema>;
 
-// ============== Employee Schema ==============
+// ============== DEPRECATED: Employee Schema (use IdentitySchema with identityType='employee') ==============
 export const EmployeeSchema = z.object({
 	_id: z.custom<ObjectId>().optional(),
 	employeeId: z.string(), // NIK/Employee Number
@@ -290,7 +377,7 @@ export const EmployeeSchema = z.object({
 
 export type Employee = z.infer<typeof EmployeeSchema>;
 
-// ============== Partner (Non-Employee) Schema ==============
+// ============== DEPRECATED: Partner Schema (use IdentitySchema with identityType='partner') ==============
 export const PartnerSchema = z.object({
 	_id: z.custom<ObjectId>().optional(),
 	partnerId: z.string(),
@@ -393,7 +480,7 @@ export type EntraIDSyncLog = z.infer<typeof EntraIDSyncLogSchema>;
 // ============== Audit Log Schema ==============
 export const AuditLogSchema = z.object({
 	_id: z.custom<ObjectId>().optional(),
-	userId: z.string(),
+	identityId: z.string(), // Changed from userId to identityId
 	action: z.string(), // login, logout, create_user, update_employee, etc
 	resource: z.string(), // users, employees, organizations, etc
 	resourceId: z.string().optional(),

@@ -5,7 +5,7 @@
 
 import { getDB } from '$lib/db/connection';
 import { ObjectId } from 'mongodb';
-import type { Employee, OrgUnit } from '$lib/db/schemas';
+import type { Identity, OrgUnit } from '$lib/db/schemas';
 
 export interface WebhookSubscription {
 	_id?: ObjectId;

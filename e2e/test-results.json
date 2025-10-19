@@ -65,6 +65,638 @@
   },
   "suites": [
     {
+      "title": "identity-unified.spec.ts",
+      "file": "identity-unified.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Unified Identity Management",
+          "file": "identity-unified.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should display unified /identities page with tabs",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 8,
+                      "error": {
+                        "message": "Error: Database not connected. Call connectDB() first.",
+                        "stack": "Error: Database not connected. Call connectDB() first.\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:9:9",
+                        "location": {
+                          "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                          "column": 9,
+                          "line": 53
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                            "column": 9,
+                            "line": 53
+                          },
+                          "message": "Error: Database not connected. Call connectDB() first.\n\n   at ../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:9:9"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-19T15:55:08.435Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                        "column": 9,
+                        "line": 53
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "96e4c9ad6f255aa9bca1-33289ffb6b0b31165cd3",
+              "file": "identity-unified.spec.ts",
+              "line": 33,
+              "column": 2
+            },
+            {
+              "title": "should filter identities by type (tabs)",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 30,
+                      "error": {
+                        "message": "Error: Database not connected. Call connectDB() first.",
+                        "stack": "Error: Database not connected. Call connectDB() first.\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:9:9",
+                        "location": {
+                          "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                          "column": 9,
+                          "line": 53
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                            "column": 9,
+                            "line": 53
+                          },
+                          "message": "Error: Database not connected. Call connectDB() first.\n\n   at ../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:9:9"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-19T15:55:08.435Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                        "column": 9,
+                        "line": 53
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "96e4c9ad6f255aa9bca1-91e3116dc85391645e0c",
+              "file": "identity-unified.spec.ts",
+              "line": 53,
+              "column": 2
+            },
+            {
+              "title": "should allow login with NIK (employeeId)",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 32,
+                      "error": {
+                        "message": "Error: Database not connected. Call connectDB() first.",
+                        "stack": "Error: Database not connected. Call connectDB() first.\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:9:9",
+                        "location": {
+                          "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                          "column": 9,
+                          "line": 53
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                            "column": 9,
+                            "line": 53
+                          },
+                          "message": "Error: Database not connected. Call connectDB() first.\n\n   at ../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:9:9"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-19T15:55:08.440Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                        "column": 9,
+                        "line": 53
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "96e4c9ad6f255aa9bca1-64ec41f7f27e1382cd3f",
+              "file": "identity-unified.spec.ts",
+              "line": 103,
+              "column": 2
+            },
+            {
+              "title": "should allow login with email",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 6,
+                      "error": {
+                        "message": "Error: Database not connected. Call connectDB() first.",
+                        "stack": "Error: Database not connected. Call connectDB() first.\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:9:9",
+                        "location": {
+                          "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                          "column": 9,
+                          "line": 53
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                            "column": 9,
+                            "line": 53
+                          },
+                          "message": "Error: Database not connected. Call connectDB() first.\n\n   at ../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:9:9"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-19T15:55:08.410Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                        "column": 9,
+                        "line": 53
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "96e4c9ad6f255aa9bca1-cfcddb8b8f9d23f93798",
+              "file": "identity-unified.spec.ts",
+              "line": 113,
+              "column": 2
+            }
+          ]
+        },
+        {
+          "title": "CSV Import with Smart Logic",
+          "file": "identity-unified.spec.ts",
+          "line": 124,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should display /sync page with tabs",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 28,
+                      "error": {
+                        "message": "Error: Database not connected. Call connectDB() first.",
+                        "stack": "Error: Database not connected. Call connectDB() first.\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:126:9",
+                        "location": {
+                          "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                          "column": 9,
+                          "line": 53
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                            "column": 9,
+                            "line": 53
+                          },
+                          "message": "Error: Database not connected. Call connectDB() first.\n\n   at ../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:126:9"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-19T15:55:09.788Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                        "column": 9,
+                        "line": 53
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "96e4c9ad6f255aa9bca1-2a002de28093f8d1296e",
+              "file": "identity-unified.spec.ts",
+              "line": 131,
+              "column": 2
+            },
+            {
+              "title": "should create new identity with isActive: true on CSV import",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 5,
+                      "error": {
+                        "message": "Error: Database not connected. Call connectDB() first.",
+                        "stack": "Error: Database not connected. Call connectDB() first.\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:126:9",
+                        "location": {
+                          "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                          "column": 9,
+                          "line": 53
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                            "column": 9,
+                            "line": 53
+                          },
+                          "message": "Error: Database not connected. Call connectDB() first.\n\n   at ../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:126:9"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-19T15:55:09.769Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                        "column": 9,
+                        "line": 53
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "96e4c9ad6f255aa9bca1-3c6280a782494f8af1ad",
+              "file": "identity-unified.spec.ts",
+              "line": 163,
+              "column": 2
+            },
+            {
+              "title": "should preserve status on re-import",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 5,
+                      "error": {
+                        "message": "Error: Database not connected. Call connectDB() first.",
+                        "stack": "Error: Database not connected. Call connectDB() first.\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:126:9",
+                        "location": {
+                          "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                          "column": 9,
+                          "line": 53
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                            "column": 9,
+                            "line": 53
+                          },
+                          "message": "Error: Database not connected. Call connectDB() first.\n\n   at ../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:126:9"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-19T15:55:09.766Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                        "column": 9,
+                        "line": 53
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "96e4c9ad6f255aa9bca1-24a478c0ef457d96ee2a",
+              "file": "identity-unified.spec.ts",
+              "line": 185,
+              "column": 2
+            }
+          ]
+        },
+        {
+          "title": "OAuth with identityId",
+          "file": "identity-unified.spec.ts",
+          "line": 235,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should use identityId in OAuth flow",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 13,
+                      "error": {
+                        "message": "Error: Database not connected. Call connectDB() first.",
+                        "stack": "Error: Database not connected. Call connectDB() first.\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:239:9",
+                        "location": {
+                          "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                          "column": 9,
+                          "line": 53
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                            "column": 9,
+                            "line": 53
+                          },
+                          "message": "Error: Database not connected. Call connectDB() first.\n\n   at ../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:239:9"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-19T15:55:09.786Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                        "column": 9,
+                        "line": 53
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "96e4c9ad6f255aa9bca1-28261e54197f44ba7e7c",
+              "file": "identity-unified.spec.ts",
+              "line": 265,
+              "column": 2
+            },
+            {
+              "title": "should return identity data in /oauth/userinfo",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 5,
+                      "error": {
+                        "message": "Error: Database not connected. Call connectDB() first.",
+                        "stack": "Error: Database not connected. Call connectDB() first.\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:239:9",
+                        "location": {
+                          "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                          "column": 9,
+                          "line": 53
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                            "column": 9,
+                            "line": 53
+                          },
+                          "message": "Error: Database not connected. Call connectDB() first.\n\n   at ../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:239:9"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-19T15:55:11.258Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                        "column": 9,
+                        "line": 53
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "96e4c9ad6f255aa9bca1-11bb5a733cc428a0ca9f",
+              "file": "identity-unified.spec.ts",
+              "line": 286,
+              "column": 2
+            }
+          ]
+        },
+        {
+          "title": "Onboarding with Unified Identity",
+          "file": "identity-unified.spec.ts",
+          "line": 300,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should create identity directly (not user + employee)",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 1676,
+                      "error": {
+                        "message": "Error: Database not connected. Call connectDB() first.",
+                        "stack": "Error: Database not connected. Call connectDB() first.\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at IdentityRepository.collection (/Users/heriawan/Project/Aksara/sso/src/lib/db/identity-repository.ts:16:10)\n    at IdentityRepository.create (/Users/heriawan/Project/Aksara/sso/src/lib/db/identity-repository.ts:22:29)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:304:28",
+                        "location": {
+                          "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                          "column": 9,
+                          "line": 53
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                            "column": 9,
+                            "line": 53
+                          },
+                          "message": "Error: Database not connected. Call connectDB() first.\n\n   at ../../src/lib/db/connection.ts:53\n\n  51 | export function getDB(): Db {\n  52 | \tif (!db) {\n> 53 | \t\tthrow new Error('Database not connected. Call connectDB() first.');\n     | \t\t      ^\n  54 | \t}\n  55 | \treturn db;\n  56 | }\n    at getDB (/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts:53:9)\n    at IdentityRepository.collection (/Users/heriawan/Project/Aksara/sso/src/lib/db/identity-repository.ts:16:10)\n    at IdentityRepository.create (/Users/heriawan/Project/Aksara/sso/src/lib/db/identity-repository.ts:22:29)\n    at /Users/heriawan/Project/Aksara/sso/e2e/tests/identity-unified.spec.ts:304:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-19T15:55:11.239Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/heriawan/Project/Aksara/sso/e2e/test-results/identity-unified-Onboardin-8ca18-directly-not-user-employee--API-Tests/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/heriawan/Project/Aksara/sso/e2e/test-results/identity-unified-Onboardin-8ca18-directly-not-user-employee--API-Tests/video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/heriawan/Project/Aksara/sso/src/lib/db/connection.ts",
+                        "column": 9,
+                        "line": 53
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "96e4c9ad6f255aa9bca1-c7d76095b7c6cf2a0953",
+              "file": "identity-unified.spec.ts",
+              "line": 301,
+              "column": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
       "title": "scim-groups.spec.ts",
       "file": "scim-groups.spec.ts",
       "column": 0,
@@ -90,10 +722,10 @@
                   "projectName": "API Tests",
                   "results": [
                     {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
+                      "workerIndex": 10,
+                      "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 158,
+                      "duration": 176,
                       "errors": [],
                       "stdout": [
                         {
@@ -102,7 +734,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-10-18T17:07:49.339Z",
+                      "startTime": "2025-10-19T15:55:11.048Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -128,22 +760,22 @@
                   "projectName": "API Tests",
                   "results": [
                     {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
+                      "workerIndex": 10,
+                      "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 2649,
+                      "duration": 2443,
                       "errors": [],
                       "stdout": [
                         {
-                          "text": "📊 Total Groups: 60\n"
+                          "text": "📊 Total Groups: 57\n"
                         },
                         {
-                          "text": "📄 Returned: 60\n"
+                          "text": "📄 Returned: 57\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-10-18T17:07:49.908Z",
+                      "startTime": "2025-10-19T15:55:11.646Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -169,10 +801,10 @@
                   "projectName": "API Tests",
                   "results": [
                     {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
+                      "workerIndex": 10,
+                      "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 1993,
+                      "duration": 1983,
                       "errors": [],
                       "stdout": [
                         {
@@ -181,7 +813,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-10-18T17:07:52.576Z",
+                      "startTime": "2025-10-19T15:55:14.106Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -207,10 +839,10 @@
                   "projectName": "API Tests",
                   "results": [
                     {
-                      "workerIndex": 1,
-                      "parallelIndex": 1,
+                      "workerIndex": 11,
+                      "parallelIndex": 3,
                       "status": "passed",
-                      "duration": 1878,
+                      "duration": 2640,
                       "errors": [],
                       "stdout": [
                         {
@@ -229,12 +861,12 @@
                           "text": "   Level: 1\n"
                         },
                         {
-                          "text": "   Parent: 68f1e86862e5ebc1974220a0\n"
+                          "text": "   Parent: 68f4ce1ca1cf92c39e23f6a6\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-10-18T17:07:49.418Z",
+                      "startTime": "2025-10-19T15:55:11.050Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -260,10 +892,10 @@
                   "projectName": "API Tests",
                   "results": [
                     {
-                      "workerIndex": 1,
-                      "parallelIndex": 1,
+                      "workerIndex": 11,
+                      "parallelIndex": 3,
                       "status": "passed",
-                      "duration": 2842,
+                      "duration": 2898,
                       "errors": [],
                       "stdout": [
                         {
@@ -275,7 +907,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-10-18T17:07:51.656Z",
+                      "startTime": "2025-10-19T15:55:14.259Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -301,10 +933,10 @@
                   "projectName": "API Tests",
                   "results": [
                     {
-                      "workerIndex": 1,
-                      "parallelIndex": 1,
+                      "workerIndex": 11,
+                      "parallelIndex": 3,
                       "status": "passed",
-                      "duration": 1099,
+                      "duration": 993,
                       "errors": [],
                       "stdout": [
                         {
@@ -313,7 +945,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-10-18T17:07:54.515Z",
+                      "startTime": "2025-10-19T15:55:17.169Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -339,10 +971,10 @@
                   "projectName": "API Tests",
                   "results": [
                     {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1942,
+                      "duration": 2881,
                       "errors": [],
                       "stdout": [
                         {
@@ -354,7 +986,7 @@
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-10-18T17:07:49.377Z",
+                      "startTime": "2025-10-19T15:55:12.394Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -380,15 +1012,15 @@
                   "projectName": "API Tests",
                   "results": [
                     {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 13,
+                      "duration": 16,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-10-18T17:07:51.682Z",
+                      "startTime": "2025-10-19T15:55:17.126Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -414,15 +1046,15 @@
                   "projectName": "API Tests",
                   "results": [
                     {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 11,
+                      "duration": 9,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-10-18T17:07:51.714Z",
+                      "startTime": "2025-10-19T15:55:17.153Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -448,28 +1080,28 @@
                   "projectName": "API Tests",
                   "results": [
                     {
-                      "workerIndex": 3,
-                      "parallelIndex": 3,
+                      "workerIndex": 13,
+                      "parallelIndex": 2,
                       "status": "passed",
-                      "duration": 236,
+                      "duration": 933,
                       "errors": [],
                       "stdout": [
                         {
                           "text": "✅ OAuth token obtained: eyJhbGciOiJIUzI1NiJ9...\n"
                         },
                         {
-                          "text": "✅ Created Group: Test Department 1760807269730\n"
+                          "text": "✅ Created Group: Test Department 1760889317224\n"
                         },
                         {
-                          "text": "   ID: 68f3c965fd6c7707bcf48408\n"
+                          "text": "   ID: 68f509e56e88f547883bcf78\n"
                         },
                         {
-                          "text": "   Location: http://localhost:5173/scim/v2/Groups/68f3c965fd6c7707bcf48408\n"
+                          "text": "   Location: http://localhost:5173/scim/v2/Groups/68f509e56e88f547883bcf78\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-10-18T17:07:49.350Z",
+                      "startTime": "2025-10-19T15:55:16.216Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -489,11 +1121,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-10-18T17:07:47.524Z",
-    "duration": 8126.612,
+    "startTime": "2025-10-19T15:55:06.526Z",
+    "duration": 11675.010999999999,
     "expected": 10,
     "skipped": 0,
-    "unexpected": 0,
+    "unexpected": 10,
     "flaky": 0
   }
 }

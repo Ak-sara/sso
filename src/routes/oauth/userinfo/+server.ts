@@ -2,11 +2,15 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { oauthStore } from '$lib/store.js';
 import {
-	employeeRepository,
+	identityRepository,
 	organizationRepository,
 	orgUnitRepository,
 	positionRepository
 } from '$lib/db/repositories';
+
+// Debug: Check if identityRepository is loaded
+console.log('🔍 userinfo +server.ts loaded');
+console.log('   identityRepository:', identityRepository ? 'LOADED' : 'UNDEFINED');
 
 export const GET: RequestHandler = async ({ request }) => {
 	const authorization = request.headers.get('authorization');
@@ -26,7 +30,7 @@ export const GET: RequestHandler = async ({ request }) => {
 		throw error(401, 'Access token has expired');
 	}
 
-	const user = await oauthStore.getUserById(tokenData.user_id);
+	const user = await oauthStore.getUserById(tokenData.identity_id);
 	if (!user) {
 		throw error(404, 'User not found');
 	}
@@ -39,64 +43,79 @@ export const GET: RequestHandler = async ({ request }) => {
 		email_verified: true
 	};
 
-	// Fetch employee data if user has employeeId
+	// Fetch full identity data for additional fields
 	try {
-		const employee = await employeeRepository.findByUserId(user.id);
+		const identity = await identityRepository.findById(user.id);
 
-		if (employee) {
-			// Add employee basic fields
-			userInfo.employeeId = employee.employeeId;
-			userInfo.firstName = employee.firstName;
-			userInfo.lastName = employee.lastName;
-			userInfo.fullName = employee.fullName;
-			userInfo.phone = employee.phone;
-			userInfo.workLocation = employee.workLocation;
-			userInfo.region = employee.region;
-			userInfo.employmentType = employee.employmentType;
-			userInfo.employmentStatus = employee.employmentStatus;
-			userInfo.isRemote = employee.isRemote;
+		if (identity) {
+			// Add identity basic fields
+			userInfo.identityType = identity.identityType;
+			userInfo.username = identity.username;
+			userInfo.firstName = identity.firstName;
+			userInfo.lastName = identity.lastName;
+			userInfo.fullName = identity.fullName;
+			userInfo.phone = identity.phone;
 
-			// Fetch and add Organization data (Entitas)
-			if (employee.organizationId) {
-				userInfo.organizationId = employee.organizationId;
-				const organization = await organizationRepository.findById(employee.organizationId);
-				if (organization) {
-					userInfo.organizationName = organization.name;
-					userInfo.organizationCode = organization.code;
+			// Add employee-specific fields if identity is an employee
+			if (identity.identityType === 'employee') {
+				userInfo.employeeId = identity.employeeId;
+				userInfo.workLocation = identity.workLocation;
+				userInfo.region = identity.region;
+				userInfo.employmentType = identity.employmentType;
+				userInfo.employmentStatus = identity.employmentStatus;
+				userInfo.isRemote = identity.isRemote;
+
+				// Fetch and add Organization data (Entitas)
+				if (identity.organizationId) {
+					userInfo.organizationId = identity.organizationId;
+					const organization = await organizationRepository.findById(identity.organizationId);
+					if (organization) {
+						userInfo.organizationName = organization.name;
+						userInfo.organizationCode = organization.code;
+					}
+				}
+
+				// Fetch and add OrgUnit data (Unit Kerja)
+				if (identity.orgUnitId) {
+					userInfo.orgUnitId = identity.orgUnitId;
+					const orgUnit = await orgUnitRepository.findById(identity.orgUnitId);
+					if (orgUnit) {
+						userInfo.orgUnitName = orgUnit.name;
+						userInfo.orgUnitCode = orgUnit.code;
+						userInfo.orgUnitType = orgUnit.type;
+					}
+				}
+
+				// Fetch and add Position data
+				if (identity.positionId) {
+					userInfo.positionId = identity.positionId;
+					const position = await positionRepository.findById(identity.positionId);
+					if (position) {
+						userInfo.positionName = position.name;
+						userInfo.positionCode = position.code;
+						userInfo.positionLevel = position.level;
+						userInfo.positionGrade = position.grade;
+					}
+				}
+
+				// Add manager information
+				if (identity.managerId) {
+					userInfo.managerId = identity.managerId;
 				}
 			}
 
-			// Fetch and add OrgUnit data (Unit Kerja)
-			if (employee.orgUnitId) {
-				userInfo.orgUnitId = employee.orgUnitId;
-				const orgUnit = await orgUnitRepository.findById(employee.orgUnitId);
-				if (orgUnit) {
-					userInfo.orgUnitName = orgUnit.name;
-					userInfo.orgUnitCode = orgUnit.code;
-					userInfo.orgUnitType = orgUnit.type;
-				}
-			}
-
-			// Fetch and add Position data
-			if (employee.positionId) {
-				userInfo.positionId = employee.positionId;
-				const position = await positionRepository.findById(employee.positionId);
-				if (position) {
-					userInfo.positionName = position.name;
-					userInfo.positionCode = position.code;
-					userInfo.positionLevel = position.level;
-					userInfo.positionGrade = position.grade;
-				}
-			}
-
-			// Add manager information
-			if (employee.managerId) {
-				userInfo.managerId = employee.managerId;
+			// Add partner-specific fields if identity is a partner
+			if (identity.identityType === 'partner') {
+				userInfo.partnerType = identity.partnerType;
+				userInfo.companyName = identity.companyName;
+				userInfo.contractNumber = identity.contractNumber;
+				userInfo.contractStartDate = identity.contractStartDate;
+				userInfo.contractEndDate = identity.contractEndDate;
 			}
 		}
 	} catch (err) {
-		console.warn('Failed to fetch employee data for userinfo:', err);
-		// Continue without employee data if fetch fails
+		console.warn('Failed to fetch identity data for userinfo:', err);
+		// Continue without identity data if fetch fails
 	}
 
 	return json(userInfo);

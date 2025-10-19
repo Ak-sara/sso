@@ -68,7 +68,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 
 			// Get user info
-			const user = await oauthStore.getUserById(authCode.user_id);
+			const user = await oauthStore.getUserById(authCode.identity_id);
 			if (!user) {
 				throw error(400, 'User not found');
 			}
@@ -84,7 +84,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			await oauthStore.saveAccessToken({
 				token: accessToken,
 				client_id: validatedData.client_id,
-				user_id: authCode.user_id,
+				identity_id: authCode.identity_id,
 				scope: authCode.scope,
 				expires_at: accessTokenExpiresAt
 			});
@@ -92,7 +92,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			await oauthStore.saveRefreshToken({
 				token: refreshToken,
 				client_id: validatedData.client_id,
-				user_id: authCode.user_id,
+				identity_id: authCode.identity_id,
 				expires_at: refreshTokenExpiresAt
 			});
 
@@ -163,7 +163,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			await oauthStore.saveAccessToken({
 				token: accessToken,
 				client_id: validatedData.client_id,
-				user_id: storedRefreshToken.user_id,
+				identity_id: storedRefreshToken.identity_id,
 				scope: 'openid', // Default scope for refresh
 				expires_at: accessTokenExpiresAt
 			});

@@ -18,7 +18,7 @@ export interface Client {
 export interface AuthorizationCode {
     code: string;
     client_id: string;
-    user_id: string;
+    identity_id: string; // Changed from user_id to identity_id
     redirect_uri: string;
     scope: string;
     expires_at: Date;
@@ -29,7 +29,7 @@ export interface AuthorizationCode {
 export interface AccessToken {
     token: string;
     client_id: string;
-    user_id: string;
+    identity_id: string; // Changed from user_id to identity_id
     scope: string;
     expires_at: Date;
 }
@@ -37,7 +37,7 @@ export interface AccessToken {
 export interface RefreshToken {
     token: string;
     client_id: string;
-    user_id: string;
+    identity_id: string; // Changed from user_id to identity_id
     expires_at: Date;
 }
 

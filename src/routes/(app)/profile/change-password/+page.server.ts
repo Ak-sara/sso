@@ -1,8 +1,7 @@
 import { fail } from '@sveltejs/kit';
-import { userRepository } from '$lib/db/repositories';
+import { identityRepository } from '$lib/db/identity-repository';
 import { passwordService } from '$lib/auth/password';
 import type { Actions, PageServerLoad } from './$types';
-import { ObjectId } from 'mongodb';
 
 export const load: PageServerLoad = async () => {
 	return {};
@@ -32,13 +31,13 @@ export const actions: Actions = {
 			return fail(400, { error: passwordValidation.errors.join(', ') });
 		}
 
-		const user = await userRepository.findById(locals.user.userId);
-		if (!user) {
-			return fail(404, { error: 'User tidak ditemukan' });
+		const identity = await identityRepository.findById(locals.user.userId);
+		if (!identity) {
+			return fail(404, { error: 'Identity tidak ditemukan' });
 		}
 
 		const isCurrentPasswordValid = await passwordService.verifyPassword(
-			user.password,
+			identity.password,
 			currentPassword
 		);
 
@@ -48,7 +47,7 @@ export const actions: Actions = {
 
 		const hashedPassword = await passwordService.hashPassword(newPassword);
 
-		await userRepository.updatePassword(locals.user.userId, hashedPassword);
+		await identityRepository.updateById(locals.user.userId, { password: hashedPassword });
 
 		return { success: true };
 	},

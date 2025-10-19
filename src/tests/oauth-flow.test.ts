@@ -67,7 +67,7 @@ describe('OAuth Flow Integration Tests', () => {
 		await oauthStore.saveAuthCode({
 			code: authCode,
 			client_id: testClient.client_id,
-			user_id: user!.id,
+			identity_id: user!.id,
 			redirect_uri: testClient.redirect_uris[0],
 			scope: 'openid profile email',
 			expires_at: codeExpiresAt,
@@ -78,7 +78,7 @@ describe('OAuth Flow Integration Tests', () => {
 		expect(storedAuthCode).toBeDefined();
 		expect(storedAuthCode?.code).toBe(authCode);
 		expect(storedAuthCode?.client_id).toBe(testClient.client_id);
-		expect(storedAuthCode?.user_id).toBe(user!.id);
+		expect(storedAuthCode?.identity_id).toBe(user!.id);
 
 		// Step 4: Exchange authorization code for tokens
 		const accessToken = generateAccessToken();
@@ -89,7 +89,7 @@ describe('OAuth Flow Integration Tests', () => {
 		await oauthStore.saveAccessToken({
 			token: accessToken,
 			client_id: testClient.client_id,
-			user_id: user!.id,
+			identity_id: user!.id,
 			scope: 'openid profile email',
 			expires_at: accessTokenExpiresAt,
 		});
@@ -97,7 +97,7 @@ describe('OAuth Flow Integration Tests', () => {
 		await oauthStore.saveRefreshToken({
 			token: refreshToken,
 			client_id: testClient.client_id,
-			user_id: user!.id,
+			identity_id: user!.id,
 			expires_at: refreshTokenExpiresAt,
 		});
 
@@ -108,13 +108,13 @@ describe('OAuth Flow Integration Tests', () => {
 		const storedAccessToken = await oauthStore.getAccessToken(accessToken);
 		expect(storedAccessToken).toBeDefined();
 		expect(storedAccessToken?.token).toBe(accessToken);
-		expect(storedAccessToken?.user_id).toBe(user!.id);
+		expect(storedAccessToken?.identity_id).toBe(user!.id);
 
 		// Step 6: Verify refresh token
 		const storedRefreshToken = await oauthStore.getRefreshToken(refreshToken);
 		expect(storedRefreshToken).toBeDefined();
 		expect(storedRefreshToken?.token).toBe(refreshToken);
-		expect(storedRefreshToken?.user_id).toBe(user!.id);
+		expect(storedRefreshToken?.identity_id).toBe(user!.id);
 
 		// Step 7: Verify authorization code was deleted
 		const deletedAuthCode = await oauthStore.getAuthCode(authCode);
@@ -132,14 +132,14 @@ describe('OAuth Flow Integration Tests', () => {
 		await oauthStore.saveRefreshToken({
 			token: refreshToken,
 			client_id: testClient.client_id,
-			user_id: user!.id,
+			identity_id: user!.id,
 			expires_at: refreshTokenExpiresAt,
 		});
 
 		// Retrieve refresh token
 		const storedRefreshToken = await oauthStore.getRefreshToken(refreshToken);
 		expect(storedRefreshToken).toBeDefined();
-		expect(storedRefreshToken?.user_id).toBe(user!.id);
+		expect(storedRefreshToken?.identity_id).toBe(user!.id);
 
 		// Generate new access token using refresh token
 		const newAccessToken = generateAccessToken();
@@ -148,7 +148,7 @@ describe('OAuth Flow Integration Tests', () => {
 		await oauthStore.saveAccessToken({
 			token: newAccessToken,
 			client_id: testClient.client_id,
-			user_id: user!.id,
+			identity_id: user!.id,
 			scope: 'openid',
 			expires_at: accessTokenExpiresAt,
 		});
@@ -174,7 +174,7 @@ describe('OAuth Flow Integration Tests', () => {
 		await oauthStore.saveAuthCode({
 			code: authCode,
 			client_id: testClient.client_id,
-			user_id: user!.id,
+			identity_id: user!.id,
 			redirect_uri: testClient.redirect_uris[0],
 			scope: 'openid',
 			expires_at: expiredDate,
@@ -195,7 +195,7 @@ describe('OAuth Flow Integration Tests', () => {
 		await oauthStore.saveAccessToken({
 			token: accessToken,
 			client_id: testClient.client_id,
-			user_id: user!.id,
+			identity_id: user!.id,
 			scope: 'openid',
 			expires_at: expiredDate,
 		});
@@ -243,7 +243,7 @@ describe('OAuth Flow Integration Tests', () => {
 		await oauthStore.saveAuthCode({
 			code: 'expired-code',
 			client_id: testClient.client_id,
-			user_id: user!.id,
+			identity_id: user!.id,
 			redirect_uri: testClient.redirect_uris[0],
 			scope: 'openid',
 			expires_at: new Date(Date.now() - 1000),
@@ -253,7 +253,7 @@ describe('OAuth Flow Integration Tests', () => {
 		await oauthStore.saveAuthCode({
 			code: 'valid-code',
 			client_id: testClient.client_id,
-			user_id: user!.id,
+			identity_id: user!.id,
 			redirect_uri: testClient.redirect_uris[0],
 			scope: 'openid',
 			expires_at: new Date(Date.now() + 10 * 60 * 1000),
@@ -263,7 +263,7 @@ describe('OAuth Flow Integration Tests', () => {
 		await oauthStore.saveRefreshToken({
 			token: 'expired-refresh',
 			client_id: testClient.client_id,
-			user_id: user!.id,
+			identity_id: user!.id,
 			expires_at: new Date(Date.now() - 1000),
 		});
 
@@ -271,7 +271,7 @@ describe('OAuth Flow Integration Tests', () => {
 		await oauthStore.saveRefreshToken({
 			token: 'valid-refresh',
 			client_id: testClient.client_id,
-			user_id: user!.id,
+			identity_id: user!.id,
 			expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 		});
 

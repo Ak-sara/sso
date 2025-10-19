@@ -27,9 +27,9 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
         const branding = await getBrandingForClient(validatedParams.client_id);
 
         // Check if user is logged in
-        const userId = cookies.get('user_id');
-        if (userId) {
-            const user = await oauthStore.getUserById(userId);
+        const identityId = cookies.get('identity_id') || cookies.get('user_id'); // Support both for migration
+        if (identityId) {
+            const user = await oauthStore.getUserById(identityId);
             if (user) {
                 return {
                     params: validatedParams,
@@ -75,7 +75,7 @@ export const actions: Actions = {
                 return { error: 'Invalid credentials' };
             }
 
-            cookies.set('user_id', user.id, {
+            cookies.set('identity_id', user.id, {
                 path: '/',
                 maxAge: 60 * 60 * 24 * 7, // 7 days
                 httpOnly: true,
@@ -91,14 +91,14 @@ export const actions: Actions = {
             const params = Object.fromEntries(url.searchParams.entries());
             const validatedParams = authorizeSchema.parse(params);
 
-            const userId = cookies.get('user_id');
-            console.log('🔐 Authorize action - User ID from cookie:', userId);
+            const identityId = cookies.get('identity_id') || cookies.get('user_id'); // Support both for migration
+            console.log('🔐 Authorize action - Identity ID from cookie:', identityId);
 
-            if (!userId) {
+            if (!identityId) {
                 return { error: 'Not logged in' };
             }
 
-            const user = await oauthStore.getUserById(userId);
+            const user = await oauthStore.getUserById(identityId);
             console.log('🔐 Authorize action - User found:', user ? user.email : 'null');
 
             if (!user) {
@@ -112,7 +112,7 @@ export const actions: Actions = {
             console.log('🔐 Authorize action - Saving auth code:', {
                 code,
                 client_id: validatedParams.client_id,
-                user_id: user.id,
+                identity_id: user.id,
                 redirect_uri: validatedParams.redirect_uri,
                 scope: validatedParams.scope
             });
@@ -120,7 +120,7 @@ export const actions: Actions = {
             await oauthStore.saveAuthCode({
                 code,
                 client_id: validatedParams.client_id,
-                user_id: user.id,
+                identity_id: user.id,
                 redirect_uri: validatedParams.redirect_uri,
                 scope: validatedParams.scope,
                 expires_at: expiresAt,
