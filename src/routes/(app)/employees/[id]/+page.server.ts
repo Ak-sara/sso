@@ -34,6 +34,12 @@ export const load: PageServerLoad = async ({ params }) => {
 			? await db.collection('users').findOne({ _id: new ObjectId(employee.userId) })
 			: null;
 
+		// Get all users for linking (only active users without employee link)
+		const allUsers = await db.collection('users')
+			.find({ isActive: true, employeeId: { $exists: false } })
+			.sort({ email: 1 })
+			.toArray();
+
 		// Get assignment history
 		const history = await db.collection('employee_history')
 			.find({ employeeId: new ObjectId(params.id) })
@@ -75,7 +81,8 @@ export const load: PageServerLoad = async ({ params }) => {
 			history: populatedHistory,
 			organizations: organizations.map(o => ({ _id: o._id.toString(), name: o.name })),
 			orgUnits: orgUnits.map(u => ({ _id: u._id.toString(), name: u.name, organizationId: u.organizationId?.toString() })),
-			positions: positions.map(p => ({ _id: p._id.toString(), name: p.name }))
+			positions: positions.map(p => ({ _id: p._id.toString(), name: p.name })),
+			allUsers: allUsers.map(u => ({ _id: u._id.toString(), email: u.email, username: u.username, roles: u.roles }))
 		};
 	} catch (err) {
 		console.error('Load error:', err);
@@ -299,6 +306,129 @@ export const actions = {
 		} catch (err) {
 			console.error('Offboarding error:', err);
 			return fail(500, { error: 'Gagal memproses offboarding karyawan' });
+		}
+	},
+
+	linkUser: async ({ request, params }) => {
+		const db = getDB();
+		const formData = await request.formData();
+		const userId = formData.get('userId') as string;
+
+		if (!userId) {
+			return fail(400, { error: 'User ID is required' });
+		}
+
+		try {
+			// Check if employee exists
+			const employee = await db.collection('employees').findOne({ _id: new ObjectId(params.id) });
+			if (!employee) {
+				return fail(404, { error: 'Employee not found' });
+			}
+
+			// Check if employee already has a linked user
+			if (employee.userId) {
+				return fail(400, { error: 'Employee already has a linked user' });
+			}
+
+			// Check if user exists and is not already linked
+			const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+			if (!user) {
+				return fail(404, { error: 'User not found' });
+			}
+
+			if (user.employeeId) {
+				return fail(400, { error: 'User is already linked to another employee' });
+			}
+
+			// Link user to employee
+			await db.collection('employees').updateOne(
+				{ _id: new ObjectId(params.id) },
+				{
+					$set: {
+						userId: userId,
+						updatedAt: new Date()
+					}
+				}
+			);
+
+			// Link employee to user
+			await db.collection('users').updateOne(
+				{ _id: new ObjectId(userId) },
+				{
+					$set: {
+						employeeId: params.id,
+						updatedAt: new Date()
+					}
+				}
+			);
+
+			// Audit log
+			await db.collection('audit_log').insertOne({
+				timestamp: new Date(),
+				action: 'employee.link_user',
+				resourceType: 'employee',
+				resourceId: params.id,
+				userId: 'system',
+				details: { linkedUserId: userId },
+				ipAddress: null,
+				userAgent: null
+			});
+
+			return { success: true };
+		} catch (err) {
+			console.error('Link user error:', err);
+			return fail(500, { error: 'Failed to link user to employee' });
+		}
+	},
+
+	revokeSSO: async ({ params }) => {
+		const db = getDB();
+
+		try {
+			// Get employee
+			const employee = await db.collection('employees').findOne({ _id: new ObjectId(params.id) });
+			if (!employee) {
+				return fail(404, { error: 'Employee not found' });
+			}
+
+			if (!employee.userId) {
+				return fail(400, { error: 'Employee has no linked SSO user' });
+			}
+
+			// Remove link from employee
+			await db.collection('employees').updateOne(
+				{ _id: new ObjectId(params.id) },
+				{
+					$unset: { userId: '' },
+					$set: { updatedAt: new Date() }
+				}
+			);
+
+			// Remove link from user
+			await db.collection('users').updateOne(
+				{ _id: new ObjectId(employee.userId) },
+				{
+					$unset: { employeeId: '' },
+					$set: { updatedAt: new Date() }
+				}
+			);
+
+			// Audit log
+			await db.collection('audit_log').insertOne({
+				timestamp: new Date(),
+				action: 'employee.revoke_sso',
+				resourceType: 'employee',
+				resourceId: params.id,
+				userId: 'system',
+				details: { revokedUserId: employee.userId },
+				ipAddress: null,
+				userAgent: null
+			});
+
+			return { success: true };
+		} catch (err) {
+			console.error('Revoke SSO error:', err);
+			return fail(500, { error: 'Failed to revoke SSO access' });
 		}
 	}
 } satisfies Actions;

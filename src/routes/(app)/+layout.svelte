@@ -71,6 +71,7 @@
 			icon: '🔌',
 			items: [
 				{ name: 'OAuth Clients', href: '/clients', icon: '🔑' },
+				{ name: 'SCIM Clients', href: '/scim-clients', icon: '🔐' },
 				{ name: 'SCIM Configuration', href: '/scim', icon: '🔄' },
 				{ name: 'Entra ID Sync', href: '/entraid-sync', icon: '☁️' },
 			],

@@ -1,9 +1,41 @@
 import type { PageServerLoad } from './$types';
 import { getDB } from '$lib/db/connection';
+import { sanitizePaginationParams } from '$lib/utils/pagination';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ url }) => {
 	const db = getDB();
-	const orgUnits = await db.collection('org_units').find({}).sort({ sortOrder: 1 }).toArray();
+
+	const params = sanitizePaginationParams({
+		page: url.searchParams.get('page') || undefined,
+		pageSize: url.searchParams.get('pageSize') || undefined,
+		sortKey: url.searchParams.get('sortKey') || undefined,
+		sortDirection: url.searchParams.get('sortDirection') as 'asc' | 'desc' | undefined,
+		search: url.searchParams.get('search') || undefined
+	});
+
+	const searchFilter = params.search
+		? {
+				$or: [
+					{ name: { $regex: params.search, $options: 'i' } },
+					{ code: { $regex: params.search, $options: 'i' } },
+					{ shortName: { $regex: params.search, $options: 'i' } }
+				]
+		  }
+		: {};
+
+	const sortField = params.sortKey || 'sortOrder';
+	const sortDir = params.sortDirection === 'desc' ? -1 : 1;
+	const skip = (params.page - 1) * params.pageSize;
+
+	const [orgUnits, total] = await Promise.all([
+		db.collection('org_units')
+			.find(searchFilter)
+			.sort({ [sortField]: sortDir })
+			.skip(skip)
+			.limit(params.pageSize)
+			.toArray(),
+		db.collection('org_units').countDocuments(searchFilter)
+	]);
 
 	return {
 		orgUnits: orgUnits.map((u) => ({
@@ -13,5 +45,11 @@ export const load: PageServerLoad = async () => {
 			organizationId: u.organizationId?.toString() || null,
 			managerId: u.managerId?.toString() || null
 		})),
+		pagination: {
+			page: params.page,
+			pageSize: params.pageSize,
+			total,
+			totalPages: Math.ceil(total / params.pageSize)
+		}
 	};
 };

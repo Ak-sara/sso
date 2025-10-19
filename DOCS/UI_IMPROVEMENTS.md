@@ -185,7 +185,7 @@ File: `src/routes/(app)/employees/onboard/+page.svelte`
 - Gender, date of birth
 
 **Step 2: Employment Information**
-- NIP/Employee ID (with validation)
+- NIK/Employee ID (with validation)
 - Employment type (Permanent, PKWT, OS, Contract)
 - Join date, probation end date
 - Warning for PKWT to set contract end date

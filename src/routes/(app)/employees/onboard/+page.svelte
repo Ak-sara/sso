@@ -5,36 +5,38 @@
 
 	let step = $state(1);
 	let submitting = $state(false);
+
+	// Initialize formData with values from form.data if available (preserves on validation error)
 	let formData = $state({
 		// Personal Info
-		firstName: '',
-		lastName: '',
-		email: '',
-		phone: '',
-		gender: '',
-		dateOfBirth: '',
+		firstName: form?.data?.firstName || '',
+		lastName: form?.data?.lastName || '',
+		email: form?.data?.email || '',
+		phone: form?.data?.phone || '',
+		gender: form?.data?.gender || '',
+		dateOfBirth: form?.data?.dateOfBirth || '',
 
 		// Employment Info
-		employeeId: '',
-		employmentType: 'permanent',
-		joinDate: '',
-		probationEndDate: '',
+		employeeId: form?.data?.employeeId || '',
+		employmentType: form?.data?.employmentType || 'permanent',
+		joinDate: form?.data?.joinDate || '',
+		probationEndDate: form?.data?.probationEndDate || '',
 
 		// Assignment
-		organizationId: '',
-		orgUnitId: '',
-		positionId: '',
-		workLocation: '',
-		region: '',
+		organizationId: form?.data?.organizationId || '',
+		orgUnitId: form?.data?.orgUnitId || '',
+		positionId: form?.data?.positionId || '',
+		workLocation: form?.data?.workLocation || '',
+		region: form?.data?.region || '',
 
 		// SSO Access
-		createSSOAccount: false,
-		username: '',
+		createSSOAccount: form?.data?.createSSOAccount || false,
+		username: form?.data?.username || '',
 		password: '',
-		roles: ['user'],
+		roles: form?.data?.roles || ['user'],
 
 		// Custom Properties
-		customProperties: {}
+		customProperties: form?.data?.customProperties || {}
 	});
 
 	function nextStep() {
@@ -125,7 +127,7 @@
 			<h3 class="text-lg font-medium mb-4">💼 Informasi Kepegawaian</h3>
 			<div class="grid grid-cols-2 gap-4">
 				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">NIP/Employee ID *</label>
+					<label class="block text-sm font-medium text-gray-700 mb-2">NIK/Employee ID *</label>
 					<input type="text" bind:value={formData.employeeId} required class="w-full px-3 py-2 border rounded-md" placeholder="IAS-001" />
 				</div>
 				<div>
@@ -282,7 +284,7 @@
 				<div>
 					<h4 class="font-medium text-gray-900 mb-2">Employment Information</h4>
 					<dl class="grid grid-cols-2 gap-2 text-sm">
-						<dt class="text-gray-500">NIP:</dt>
+						<dt class="text-gray-500">NIK:</dt>
 						<dd class="font-medium">{formData.employeeId}</dd>
 						<dt class="text-gray-500">Jenis:</dt>
 						<dd class="font-medium">{formData.employmentType}</dd>

@@ -1,4 +1,4 @@
-import type { Branding } from '$lib/db/schemas';
+import type { Branding } from '$lib/branding';
 
 /**
  * Get CSS custom properties for branding colors

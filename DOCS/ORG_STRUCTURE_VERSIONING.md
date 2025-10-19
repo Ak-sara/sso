@@ -254,7 +254,7 @@ STEP 6: Approval & Activation
 
 #### Tab 3: Karyawan Terdampak (Affected Employees)
 - **Table format** (ready for SK attachment):
-  - No, NIP, Nama
+  - No, NIK, Nama
   - Dari (Old Unit + Position)
   - Ke (New Unit + Position)
   - Tanggal Efektif
@@ -404,7 +404,7 @@ function generateSKAttachment(version: OrgStructureVersion): Excel {
   // Headers
   worksheet.columns = [
     { header: 'No', key: 'no', width: 5 },
-    { header: 'NIP', key: 'nip', width: 15 },
+    { header: 'NIK', key: 'nip', width: 15 },
     { header: 'Nama Lengkap', key: 'name', width: 30 },
     { header: 'Dari (Unit Kerja)', key: 'from_unit', width: 25 },
     { header: 'Dari (Posisi)', key: 'from_position', width: 20 },

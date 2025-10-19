@@ -71,12 +71,21 @@ export async function seed() {
 
 		// Create indexes
 		console.log('📇 Creating indexes...');
+
+		// Drop old non-unique email index if exists
+		try {
+			await db.collection('employees').dropIndex('email_1');
+			console.log('   Dropped old email_1 index');
+		} catch (e) {
+			// Index might not exist, that's ok
+		}
+
 		await db.collection('users').createIndex({ email: 1 }, { unique: true });
 		await db.collection('users').createIndex({ username: 1 }, { unique: true });
 		await db.collection('oauth_clients').createIndex({ clientId: 1 }, { unique: true });
 		await db.collection('employees').createIndex({ employeeId: 1 }, { unique: true });
 		await db.collection('employees').createIndex({ organizationId: 1 });
-		await db.collection('employees').createIndex({ email: 1 });
+		await db.collection('employees').createIndex({ email: 1 }, { unique: true }); // ✅ Now unique!
 		await db.collection('organizations').createIndex({ code: 1 }, { unique: true });
 		await db.collection('org_units').createIndex({ code: 1, organizationId: 1 }, { unique: true });
 		await db.collection('partners').createIndex({ partnerId: 1 }, { unique: true });

@@ -1,10 +1,13 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { enhance } from '$app/forms';
+	import LinkUserModal from './link-user-modal.svelte';
 
 	let { data }: { data: PageData } = $props();
 	let activeTab = $state('overview');
 	let showMutationModal = $state(false);
 	let showOffboardModal = $state(false);
+	let showLinkUserModal = $state(false);
 	let editMode = $state(false);
 
 	// Editable form data
@@ -244,14 +247,14 @@
 					{#if editMode}
 						<div class="grid grid-cols-2 gap-4">
 							<div>
-								<label class="block text-sm font-medium text-gray-700 mb-1">NIP *</label>
+								<label class="block text-sm font-medium text-gray-700 mb-1">NIK *</label>
 								<input
 									type="text"
 									value={data.employee.employeeId}
 									disabled
 									class="w-full px-3 py-2 border rounded-md bg-gray-100 cursor-not-allowed"
 								/>
-								<p class="text-xs text-gray-500 mt-1">NIP tidak dapat diubah</p>
+								<p class="text-xs text-gray-500 mt-1">NIK tidak dapat diubah</p>
 							</div>
 							<div>
 								<label class="block text-sm font-medium text-gray-700 mb-1">Jenis Kepegawaian *</label>
@@ -293,7 +296,7 @@
 					{:else}
 						<dl class="grid grid-cols-2 gap-4">
 							<div>
-								<dt class="text-sm font-medium text-gray-500">NIP</dt>
+								<dt class="text-sm font-medium text-gray-500">NIK</dt>
 								<dd class="mt-1 text-sm text-gray-900">{data.employee.employeeId}</dd>
 							</div>
 							<div>
@@ -453,9 +456,11 @@
 							<p class="font-medium text-green-900">✓ SSO Account Active</p>
 							<p class="text-sm text-green-700 mt-1">User ID: {data.employee.userId}</p>
 						</div>
-						<button class="px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50">
-							Revoke Access
-						</button>
+						<form method="POST" action="?/revokeSSO" use:enhance>
+							<button type="submit" class="px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50">
+								Revoke Access
+							</button>
+						</form>
 					</div>
 				</div>
 
@@ -498,9 +503,21 @@
 					<p class="text-sm text-yellow-700 mt-1">Karyawan ini belum memiliki akun SSO</p>
 				</div>
 
-				<button class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-					+ Create SSO Account
-				</button>
+				<div class="flex gap-3">
+					<form method="POST" action="?/createSSOAccount" class="inline">
+						<button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+							+ Create New SSO Account
+						</button>
+					</form>
+
+					<button
+						onclick={() => showLinkUserModal = true}
+						type="button"
+						class="px-4 py-2 border border-indigo-600 text-indigo-600 rounded-md hover:bg-indigo-50"
+					>
+						🔗 Link Existing User
+					</button>
+				</div>
 			{/if}
 		</div>
 
@@ -645,6 +662,13 @@
 	</div>
 {/if}
 
+<LinkUserModal
+	show={showLinkUserModal}
+	employeeName={data.employee.fullName}
+	allUsers={data.allUsers || []}
+	onClose={() => showLinkUserModal = false}
+/>
+
 <!-- Offboard Modal -->
 {#if showOffboardModal}
 	<div class="fixed inset-0 z-50 overflow-y-auto">
@@ -702,3 +726,10 @@
 		</div>
 	</div>
 {/if}
+
+<LinkUserModal
+	show={showLinkUserModal}
+	employeeName={data.employee.fullName}
+	allUsers={data.allUsers || []}
+	onClose={() => showLinkUserModal = false}
+/>

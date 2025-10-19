@@ -63,14 +63,14 @@ export const actions: Actions = {
 
         // Login action
         if (actionType === 'login') {
-            const email = formData.get('email') as string;
+            const username = formData.get('email') as string; // Can be email or NIK
             const password = formData.get('password') as string;
 
-            if (!email || !password) {
-                return { error: 'Email and password are required' };
+            if (!username || !password) {
+                return { error: 'Email/NIK and password are required' };
             }
 
-            const user = await oauthStore.getUserByEmail(email);
+            const user = await oauthStore.getUserByEmailOrNIK(username);
             if (!user || !(await verify(user.password, password))) {
                 return { error: 'Invalid credentials' };
             }

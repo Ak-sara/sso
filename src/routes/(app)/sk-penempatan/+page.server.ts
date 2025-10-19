@@ -3,8 +3,9 @@ import { getDB } from '$lib/db/connection';
 import { ObjectId } from 'mongodb';
 import { fail, redirect } from '@sveltejs/kit';
 import { parseReassignmentCSV } from '$lib/utils/csv-parser';
+import { sanitizePaginationParams } from '$lib/utils/pagination';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ url }) => {
 	const db = getDB();
 
 	// Get organization (IAS for now)
@@ -13,12 +14,38 @@ export const load: PageServerLoad = async () => {
 		throw new Error('Organization not found');
 	}
 
-	// Get all SK Penempatan
-	const skList = await db
-		.collection('sk_penempatan')
-		.find({ organizationId: organization._id.toString() })
-		.sort({ createdAt: -1 })
-		.toArray();
+	// Get pagination params
+	const params = sanitizePaginationParams({
+		page: url.searchParams.get('page') || undefined,
+		pageSize: url.searchParams.get('pageSize') || undefined,
+		sortKey: url.searchParams.get('sortKey') || undefined,
+		sortDirection: url.searchParams.get('sortDirection') as 'asc' | 'desc' | undefined,
+		search: url.searchParams.get('search') || undefined
+	});
+
+	const searchFilter = params.search
+		? { $regex: params.search, $options: 'i' }
+		: undefined;
+
+	const query = {
+		organizationId: organization._id.toString(),
+		...(searchFilter ? { skNumber: searchFilter } : {})
+	};
+
+	const sortField = params.sortKey || 'createdAt';
+	const sortDir = params.sortDirection === 'desc' ? -1 : 1;
+	const skip = (params.page - 1) * params.pageSize;
+
+	// Get all SK Penempatan with pagination
+	const [skList, total] = await Promise.all([
+		db.collection('sk_penempatan')
+			.find(query)
+			.sort({ [sortField]: sortDir })
+			.skip(skip)
+			.limit(params.pageSize)
+			.toArray(),
+		db.collection('sk_penempatan').countDocuments(query)
+	]);
 
 	// Get directors for signatory dropdown
 	const directors = await db
@@ -56,7 +83,13 @@ export const load: PageServerLoad = async () => {
 			fullName: d.fullName,
 			positionName: d.position?.[0]?.name || 'Unknown'
 		})),
-		organizationId: organization._id.toString()
+		organizationId: organization._id.toString(),
+		pagination: {
+			page: params.page,
+			pageSize: params.pageSize,
+			total,
+			totalPages: Math.ceil(total / params.pageSize)
+		}
 	};
 };
 
@@ -201,7 +234,7 @@ export const actions = {
 				const employee = employeeMap.get(row.employeeId);
 
 				if (!employee) {
-					errors.push(`Baris ${index + 2}: NIP ${row.employeeId} tidak ditemukan`);
+					errors.push(`Baris ${index + 2}: NIK ${row.employeeId} tidak ditemukan`);
 					continue;
 				}
 

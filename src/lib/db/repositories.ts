@@ -1,7 +1,9 @@
 import { getDB } from './connection';
-import type { User, OAuthClient, AuthCode, RefreshToken } from './schemas';
+import type { User, OAuthClient, AuthCode, RefreshToken, Employee, Organization, OrgUnit, Position } from './schemas';
 import { ObjectId } from 'mongodb';
 import { verify } from '@node-rs/argon2';
+import type { PaginationParams, PaginationResult } from '$lib/utils/pagination';
+import { getPaginationOffset, createPaginationResult, getMongoSort, buildSearchQuery } from '$lib/utils/pagination';
 
 // ============== Access Token Interface ==============
 // We'll store access tokens in memory for performance, but you can move to DB if needed
@@ -43,6 +45,28 @@ export class UserRepository {
 		return await this.collection.findOne({ username });
 	}
 
+	/**
+	 * Find user by email or NIK (employeeId from linked employee)
+	 * This allows flexible login with either email or NIK
+	 */
+	async findByEmailOrNIK(identifier: string): Promise<User | null> {
+		// First, try to find by email
+		let user = await this.collection.findOne({ email: identifier });
+		if (user) return user;
+
+		// If not found, find employee by NIK and get associated user
+		const db = getDB();
+		const employee = await db.collection('employees').findOne({ employeeId: identifier });
+
+		if (employee && employee.userId) {
+			// Get user by userId reference
+			user = await this.findById(employee.userId);
+			return user;
+		}
+
+		return null;
+	}
+
 	async verifyPassword(user: User, password: string): Promise<boolean> {
 		return await verify(user.password, password);
 	}
@@ -63,6 +87,26 @@ export class UserRepository {
 
 	async list(filter: Partial<User> = {}): Promise<User[]> {
 		return await this.collection.find(filter).toArray();
+	}
+
+	async listPaginated(params: PaginationParams, filter: any = {}): Promise<PaginationResult<User>> {
+		const { page, pageSize, sortKey, sortDirection, search } = params;
+
+		// Build search query
+		const searchQuery = search
+			? buildSearchQuery(search, ['email', 'username', 'firstName', 'lastName'])
+			: {};
+
+		const query = { ...filter, ...searchQuery };
+		const sort = getMongoSort(sortKey, sortDirection);
+		const skip = getPaginationOffset(page, pageSize);
+
+		const [data, total] = await Promise.all([
+			this.collection.find(query).sort(sort).skip(skip).limit(pageSize).toArray(),
+			this.collection.countDocuments(query)
+		]);
+
+		return createPaginationResult(data, total, params);
 	}
 }
 
@@ -227,6 +271,22 @@ export class OAuthStore {
 		};
 	}
 
+	/**
+	 * Get user by email or NIK for OAuth authentication
+	 */
+	async getUserByEmailOrNIK(identifier: string): Promise<{ id: string; email: string; password: string; name: string; createdAt: Date } | null> {
+		const user = await this.userRepo.findByEmailOrNIK(identifier);
+		if (!user) return null;
+
+		return {
+			id: user._id!.toString(),
+			email: user.email,
+			password: user.password,
+			name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+			createdAt: user.createdAt,
+		};
+	}
+
 	// Client methods
 	async createClient(client: { client_id: string; client_secret: string; name: string; redirect_uris: string[]; allowed_scopes: string[]; created_at: Date }): Promise<void> {
 		await this.clientRepo.create({
@@ -353,11 +413,181 @@ export class OAuthStore {
 	}
 }
 
+// ============== Employee Repository ==============
+export class EmployeeRepository {
+	get collection() {
+		return getDB().collection<Employee>('employees');
+	}
+
+	async findById(id: string): Promise<Employee | null> {
+		try {
+			return await this.collection.findOne({ _id: new ObjectId(id) });
+		} catch {
+			return null;
+		}
+	}
+
+	async findByEmployeeId(employeeId: string): Promise<Employee | null> {
+		return await this.collection.findOne({ employeeId });
+	}
+
+	async findByUserId(userId: string): Promise<Employee | null> {
+		return await this.collection.findOne({ userId });
+	}
+
+	async list(filter: any = {}): Promise<Employee[]> {
+		return await this.collection.find(filter).toArray();
+	}
+
+	async listPaginated(params: PaginationParams, filter: any = {}): Promise<PaginationResult<Employee>> {
+		const { page, pageSize, sortKey, sortDirection, search } = params;
+
+		// Build search query
+		const searchQuery = search
+			? buildSearchQuery(search, ['employeeId', 'firstName', 'lastName', 'fullName', 'email'])
+			: {};
+
+		const query = { ...filter, ...searchQuery };
+		const sort = getMongoSort(sortKey || 'createdAt', sortDirection);
+		const skip = getPaginationOffset(page, pageSize);
+
+		const [data, total] = await Promise.all([
+			this.collection.find(query).sort(sort).skip(skip).limit(pageSize).toArray(),
+			this.collection.countDocuments(query)
+		]);
+
+		return createPaginationResult(data, total, params);
+	}
+
+	async update(id: string, update: Partial<Employee>): Promise<Employee | null> {
+		const result = await this.collection.findOneAndUpdate(
+			{ _id: new ObjectId(id) },
+			{ $set: { ...update, updatedAt: new Date() } },
+			{ returnDocument: 'after' }
+		);
+		return result || null;
+	}
+
+	async create(employee: Omit<Employee, '_id'>): Promise<Employee> {
+		const result = await this.collection.insertOne(employee as Employee);
+		return { ...employee, _id: result.insertedId } as Employee;
+	}
+
+	async delete(id: string): Promise<void> {
+		await this.collection.deleteOne({ _id: new ObjectId(id) });
+	}
+
+	async getAll(): Promise<Employee[]> {
+		return await this.collection.find({}).toArray();
+	}
+
+	async findByUnit(unitId: string): Promise<Employee[]> {
+		try {
+			return await this.collection.find({
+				'assignment.unitId': new ObjectId(unitId)
+			}).toArray();
+		} catch {
+			return [];
+		}
+	}
+}
+
+// ============== Organization Repository ==============
+export class OrganizationRepository {
+	get collection() {
+		return getDB().collection<Organization>('organizations');
+	}
+
+	async findById(id: string): Promise<Organization | null> {
+		try {
+			return await this.collection.findOne({ _id: new ObjectId(id) });
+		} catch {
+			return null;
+		}
+	}
+
+	async findByCode(code: string): Promise<Organization | null> {
+		return await this.collection.findOne({ code });
+	}
+
+	async list(filter: any = {}): Promise<Organization[]> {
+		return await this.collection.find(filter).toArray();
+	}
+}
+
+// ============== OrgUnit Repository ==============
+export class OrgUnitRepository {
+	get collection() {
+		return getDB().collection<OrgUnit>('org_units');
+	}
+
+	async findById(id: string): Promise<OrgUnit | null> {
+		try {
+			return await this.collection.findOne({ _id: new ObjectId(id) });
+		} catch {
+			return null;
+		}
+	}
+
+	async findByCode(code: string, organizationId: string): Promise<OrgUnit | null> {
+		return await this.collection.findOne({ code, organizationId });
+	}
+
+	async list(filter: any = {}): Promise<OrgUnit[]> {
+		return await this.collection.find(filter).toArray();
+	}
+
+	async getAll(): Promise<OrgUnit[]> {
+		return await this.collection.find({}).toArray();
+	}
+
+	async create(orgUnit: Omit<OrgUnit, '_id'>): Promise<OrgUnit> {
+		const result = await this.collection.insertOne(orgUnit as OrgUnit);
+		return { ...orgUnit, _id: result.insertedId } as OrgUnit;
+	}
+
+	async update(id: string, update: Partial<OrgUnit>): Promise<OrgUnit | null> {
+		const result = await this.collection.findOneAndUpdate(
+			{ _id: new ObjectId(id) },
+			{ $set: { ...update, updatedAt: new Date() } },
+			{ returnDocument: 'after' }
+		);
+		return result || null;
+	}
+}
+
+// ============== Position Repository ==============
+export class PositionRepository {
+	get collection() {
+		return getDB().collection<Position>('positions');
+	}
+
+	async findById(id: string): Promise<Position | null> {
+		try {
+			return await this.collection.findOne({ _id: new ObjectId(id) });
+		} catch {
+			return null;
+		}
+	}
+
+	async findByCode(code: string, organizationId: string): Promise<Position | null> {
+		return await this.collection.findOne({ code, organizationId });
+	}
+
+	async list(filter: any = {}): Promise<Position[]> {
+		return await this.collection.find(filter).toArray();
+	}
+}
+
 // Export singleton instance
 export const oauthStore = new OAuthStore();
 
 // Export repositories for direct access
 export const userRepository = new UserRepository();
+export const employeeRepository = new EmployeeRepository();
+export const organizationRepository = new OrganizationRepository();
+export const orgUnitRepository = new OrgUnitRepository();
+export const positionRepository = new PositionRepository();
 export const oauthClientRepository = new OAuthClientRepository();
 export const authCodeRepository = new AuthCodeRepository();
 export const refreshTokenRepository = new RefreshTokenRepository();

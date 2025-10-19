@@ -49,19 +49,22 @@
 					<input type="hidden" name="action" value="login" />
 					<div>
 						<label for="email" class="block text-sm font-medium text-gray-700">
-							Email address
+							Email / NIK
 						</label>
 						<div class="mt-1">
 							<input
 								id="email"
 								name="email"
-								type="email"
-								autocomplete="email"
+								type="text"
+								autocomplete="username"
 								required
-								value="admin@ias.co.id"
+								placeholder="email@company.com or NIK123456"
 								class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
 							/>
 						</div>
+						<p class="mt-1 text-xs text-gray-500">
+							You can use either your email address or NIK (Employee ID)
+						</p>
 					</div>
 
 					<div>
@@ -75,7 +78,6 @@
 								type="password"
 								autocomplete="current-password"
 								required
-								value="password123"
 								class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
 							/>
 						</div>

@@ -9,11 +9,35 @@ interface EmployeeGeneratorOptions {
 }
 
 const indonesianFirstNames = {
-	male: ['Ahmad', 'Budi', 'Rudi', 'Dedi', 'Eko', 'Agus', 'Bambang', 'Hadi', 'Wawan', 'Joko', 'Made', 'Putu', 'Ketut', 'Nyoman', 'Rizki', 'Fajar', 'Andi', 'Yudi', 'Aan', 'Denny'],
-	female: ['Siti', 'Dewi', 'Rina', 'Lisa', 'Ani', 'Sri', 'Wati', 'Sari', 'Lestari', 'Fitri', 'Nur', 'Ayu', 'Putri', 'Maya', 'Nia', 'Dian', 'Ratna', 'Indah', 'Yuni', 'Eka']
+	male: [
+		'Ahmad', 'Budi', 'Rudi', 'Dedi', 'Eko', 'Agus', 'Bambang', 'Hadi', 'Wawan', 'Joko',
+		'Made', 'Putu', 'Ketut', 'Nyoman', 'Rizki', 'Fajar', 'Andi', 'Yudi', 'Aan', 'Denny',
+		'Reza', 'Irfan', 'Hafiz', 'Arif', 'Bayu', 'Cahya', 'Dimas', 'Fikri', 'Gilang', 'Hendra',
+		'Ilham', 'Jaya', 'Krisna', 'Lukman', 'Mahendra', 'Nanda', 'Oka', 'Pandu', 'Rama', 'Surya',
+		'Teguh', 'Umar', 'Vino', 'Wahyu', 'Yoga', 'Zaki', 'Aditya', 'Bobby', 'Candra', 'Dwi',
+		'Eko', 'Firman', 'Gani', 'Haris', 'Ivan', 'Jefri', 'Kevin', 'Leo', 'Mulyono', 'Naufal',
+		'Oscar', 'Prasetyo', 'Qori', 'Rio', 'Satrio', 'Tono', 'Udin', 'Victor', 'Wisnu', 'Yanto'
+	],
+	female: [
+		'Siti', 'Dewi', 'Rina', 'Lisa', 'Ani', 'Sri', 'Wati', 'Sari', 'Lestari', 'Fitri',
+		'Nur', 'Ayu', 'Putri', 'Maya', 'Nia', 'Dian', 'Ratna', 'Indah', 'Yuni', 'Eka',
+		'Rini', 'Tuti', 'Uci', 'Vina', 'Winda', 'Yanti', 'Zahra', 'Amel', 'Bella', 'Citra',
+		'Dini', 'Elsa', 'Farah', 'Gita', 'Hanna', 'Intan', 'Julia', 'Kartika', 'Lina', 'Mira',
+		'Nisa', 'Oktavia', 'Prita', 'Qonita', 'Rani', 'Shinta', 'Tiara', 'Ulfa', 'Vera', 'Wulan',
+		'Xenia', 'Yasmin', 'Zulfa', 'Annisa', 'Bunga', 'Clara', 'Diana', 'Elma', 'Fani', 'Gina',
+		'Hesti', 'Ima', 'Jelita', 'Kiki', 'Laras', 'Melati', 'Nina', 'Olivia', 'Poppy', 'Qory'
+	]
 };
 
-const indonesianLastNames = ['Wijaya', 'Santoso', 'Lestari', 'Susanti', 'Hermawan', 'Anggraini', 'Sudana', 'Kusuma', 'Pratama', 'Putra', 'Sari', 'Nugroho', 'Hidayat', 'Setiawan', 'Wibowo', 'Kurniawan', 'Prabowo', 'Rahman', 'Permana', 'Saputra'];
+const indonesianLastNames = [
+	'Wijaya', 'Santoso', 'Lestari', 'Susanti', 'Hermawan', 'Anggraini', 'Sudana', 'Kusuma',
+	'Pratama', 'Putra', 'Sari', 'Nugroho', 'Hidayat', 'Setiawan', 'Wibowo', 'Kurniawan',
+	'Prabowo', 'Rahman', 'Permana', 'Saputra', 'Utomo', 'Halim', 'Gunawan', 'Suharto',
+	'Mahardika', 'Firmansyah', 'Alamsyah', 'Budiman', 'Cahyono', 'Darmawan', 'Fadillah',
+	'Hakim', 'Indarto', 'Kurnia', 'Maulana', 'Noor', 'Pamungkas', 'Ramadhan', 'Safitri',
+	'Trianto', 'Wahyudi', 'Yusuf', 'Adiputra', 'Baskara', 'Chandra', 'Darma', 'Eko',
+	'Firdaus', 'Ginting', 'Handoko', 'Iskandar', 'Junaidi', 'Kusumawati', 'Lubis', 'Mulyadi'
+];
 
 const regions = ['Pusat', 'Regional 1', 'Regional 2', 'Regional 3', 'Regional 4'];
 const locations = ['Jakarta', 'KNO', 'CGK', 'DPS', 'UPG', 'SUB', 'BPN', 'MDC'];
@@ -33,11 +57,24 @@ function generateEmployeeData(
 	index: number,
 	organizationId: string,
 	unitMap: Record<string, any>,
-	positionIds: string[]
+	positionIds: string[],
+	usedEmails: Set<string>
 ): Partial<Employee> {
 	const { firstName, lastName, gender } = generateIndonesianName();
 	const fullName = `${firstName} ${lastName}`;
-	const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@ias.co.id`;
+
+	// Generate unique email with suffix if needed
+	let email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@ias.co.id`;
+	let emailSuffix = 1;
+
+	// Keep adding suffix until we get a unique email
+	while (usedEmails.has(email)) {
+		email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${emailSuffix}@ias.co.id`;
+		emailSuffix++;
+	}
+
+	// Mark this email as used
+	usedEmails.add(email);
 
 	// Distribute employees across different employment types
 	const rand = Math.random();
@@ -99,7 +136,7 @@ function generateEmployeeData(
 }
 
 /**
- * Seed employees with bulk generation
+ * Seed employees with bulk generation and unique email validation
  */
 export async function seedEmployees(
 	db: Db,
@@ -109,6 +146,18 @@ export async function seedEmployees(
 
 	if (options.clear) {
 		await db.collection('employees').deleteMany({});
+	}
+
+	// Track used emails to ensure uniqueness
+	const usedEmails = new Set<string>();
+
+	// If not clearing, load existing emails
+	if (!options.clear) {
+		const existingEmployees = await db.collection('employees').find({}, { projection: { email: 1 } }).toArray();
+		existingEmployees.forEach(emp => {
+			if (emp.email) usedEmails.add(emp.email);
+		});
+		console.log(`   Found ${usedEmails.size} existing emails`);
 	}
 
 	const batchSize = 100;
@@ -123,16 +172,21 @@ export async function seedEmployees(
 				i + j,
 				options.organizationId,
 				options.unitMap,
-				options.positionIds
+				options.positionIds,
+				usedEmails
 			));
 		}
 
 		await db.collection('employees').insertMany(batch);
 		created += batch.length;
-		console.log(`   Progress: ${created}/${options.count} employees created`);
+
+		// Show progress every 500 employees
+		if (created % 500 === 0 || created === options.count) {
+			console.log(`   Progress: ${created}/${options.count} employees created (${usedEmails.size} unique emails)`);
+		}
 	}
 
-	console.log(`✅ Created ${created} employees`);
+	console.log(`✅ Created ${created} employees with ${usedEmails.size} unique emails`);
 	return created;
 }
 

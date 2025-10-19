@@ -48,7 +48,7 @@ Karyawan, partner, atau pengguna lain yang data pribadinya diolah dalam sistem.
 ### 3.2 Data Karyawan
 #### A. Data Identitas
 - Nama lengkap
-- Nomor Induk Karyawan (NIP)
+- Nomor Induk Karyawan (NIK)
 - **NIK (Nomor Induk Kependudukan)** 🔴 *Sensitif*
 - **NPWP (Nomor Pokok Wajib Pajak)** 🔴 *Sensitif*
 - **Tanggal lahir** 🔴 *Sensitif*

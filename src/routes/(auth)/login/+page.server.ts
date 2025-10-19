@@ -8,28 +8,30 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (locals.user) {
 		throw redirect(302, '/');
 	}
+
 	return {};
 };
 
 export const actions: Actions = {
 	default: async ({ request, cookies }) => {
 		const data = await request.formData();
-		const email = data.get('email')?.toString();
+		const username = data.get('email')?.toString(); // Can be email or NIK
 		const password = data.get('password')?.toString();
 
-		if (!email || !password) {
+		if (!username || !password) {
 			return fail(400, {
-				error: 'Email dan password harus diisi',
-				email,
+				error: 'Username/Email/NIK dan password harus diisi',
+				email: username,
 			});
 		}
 
-		const user = await userRepository.findByEmail(email);
+		// Try to find user by email or NIK
+		const user = await userRepository.findByEmailOrNIK(username);
 
 		if (!user) {
 			return fail(401, {
-				error: 'Email atau password salah',
-				email,
+				error: 'Username/Email/NIK atau password salah',
+				email: username,
 			});
 		}
 
@@ -44,8 +46,8 @@ export const actions: Actions = {
 
 		if (!isPasswordValid) {
 			return fail(401, {
-				error: 'Email atau password salah',
-				email,
+				error: 'Username/Email/NIK atau password salah',
+				email: username,
 			});
 		}
 

@@ -43,14 +43,14 @@ export const actions = {
 		};
 
 		// Validation
-		if (!data.firstName || !data.lastName || !data.email || !data.employeeId || !data.employmentType || !data.joinDate) {
-			return fail(400, { error: 'Field yang wajib diisi belum lengkap' });
+		if (!data.firstName || !data.lastName || !data.employeeId || !data.employmentType || !data.joinDate) {
+			return fail(400, { error: 'Field yang wajib diisi belum lengkap', data });
 		}
 
 		// Check if employeeId already exists
 		const existingEmployee = await db.collection('employees').findOne({ employeeId: data.employeeId });
 		if (existingEmployee) {
-			return fail(400, { error: `NIP ${data.employeeId} sudah digunakan` });
+			return fail(400, { error: `NIK ${data.employeeId} sudah digunakan` });
 		}
 
 		// Check if email already exists

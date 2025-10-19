@@ -33,6 +33,11 @@ Thumbs.db
 # Testing
 coverage
 .nyc_output
+e2e/
+playwright-report/
+test-results/
+*.spec.ts
+*.test.ts
 
 # Git
 .git

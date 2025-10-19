@@ -73,7 +73,7 @@ Aksara SSO uses **three distinct collections** for different purposes:
 ```typescript
 {
   _id: ObjectId,
-  employeeId: string,         // NIP
+  employeeId: string,         // NIK
   userId?: string,            // ⚠️ Link to users collection (optional)
 
   // ⚠️ SENSITIVE PERSONAL DATA (UU PDP Protected)
@@ -504,7 +504,7 @@ Dasar Hukum: Kontrak kerja, UU Ketenagakerjaan
 Kategori Data:
   - Data identitas (Nama, NIK, NPWP)
   - Data kontak (Email, Phone)
-  - Data pekerjaan (NIP, Posisi, Gaji)
+  - Data pekerjaan (NIK, Posisi, Gaji)
   - Data sensitif (Medical records)
 Kategori Subjek Data: Karyawan
 Penerima Data: HR Dept, Finance Dept, Management

@@ -26,7 +26,7 @@
 	}
 
 	function downloadTemplate() {
-		const template = `NIP,Nama,Unit Kerja Baru,Posisi Baru,Lokasi Kerja,Region,Alasan,Catatan
+		const template = `NIK,Nama,Unit Kerja Baru,Posisi Baru,Lokasi Kerja,Region,Alasan,Catatan
 IAS-001,Budi Santoso,IT,Manager,Jakarta,Pusat,Promosi,Promoted to Manager
 IAS-002,Siti Nurhaliza,ACC,Senior Staff,Jakarta,Pusat,Rotasi,Regular rotation`;
 
@@ -318,7 +318,7 @@ IAS-002,Siti Nurhaliza,ACC,Senior Staff,Jakarta,Pusat,Rotasi,Regular rotation`;
 						class="w-full px-3 py-2 border rounded-md"
 					/>
 					<p class="mt-2 text-xs text-gray-500">
-						Format: NIP,Nama,Unit Kerja Baru,Posisi Baru,Lokasi Kerja,Region,Alasan,Catatan
+						Format: NIK,Nama,Unit Kerja Baru,Posisi Baru,Lokasi Kerja,Region,Alasan,Catatan
 					</p>
 					<button
 						type="button"

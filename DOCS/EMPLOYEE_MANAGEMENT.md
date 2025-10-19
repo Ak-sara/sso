@@ -98,7 +98,7 @@ Visual progress indicator shows current step with color-coded bars.
 #### Step 2: Employment Information
 ```
 💼 Informasi Kepegawaian
-- NIP/Employee ID * (validated for uniqueness)
+- NIK/Employee ID * (validated for uniqueness)
 - Jenis Kepegawaian * (Permanent/PKWT/OS/Contract)
 - Tanggal Bergabung *
 - Akhir Masa Probation

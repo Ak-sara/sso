@@ -1,0 +1,499 @@
+{
+  "config": {
+    "configFile": "/Users/heriawan/Project/Aksara/sso/e2e/playwright.config.ts",
+    "rootDir": "/Users/heriawan/Project/Aksara/sso/e2e/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 4
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "playwright-report",
+          "open": "never"
+        }
+      ],
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/heriawan/Project/Aksara/sso/e2e/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "API Tests",
+        "name": "API Tests",
+        "testDir": "/Users/heriawan/Project/Aksara/sso/e2e/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\.spec\\.ts/"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 4,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "scim-groups.spec.ts",
+      "file": "scim-groups.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "SCIM Groups API",
+          "file": "scim-groups.spec.ts",
+          "line": 16,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should authenticate with OAuth 2.0 client credentials",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 158,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ OAuth token obtained: eyJhbGciOiJIUzI1NiJ9...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-18T17:07:49.339Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "af85a14359f108c65f9d-954bd5a045fca5ddea18",
+              "file": "scim-groups.spec.ts",
+              "line": 35,
+              "column": 2
+            },
+            {
+              "title": "should list all groups (organizational units)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2649,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "📊 Total Groups: 60\n"
+                        },
+                        {
+                          "text": "📄 Returned: 60\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-18T17:07:49.908Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "af85a14359f108c65f9d-d58cb02717aaaf81a05c",
+              "file": "scim-groups.spec.ts",
+              "line": 55,
+              "column": 2
+            },
+            {
+              "title": "should return group with correct SCIM schema",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1993,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Sample Group: Board of Directors\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-18T17:07:52.576Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "af85a14359f108c65f9d-17c101c9948bc067e4a4",
+              "file": "scim-groups.spec.ts",
+              "line": 81,
+              "column": 2
+            },
+            {
+              "title": "should return hierarchical org unit structure (x-orgUnit extension)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1878,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ OAuth token obtained: eyJhbGciOiJIUzI1NiJ9...\n"
+                        },
+                        {
+                          "text": "🌳 Sample Hierarchical Group:\n"
+                        },
+                        {
+                          "text": "   Name: Direktur Utama\n"
+                        },
+                        {
+                          "text": "   Type: directorate\n"
+                        },
+                        {
+                          "text": "   Level: 1\n"
+                        },
+                        {
+                          "text": "   Parent: 68f1e86862e5ebc1974220a0\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-18T17:07:49.418Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "af85a14359f108c65f9d-676ae9e556132d5650bd",
+              "file": "scim-groups.spec.ts",
+              "line": 107,
+              "column": 2
+            },
+            {
+              "title": "should support pagination",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2842,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "📄 Page 1: 10 groups\n"
+                        },
+                        {
+                          "text": "📄 Page 2: 10 groups\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-18T17:07:51.656Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "af85a14359f108c65f9d-42ca1d0ac949eedacd4a",
+              "file": "scim-groups.spec.ts",
+              "line": 137,
+              "column": 2
+            },
+            {
+              "title": "should include group members",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1099,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "⚠️  No groups with members found (may need to run seed data)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-18T17:07:54.515Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "af85a14359f108c65f9d-cccb3e92cd8eaf6aa047",
+              "file": "scim-groups.spec.ts",
+              "line": 176,
+              "column": 2
+            },
+            {
+              "title": "should have unit-level managers (unique feature)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 1942,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ OAuth token obtained: eyJhbGciOiJIUzI1NiJ9...\n"
+                        },
+                        {
+                          "text": "⚠️  No groups with managers found\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-18T17:07:49.377Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "af85a14359f108c65f9d-ee4bc522876da3ca6419",
+              "file": "scim-groups.spec.ts",
+              "line": 205,
+              "column": 2
+            },
+            {
+              "title": "should reject invalid OAuth token",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 13,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-18T17:07:51.682Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "af85a14359f108c65f9d-8e13f2b38b9a8bdea53a",
+              "file": "scim-groups.spec.ts",
+              "line": 228,
+              "column": 2
+            },
+            {
+              "title": "should reject missing OAuth token",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 11,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-18T17:07:51.714Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "af85a14359f108c65f9d-3d0179a2ef636cfc3708",
+              "file": "scim-groups.spec.ts",
+              "line": 238,
+              "column": 2
+            },
+            {
+              "title": "should create new group (organizational unit)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "API Tests",
+                  "projectName": "API Tests",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 236,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ OAuth token obtained: eyJhbGciOiJIUzI1NiJ9...\n"
+                        },
+                        {
+                          "text": "✅ Created Group: Test Department 1760807269730\n"
+                        },
+                        {
+                          "text": "   ID: 68f3c965fd6c7707bcf48408\n"
+                        },
+                        {
+                          "text": "   Location: http://localhost:5173/scim/v2/Groups/68f3c965fd6c7707bcf48408\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-10-18T17:07:49.350Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "af85a14359f108c65f9d-20de0aafb8490d0db8a9",
+              "file": "scim-groups.spec.ts",
+              "line": 244,
+              "column": 2
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-10-18T17:07:47.524Z",
+    "duration": 8126.612,
+    "expected": 10,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

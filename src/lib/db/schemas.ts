@@ -236,7 +236,7 @@ export type Position = z.infer<typeof PositionSchema>;
 // ============== Employee Schema ==============
 export const EmployeeSchema = z.object({
 	_id: z.custom<ObjectId>().optional(),
-	employeeId: z.string(), // NIP/Employee Number
+	employeeId: z.string(), // NIK/Employee Number
 	userId: z.string().optional(), // Reference to User (if they have SSO access)
 	organizationId: z.string(),
 	orgUnitId: z.string().optional(),
@@ -247,7 +247,7 @@ export const EmployeeSchema = z.object({
 	firstName: z.string(),
 	lastName: z.string(),
 	fullName: z.string(),
-	email: z.string().email(),
+	email: z.string().email().optional(), // Optional since not all employees have company email
 	phone: z.string().optional(),
 	personalEmail: z.string().email().optional(),
 	dateOfBirth: z.date().optional(),
@@ -323,6 +323,51 @@ export const PartnerSchema = z.object({
 
 export type Partner = z.infer<typeof PartnerSchema>;
 
+// ============== Entra ID Configuration Schema ==============
+export const EntraIDConfigSchema = z.object({
+	_id: z.custom<ObjectId>().optional(),
+	organizationId: z.string(), // Which organization this config belongs to
+
+	// Microsoft Entra ID credentials
+	tenantId: z.string(), // Azure AD Tenant ID
+	clientId: z.string(), // Application (client) ID
+	clientSecret: z.string(), // Client secret (encrypted in production)
+
+	// Connection status
+	isConnected: z.boolean().default(false),
+	lastTestedAt: z.date().optional(),
+	lastTestStatus: z.enum(['success', 'failed']).optional(),
+	lastTestError: z.string().optional(),
+
+	// Sync configuration
+	syncUsers: z.boolean().default(true),
+	syncGroups: z.boolean().default(false),
+	autoSync: z.boolean().default(false),
+	syncIntervalMinutes: z.number().default(60), // Default: hourly
+
+	// Field mapping: { aksaraField: entraIdField }
+	fieldMapping: z.record(z.object({
+		entraField: z.string(),
+		enabled: z.boolean().default(true),
+		direction: z.enum(['to_entra', 'from_entra', 'bidirectional']).default('to_entra'),
+	})).default({
+		email: { entraField: 'userPrincipalName', enabled: true, direction: 'to_entra' },
+		firstName: { entraField: 'givenName', enabled: true, direction: 'to_entra' },
+		lastName: { entraField: 'surname', enabled: true, direction: 'to_entra' },
+		phone: { entraField: 'mobilePhone', enabled: false, direction: 'to_entra' },
+		jobTitle: { entraField: 'jobTitle', enabled: false, direction: 'to_entra' },
+		department: { entraField: 'department', enabled: false, direction: 'to_entra' },
+	}),
+
+	// Timestamps
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
+	createdBy: z.string(),
+	updatedBy: z.string().optional(),
+});
+
+export type EntraIDConfig = z.infer<typeof EntraIDConfigSchema>;
+
 // ============== Entra ID Sync Log Schema ==============
 export const EntraIDSyncLogSchema = z.object({
 	_id: z.custom<ObjectId>().optional(),
@@ -384,7 +429,7 @@ export const SKPenempatanSchema = z.object({
 
 	// Reassignments
 	reassignments: z.array(z.object({
-		employeeId: z.string(), // NIP
+		employeeId: z.string(), // NIK
 		employeeName: z.string(),
 
 		// Previous assignment
@@ -452,3 +497,86 @@ export const SKPenempatanSchema = z.object({
 });
 
 export type SKPenempatan = z.infer<typeof SKPenempatanSchema>;
+
+// ============================================
+// SCIM CLIENT CREDENTIALS
+// ============================================
+
+export const ScimClientSchema = z.object({
+	_id: z.instanceof(ObjectId).optional(),
+
+	clientId: z.string(), // "scim-ofm-prod"
+	clientName: z.string(), // "OFM Production"
+	clientSecret: z.string(), // Hashed secret (Argon2)
+
+	// Organization
+	organizationId: z.instanceof(ObjectId).optional(), // Which company owns this client
+
+	// Scopes and permissions
+	scopes: z.array(z.enum([
+		'read:users',
+		'write:users',
+		'delete:users',
+		'read:groups',
+		'write:groups',
+		'delete:groups',
+		'bulk:operations'
+	])).default(['read:users', 'read:groups']),
+
+	// Token settings
+	accessTokenExpiresIn: z.number().default(3600), // Seconds (1 hour)
+
+	// Security
+	ipWhitelist: z.array(z.string()).optional(), // ["192.168.1.0/24", "10.0.0.1"]
+	rateLimit: z.number().default(100), // Requests per minute
+
+	// Status
+	isActive: z.boolean().default(true),
+
+	// Metadata
+	description: z.string().optional(),
+	contactEmail: z.string().email().optional(),
+
+	// Usage stats
+	lastUsedAt: z.date().optional(),
+	totalRequests: z.number().default(0),
+
+	// Timestamps
+	createdAt: z.date().default(() => new Date()),
+	updatedAt: z.date().default(() => new Date()),
+	createdBy: z.string()
+});
+
+export type ScimClient = z.infer<typeof ScimClientSchema>;
+
+export const ScimAccessTokenSchema = z.object({
+	_id: z.instanceof(ObjectId).optional(),
+
+	token: z.string(), // JWT token
+	clientId: z.string(), // Reference to ScimClient.clientId
+	scopes: z.array(z.string()),
+	expiresAt: z.date(),
+	isRevoked: z.boolean().default(false),
+
+	createdAt: z.date().default(() => new Date())
+});
+
+export type ScimAccessToken = z.infer<typeof ScimAccessTokenSchema>;
+
+export const ScimAuditLogSchema = z.object({
+	_id: z.instanceof(ObjectId).optional(),
+
+	clientId: z.string(),
+	endpoint: z.string(), // "/scim/v2/Users"
+	method: z.string(), // "GET", "POST", etc.
+	statusCode: z.number(),
+	resourceId: z.string().optional(), // User/Group ID affected
+	ipAddress: z.string(),
+	userAgent: z.string().optional(),
+	duration: z.number(), // milliseconds
+	errorMessage: z.string().optional(),
+
+	timestamp: z.date().default(() => new Date())
+});
+
+export type ScimAuditLog = z.infer<typeof ScimAuditLogSchema>;

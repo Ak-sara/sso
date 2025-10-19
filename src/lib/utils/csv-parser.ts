@@ -2,13 +2,13 @@
  * CSV Parser for Employee Reassignment
  *
  * Expected CSV format:
- * NIP,Nama,Unit Kerja Baru,Posisi Baru,Lokasi Kerja,Region,Alasan,Catatan
+ * NIK,Nama,Unit Kerja Baru,Posisi Baru,Lokasi Kerja,Region,Alasan,Catatan
  * IAS-001,Budi Santoso,IT,Manager,Jakarta,Pusat,Promosi,Promoted to Manager
  * IAS-002,Siti Nurhaliza,ACC,Senior Staff,Jakarta,Pusat,Rotasi,Regular rotation
  */
 
 export interface CSVReassignmentRow {
-	employeeId: string; // NIP
+	employeeId: string; // NIK
 	employeeName?: string;
 	newOrgUnitCode?: string;
 	newPositionCode?: string;
@@ -91,13 +91,13 @@ export async function parseReassignmentCSV(fileContent: string): Promise<CSVPars
 
 			// Validate minimum required data
 			if (colMap['employeeId'] === undefined) {
-				errors.push(`Baris ${rowNumber}: Kolom NIP tidak ditemukan`);
+				errors.push(`Baris ${rowNumber}: Kolom NIK tidak ditemukan`);
 				continue;
 			}
 
 			const employeeId = cells[colMap['employeeId']]?.trim();
 			if (!employeeId) {
-				errors.push(`Baris ${rowNumber}: NIP tidak boleh kosong`);
+				errors.push(`Baris ${rowNumber}: NIK tidak boleh kosong`);
 				continue;
 			}
 
@@ -175,7 +175,7 @@ function parseCSVLine(line: string): string[] {
  */
 export function generateReassignmentCSVTemplate(): string {
 	const headers = [
-		'NIP',
+		'NIK',
 		'Nama',
 		'Unit Kerja Baru',
 		'Posisi Baru',
@@ -202,7 +202,7 @@ export function validateEmployeeIds(rows: CSVReassignmentRow[], existingEmployee
 
 	rows.forEach((row, idx) => {
 		if (!existingEmployeeIds.has(row.employeeId)) {
-			errors.push(`Baris ${idx + 2}: NIP ${row.employeeId} tidak ditemukan di database`);
+			errors.push(`Baris ${idx + 2}: NIK ${row.employeeId} tidak ditemukan di database`);
 		}
 	});
 
