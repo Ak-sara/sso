@@ -22,6 +22,8 @@
 	let currentTab = $derived(data.currentTab || 'csv');
 	let isUploading = $state(false);
 	let isApplying = $state(false);
+	let isTesting = $state(false);
+	let isSaving = $state(false);
 	let preview = $state<any>(null);
 
 	// Handle form result
@@ -35,11 +37,30 @@
 			isApplying = false;
 			alert(form.message);
 		}
+		if (form?.success && form?.message) {
+			isTesting = false;
+			isSaving = false;
+			alert(form.message);
+		}
+		if (form?.error) {
+			isTesting = false;
+			isSaving = false;
+			alert('Error: ' + form.error);
+		}
 	});
 
 	function switchTab(tabId: string) {
-		goto(`?tab=${tabId}`);
+		const currentOrg = new URLSearchParams($page.url.search).get('org');
+		const url = currentOrg ? `?tab=${tabId}&org=${currentOrg}` : `?tab=${tabId}`;
+		goto(url);
 		preview = null; // Clear preview when switching tabs
+	}
+
+	function handleOrgChange(event: Event) {
+		const select = event.target as HTMLSelectElement;
+		const orgId = select.value;
+		const currentTab = new URLSearchParams($page.url.search).get('tab') || 'csv';
+		goto(`?tab=${currentTab}&org=${orgId}`);
 	}
 
 	async function handleUpload(file: File) {
@@ -109,10 +130,35 @@
 <div class="max-w-7xl mx-auto">
 	<!-- Header -->
 	<div class="mb-6">
-		<h1 class="text-2xl font-bold text-gray-900">Sync & Import</h1>
-		<p class="mt-1 text-sm text-gray-500">
-			Import employee data from CSV or sync with external systems like Microsoft Entra ID
-		</p>
+		<div class="flex items-center justify-between">
+			<div>
+				<h1 class="text-2xl font-bold text-gray-900">Sync & Import</h1>
+				<p class="mt-1 text-sm text-gray-500">
+					Import employee data from CSV or sync with external systems like Microsoft Entra ID
+				</p>
+			</div>
+
+			<!-- Organization Selector (only show on entra tab) -->
+			{#if currentTab === 'entra' && data.organizations && data.organizations.length > 1}
+				<div class="min-w-[250px]">
+					<label for="organization" class="block text-sm font-medium text-gray-700 mb-1">
+						Organization
+					</label>
+					<select
+						id="organization"
+						onchange={handleOrgChange}
+						value={data.selectedOrganization?._id || ''}
+						class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+					>
+						{#each data.organizations as org}
+							<option value={org._id}>
+								{org.name} ({org.code})
+							</option>
+						{/each}
+					</select>
+				</div>
+			{/if}
+		</div>
 	</div>
 
 	<!-- Info Box -->
@@ -171,19 +217,11 @@
 				/>
 			{:else if currentTab === 'entra'}
 				<EntraIDSyncTab
-					config={null}
-					syncHistory={[]}
-					isTesting={false}
+					config={data.entraConfig}
+					syncHistory={data.syncHistory || []}
+					organizationId={data.organizationId}
+					{isTesting}
 					isSyncing={false}
-					onTestConnection={async () => {
-						alert('Entra ID connection test - Feature coming soon!');
-					}}
-					onSync={async () => {
-						alert('Entra ID sync - Feature coming soon!');
-					}}
-					onSaveConfig={async (config) => {
-						alert('Save Entra ID config - Feature coming soon!');
-					}}
 				/>
 			{:else if currentTab === 'api'}
 				<div class="text-center py-12">

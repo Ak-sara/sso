@@ -3,8 +3,8 @@
 
 	const stats = [
 		{ name: 'Total Pengguna', value: data.stats.users, icon: '👥', color: 'bg-blue-500' },
-		{ name: 'Total Karyawan', value: data.stats.employees, icon: '👨‍💼', color: 'bg-green-500' },
-		{ name: 'Organisasi', value: data.stats.organizations, icon: '🏢', color: 'bg-purple-500' },
+		{ name: 'Companies', value: data.stats.organizations, icon: '🏢', color: 'bg-purple-500' },
+		{ name: 'Units', value: data.stats.units, icon: '💼', color: 'bg-green-500' },
 		{ name: 'OAuth Clients', value: data.stats.clients, icon: '🔑', color: 'bg-orange-500' },
 	];
 </script>
@@ -79,7 +79,7 @@
 	<!-- Quick Actions -->
 	<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
 		<a
-			href="/users"
+			href="/identities"
 			class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow"
 		>
 			<div class="p-6">
@@ -88,21 +88,6 @@
 					<div>
 						<h3 class="text-lg font-medium text-gray-900">Kelola Pengguna</h3>
 						<p class="text-sm text-gray-500">Tambah, edit, atau hapus pengguna</p>
-					</div>
-				</div>
-			</div>
-		</a>
-
-		<a
-			href="/employees"
-			class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow"
-		>
-			<div class="p-6">
-				<div class="flex items-center">
-					<div class="text-3xl mr-4">👨‍💼</div>
-					<div>
-						<h3 class="text-lg font-medium text-gray-900">Kelola Karyawan</h3>
-						<p class="text-sm text-gray-500">Manajemen data karyawan</p>
 					</div>
 				</div>
 			</div>

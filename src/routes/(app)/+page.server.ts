@@ -5,10 +5,10 @@ export const load: PageServerLoad = async () => {
 	const db = getDB();
 
 	// Get statistics
-	const [usersCount, employeesCount, orgsCount, clientsCount] = await Promise.all([
-		db.collection('users').countDocuments(),
-		db.collection('employees').countDocuments(),
+	const [usersCount, orgsCount, unitsCount, clientsCount] = await Promise.all([
+		db.collection('identities').countDocuments(),
 		db.collection('organizations').countDocuments(),
+		db.collection('org_units').countDocuments(),
 		db.collection('oauth_clients').countDocuments(),
 	]);
 
@@ -39,8 +39,8 @@ export const load: PageServerLoad = async () => {
 	return {
 		stats: {
 			users: usersCount,
-			employees: employeesCount,
 			organizations: orgsCount,
+			units:unitsCount,
 			clients: clientsCount,
 		},
 		recentActivity,

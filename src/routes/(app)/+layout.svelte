@@ -10,6 +10,9 @@
 	let { data }: Props = $props();
 	let isSidebarOpen = $state(true);
 	let showUserMenu = $state(false);
+	let hoveredGroup = $state<string | null>(null);
+	let hoveredGroupTop = $state<number>(0);
+	let hoverTimeout: number | null = null;
 	let expandedGroups = $state<Record<string, boolean>>({
 		users_access: true,
 		organization: true,
@@ -46,21 +49,15 @@
 	const navigation: (NavItem | NavGroup)[] = [
 		{ name: 'Dashboard', href: '/', icon: '📊' },
 		{
-			name: 'Users & Access',
-			icon: '👥',
-			items: [
-				{ name: 'Identitas', href: '/identities', icon: '🔐' },
-			],
-		},
-		{
 			name: 'Organisasi',
 			icon: '🏢',
 			items: [
+				{ name: 'Identitas', href: '/identities', icon: '👥' },
 				{ name: 'Realm/Entitas', href: '/realms', icon: '🌐' },
 				{ name: 'Unit Kerja/Divisi', href: '/org-units', icon: '🏛️' },
-				{ name: 'Struktur Organisasi', href: '/org-structure', icon: '🌳' },
-				{ name: 'Versi Struktur', href: '/org-structure/versions', icon: '📋' },
 				{ name: 'Posisi/Jabatan', href: '/positions', icon: '💼' },
+				{ name: 'Versi Struktur', href: '/org-structure/versions', icon: '📋' },
+				{ name: 'Struktur Organisasi', href: '/org-structure', icon: '🌳' },
 			],
 		},
 		{
@@ -68,15 +65,21 @@
 			icon: '📊',
 			items: [
 				{ name: 'Sync & Import', href: '/sync', icon: '🔄' },
+				{ name: 'Audit Log', href: '/audit', icon: '📋' },
 			],
 		},
 		{
 			name: 'Integrasi',
 			icon: '🔌',
 			items: [
+			],
+		},
+		{
+			name: 'Configurations',
+			icon: '⚙️',
+			items: [
 				{ name: 'OAuth Clients', href: '/clients', icon: '🔑' },
-				{ name: 'SCIM Clients', href: '/scim-clients', icon: '🔐' },
-				{ name: 'Audit Log', href: '/audit', icon: '📋' },
+				{ name: 'SCIM Clients', href: '/scim-clients', icon: '🔐' },				
 			],
 		},
 	];
@@ -91,6 +94,36 @@
 
 	function toggleGroup(groupName: string) {
 		expandedGroups[groupName] = !expandedGroups[groupName];
+	}
+
+	function handleGroupHover(groupName: string, event: MouseEvent) {
+		if (!isSidebarOpen) {
+			if (hoverTimeout) {
+				clearTimeout(hoverTimeout);
+				hoverTimeout = null;
+			}
+			hoveredGroup = groupName;
+			const target = event.currentTarget as HTMLElement;
+			const rect = target.getBoundingClientRect();
+			hoveredGroupTop = rect.top;
+		}
+	}
+
+	function handleGroupLeave() {
+		if (hoverTimeout) {
+			clearTimeout(hoverTimeout);
+		}
+		hoverTimeout = window.setTimeout(() => {
+			hoveredGroup = null;
+			hoverTimeout = null;
+		}, 200);
+	}
+
+	function cancelClose() {
+		if (hoverTimeout) {
+			clearTimeout(hoverTimeout);
+			hoverTimeout = null;
+		}
 	}
 
 	function isGroup(item: NavItem | NavGroup): item is NavGroup {
@@ -136,32 +169,61 @@
 			</div>
 
 			<!-- Navigation -->
-			<nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+			<nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto overflow-x-visible">
 				{#each navigation as item}
 					{#if isGroup(item)}
 						<!-- Group with collapsible submenu -->
 						<div class="space-y-1">
-							<button
-								onclick={() => toggleGroup(item.name.toLowerCase())}
-								class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors {isGroupActive(item)
-									? 'bg-indigo-800 text-white'
-									: 'text-indigo-100 hover:bg-indigo-800 hover:text-white'}"
-								title={item.name}
-							>
-								<div class="flex items-center">
-									<span class="text-xl {isSidebarOpen ? 'mr-3' : ''}">{item.icon}</span>
+							<div class="relative">
+								<button
+									onclick={() => toggleGroup(item.name.toLowerCase())}
+									onmouseenter={(e) => handleGroupHover(item.name.toLowerCase(), e)}
+									onmouseleave={handleGroupLeave}
+									class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors {isGroupActive(item)
+										? 'bg-indigo-800 text-white'
+										: 'text-indigo-100 hover:bg-indigo-800 hover:text-white'}"
+									title={item.name}
+								>
+									<div class="flex items-center">
+										<span class="text-xl {isSidebarOpen ? 'mr-3' : ''}">{item.icon}</span>
+										{#if isSidebarOpen}
+											{item.name}
+										{/if}
+									</div>
 									{#if isSidebarOpen}
-										{item.name}
+										<span class="text-xs transition-transform {expandedGroups[item.name.toLowerCase()] ? 'rotate-180' : ''}">
+											▼
+										</span>
 									{/if}
-								</div>
-								{#if isSidebarOpen}
-									<span class="text-xs transition-transform {expandedGroups[item.name.toLowerCase()] ? 'rotate-180' : ''}">
-										▼
-									</span>
-								{/if}
-							</button>
+								</button>
 
-							<!-- Submenu -->
+								<!-- Floating submenu (when sidebar is collapsed and hovered) -->
+								{#if !isSidebarOpen && hoveredGroup === item.name.toLowerCase()}
+									<div
+										class="fixed w-56 bg-white rounded-lg shadow-2xl py-2 border border-gray-200"
+										style="left: 4rem; top: {hoveredGroupTop}px; z-index: 9999;"
+										onmouseenter={cancelClose}
+										onmouseleave={handleGroupLeave}
+									>
+										<div class="px-3 py-2 border-b border-gray-100">
+											<p class="text-sm font-semibold text-gray-700">{item.name}</p>
+										</div>
+										{#each item.items as subItem}
+											<a
+												href={subItem.href}
+												class="flex items-center px-4 py-2 text-sm transition-colors {isActive(subItem.href)
+													? 'bg-indigo-50 text-indigo-700 font-medium'
+													: 'text-gray-700 hover:bg-gray-50'}"
+											>
+												<span class="text-base mr-2">{subItem.icon}</span>
+												{subItem.name}
+											</a>
+										{/each}
+									</div>
+								{/if}
+							</div>
+
+							<!-- Submenu (inline when open) -->
 							{#if isSidebarOpen && expandedGroups[item.name.toLowerCase()]}
 								<div class="ml-4 space-y-1">
 									{#each item.items as subItem}
