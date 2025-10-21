@@ -23,7 +23,7 @@ SCIM_CLIENT_ID=scim-ba4ab5a03b58ff56
 SCIM_CLIENT_SECRET=zM39gStrdh1ZNEOD6cCRmDkyLhV5JyzCCcfN/S6cJKs=
 ```
 
-Get credentials from: http://localhost:5173/scim-clients
+Get credentials from: http://localhost:5173/clients-scim
 
 ### 3. Start SSO Server
 
@@ -194,7 +194,7 @@ bun run dev
 
 ### "Invalid credentials"
 
-Update `.env.test` with valid SCIM client credentials from `/scim-clients`
+Update `.env.test` with valid SCIM client credentials from `/clients-scim`
 
 ### "No groups found"
 

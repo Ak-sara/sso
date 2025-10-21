@@ -56,8 +56,7 @@
 				{ name: 'Realm/Entitas', href: '/realms', icon: '🌐' },
 				{ name: 'Unit Kerja/Divisi', href: '/org-units', icon: '🏛️' },
 				{ name: 'Posisi/Jabatan', href: '/positions', icon: '💼' },
-				{ name: 'Versi Struktur', href: '/org-structure/versions', icon: '📋' },
-				{ name: 'Struktur Organisasi', href: '/org-structure', icon: '🌳' },
+				{ name: 'Struktur Organisasi', href: '/org-structure/versions', icon: '🌳' }
 			],
 		},
 		{
@@ -69,17 +68,12 @@
 			],
 		},
 		{
-			name: 'Integrasi',
-			icon: '🔌',
-			items: [
-			],
-		},
-		{
 			name: 'Configurations',
 			icon: '⚙️',
 			items: [
+				{ name: 'Global Settings', href: '/settings', icon: '🔌' },
 				{ name: 'OAuth Clients', href: '/clients', icon: '🔑' },
-				{ name: 'SCIM Clients', href: '/scim-clients', icon: '🔐' },				
+				{ name: 'SCIM Clients', href: '/clients-scim', icon: '🔐' },				
 			],
 		},
 	];
@@ -301,7 +295,7 @@
 							Posisi/Jabatan
 						{:else if $page.url.pathname === '/clients'}
 							OAuth Clients
-						{:else if $page.url.pathname === '/scim-clients' || $page.url.pathname.startsWith('/scim-clients')}
+						{:else if $page.url.pathname === '/clients-scim' || $page.url.pathname.startsWith('/clients-scim')}
 							SCIM Clients
 						{:else if $page.url.pathname === '/audit'}
 							Audit Log

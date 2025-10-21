@@ -385,7 +385,7 @@ export async function deleteScimClient(clientId: string): Promise<void> {
 	// Log deletion
 	await logScimRequest({
 		clientId,
-		endpoint: '/scim-clients/delete',
+		endpoint: '/clients-scim/delete',
 		method: 'DELETE',
 		statusCode: 200,
 		ipAddress: '127.0.0.1',

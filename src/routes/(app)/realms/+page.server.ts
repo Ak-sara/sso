@@ -11,17 +11,15 @@ export const load: PageServerLoad = async () => {
 	// Get user and employee counts per organization
 	const realmsWithCounts = await Promise.all(
 		organizations.map(async (org) => {
-			const [userCount, employeeCount] = await Promise.all([
-				db.collection('users').countDocuments({ organizationId: org._id.toString() }),
-				db.collection('employees').countDocuments({ organizationId: org._id.toString() }),
+			const [userCount] = await Promise.all([
+				db.collection('identities').countDocuments({ organizationId: org._id.toString() }),
 			]);
 
 			return {
 				...org,
 				_id: org._id.toString(),
 				parentId: org.parentId?.toString() || null,
-				userCount,
-				employeeCount,
+				userCount
 			};
 		})
 	);

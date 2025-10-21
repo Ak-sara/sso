@@ -279,7 +279,7 @@ A Keycloak-like SSO system with advanced employee lifecycle management, organiza
 - ✅ **SCIM-compliant error responses**
 
 ### Admin UI
-- ✅ **SCIM Client Management Dashboard** (`/scim-clients`):
+- ✅ **SCIM Client Management Dashboard** (`/clients-scim`):
   - Create/deactivate clients
   - Rotate secrets
   - View usage statistics

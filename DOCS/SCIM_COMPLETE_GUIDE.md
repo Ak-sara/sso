@@ -36,7 +36,7 @@ SCIM (System for Cross-domain Identity Management) is an industry-standard REST 
 
 **Step 1: Create SCIM Client**
 
-Navigate to `/scim-clients` in admin console:
+Navigate to `/clients-scim` in admin console:
 
 ```bash
 Client Name: OFM Production
@@ -107,7 +107,7 @@ curl -X GET http://localhost:5173/scim/v2/Users \
 
 ### Admin UI
 
-**Location:** `/scim-clients`
+**Location:** `/clients-scim`
 
 **Features:**
 - Create new SCIM clients

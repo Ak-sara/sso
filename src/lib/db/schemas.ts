@@ -511,6 +511,9 @@ export const SKPenempatanSchema = z.object({
 	// Organization context
 	organizationId: z.string(),
 
+	// Link to organization structure version (if this SK is related to org restructuring)
+	orgStructureVersionId: z.string().optional(),
+
 	// Status workflow
 	status: z.enum(['draft', 'pending_approval', 'approved', 'executed', 'cancelled']).default('draft'),
 

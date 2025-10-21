@@ -43,37 +43,40 @@
 	{#if data.currentVersion}
 		<div class="bg-white shadow rounded-lg p-6 border-2 border-green-500">
 			<div class="flex items-center justify-between mb-4">
-				<div class="flex items-center space-x-3">
-					<span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
+				<div class="flex flex-col items-center justify-between">
+					<div class="flex items-center space-x-3 mb-4">
+						<span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
 						✓ AKTIF
-					</span>
-					<h3 class="text-lg font-medium">Version {data.currentVersion.versionNumber}: {data.currentVersion.versionName}</h3>
+						</span>
+						<h3 class="text-lg font-medium">Version {data.currentVersion.versionNumber}: {data.currentVersion.versionName}</h3>
+					</div>
+					<div class="grid grid-cols-4 gap-4 text-sm">
+						<div>
+							<p class="text-gray-500">Tanggal Efektif</p>
+							<p class="font-medium">{new Date(data.currentVersion.effectiveDate).toLocaleDateString('id-ID')}</p>
+						</div>
+						<div>
+							<p class="text-gray-500">Unit Kerja</p>
+							<p class="font-medium">{data.currentVersion.structure.orgUnits.length} units</p>
+						</div>
+						<div>
+							<p class="text-gray-500">Nomor SK</p>
+							<p class="font-medium">{data.currentVersion.skNumber || '-'}</p>
+						</div>
+						<div>
+							<p class="text-gray-500">Karyawan Terdampak</p>
+							<p class="font-medium">{data.currentVersion.reassignments.length} orang</p>
+						</div>
+					</div>	
 				</div>
-				<a
-					href="/org-structure/versions/{data.currentVersion._id}"
-					class="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-				>
-					Lihat Detail →
-				</a>
-			</div>
-
-			<div class="grid grid-cols-4 gap-4 text-sm">
-				<div>
-					<p class="text-gray-500">Tanggal Efektif</p>
-					<p class="font-medium">{new Date(data.currentVersion.effectiveDate).toLocaleDateString('id-ID')}</p>
+				<div class="flex flex-col items-center justify-center gap-2"> 
+					<a href="/org-structure"
+						class="px-3 py-1 text-sm border border-gray-300 rounded-md bg-green-100 hover:bg-yellow-100">View STO</a>
+					<a href="/org-structure/versions/{data.currentVersion._id}"
+						class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+						Lihat Detail → </a>
 				</div>
-				<div>
-					<p class="text-gray-500">Nomor SK</p>
-					<p class="font-medium">{data.currentVersion.skNumber || '-'}</p>
-				</div>
-				<div>
-					<p class="text-gray-500">Unit Kerja</p>
-					<p class="font-medium">{data.currentVersion.structure.orgUnits.length} units</p>
-				</div>
-				<div>
-					<p class="text-gray-500">Karyawan Terdampak</p>
-					<p class="font-medium">{data.currentVersion.reassignments.length} orang</p>
-				</div>
+				
 			</div>
 		</div>
 	{/if}

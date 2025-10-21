@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { getDB } from '$lib/db/connection';
 import { ObjectId } from 'mongodb';
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { generateOrgStructureMermaid } from '$lib/utils/mermaid-generator';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		}
 
 		// Get all directors for SK signatory dropdown
-		const directors = await db.collection('employees')
+		const directors = await db.collection('indentities')
 			.find({
 				positionId: { $exists: true },
 				employmentStatus: 'active'
@@ -33,12 +33,44 @@ export const load: PageServerLoad = async ({ params }) => {
 			};
 		}));
 
+		// Get linked SK Penempatan (employee assignment decrees related to this org structure version)
+		const linkedSKPenempatan = await db.collection('sk_penempatan')
+			.find({ orgStructureVersionId: params.id })
+			.sort({ createdAt: -1 })
+			.toArray();
+
+		// Aggregate all employees affected from all SK Penempatan
+		const aggregatedReassignments: any[] = [];
+		let totalAffectedEmployees = 0;
+
+		for (const sk of linkedSKPenempatan) {
+			if (sk.reassignments && Array.isArray(sk.reassignments)) {
+				for (const reassignment of sk.reassignments) {
+					aggregatedReassignments.push({
+						...reassignment,
+						skPenempatanId: sk._id.toString(),
+						skNumber: sk.skNumber
+					});
+					totalAffectedEmployees++;
+				}
+			}
+		}
+
 		return {
 			version: {
 				...version,
-				_id: version._id.toString()
+				_id: version._id.toString(),
+				skAttachments: version.skAttachments || [],
+				reassignments: version.reassignments || [],
+				changes: version.changes || []
 			},
-			directors: directorsWithPositions.filter(d => d.positionName.includes('Direktur'))
+			directors: directorsWithPositions.filter(d => d.positionName.includes('Direktur')),
+			linkedSKPenempatan: linkedSKPenempatan.map(sk => ({
+				...sk,
+				_id: sk._id.toString()
+			})),
+			aggregatedReassignments,
+			totalAffectedEmployees
 		};
 	} catch (err) {
 		console.error('Load version error:', err);
@@ -230,6 +262,78 @@ export const actions = {
 		} catch (err) {
 			console.error('Regenerate Mermaid error:', err);
 			return fail(500, { error: 'Failed to regenerate diagram' });
+		}
+	},
+
+	createSKPenempatan: async ({ params, request }) => {
+		const db = getDB();
+		const formData = await request.formData();
+
+		const skNumber = formData.get('skNumber') as string;
+		const skDate = formData.get('skDate') as string;
+		const skTitle = formData.get('skTitle') as string;
+		const effectiveDate = formData.get('effectiveDate') as string;
+		const signedBy = formData.get('signedBy') as string;
+		const description = formData.get('description') as string;
+
+		if (!skNumber || !skDate || !effectiveDate || !signedBy) {
+			return fail(400, { error: 'Field yang wajib diisi belum lengkap' });
+		}
+
+		try {
+			const version = await db.collection('org_structure_versions')
+				.findOne({ _id: new ObjectId(params.id) });
+
+			if (!version) {
+				return fail(404, { error: 'Version not found' });
+			}
+
+			// Check if SK number already exists
+			const existing = await db.collection('sk_penempatan').findOne({ skNumber });
+			if (existing) {
+				return fail(400, { error: `Nomor SK ${skNumber} sudah digunakan` });
+			}
+
+			// Get signatory details
+			const signatory = await db.collection('indentities').findOne({ employeeId: signedBy });
+			const signatoryPosition = signatory?.positionId
+				? await db.collection('positions').findOne({ _id: new ObjectId(signatory.positionId) })
+				: null;
+
+			// Create SK Penempatan linked to this version
+			const newSK = {
+				skNumber,
+				skDate: new Date(skDate),
+				skTitle: skTitle || `Penempatan Karyawan - ${version.versionName}`,
+				effectiveDate: new Date(effectiveDate),
+				signedBy,
+				signedByPosition: signatoryPosition?.name || null,
+				organizationId: version.organizationId,
+				orgStructureVersionId: params.id, // Link to org structure version
+				status: 'draft',
+				reassignments: [], // Empty initially, will be filled via CSV import or manual entry
+				attachments: [],
+				importedFromCSV: false,
+				totalReassignments: 0,
+				successfulReassignments: 0,
+				failedReassignments: 0,
+				description: description || `SK Penempatan terkait ${version.versionName}`,
+				notes: `Created from Org Structure Version ${version.versionNumber}`,
+				requestedBy: 'system', // TODO: Get from session
+				requestedAt: new Date(),
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				createdBy: 'system'
+			};
+
+			const result = await db.collection('sk_penempatan').insertOne(newSK);
+
+			// Redirect to SK Penempatan detail to add employees
+			throw redirect(303, `/sk-penempatan/${result.insertedId}`);
+		} catch (err) {
+			console.error('Create SK Penempatan error:', err);
+			if (err instanceof Response) throw err;
+			return fail(500, { error: 'Gagal membuat SK Penempatan' });
 		}
 	}
 } satisfies Actions;

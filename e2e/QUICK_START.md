@@ -85,4 +85,4 @@ SCIM_CLIENT_ID=scim-ba4ab5a03b58ff56
 SCIM_CLIENT_SECRET=zM39gStrdh1ZNEOD6cCRmDkyLhV5JyzCCcfN/S6cJKs=
 ```
 
-If they don't work, create new ones at: http://localhost:5173/scim-clients
+If they don't work, create new ones at: http://localhost:5173/clients-scim

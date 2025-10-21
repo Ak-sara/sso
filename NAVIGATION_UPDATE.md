@@ -28,7 +28,7 @@ Organisasi
 
 Integrasi
 ├─ OAuth Clients (/clients)
-├─ SCIM Clients (/scim-clients)
+├─ SCIM Clients (/clients-scim)
 ├─ SCIM Configuration (/scim)
 └─ Entra ID Sync (/entraid-sync)
 
@@ -64,7 +64,7 @@ Data Management (NEW GROUP)
 
 Integrasi
 ├─ OAuth Clients (/clients)
-├─ SCIM Clients (/scim-clients)
+├─ SCIM Clients (/clients-scim)
 └─ Audit Log (/audit) - MOVED from standalone
 ```
 
@@ -125,7 +125,7 @@ Integrasi
 | `/employees/sync` | `/sync?tab=csv` | To be removed |
 | `/entraid-sync` | `/sync?tab=entra` | To be removed |
 | `/sk-penempatan` | `/org-structure/versions/[id]` (nested) | To be refactored |
-| `/scim` | `/scim-clients` (merged) | To be removed |
+| `/scim` | `/clients-scim` (merged) | To be removed |
 | `/audit` | `/audit` (moved to Integrasi group) | Same URL, different nav position |
 
 ---
@@ -207,7 +207,7 @@ const navigation = [
     icon: '🔌',
     items: [
       { name: 'OAuth Clients', href: '/clients', icon: '🔑' },
-      { name: 'SCIM Clients', href: '/scim-clients', icon: '🔐' },
+      { name: 'SCIM Clients', href: '/clients-scim', icon: '🔐' },
       { name: 'Audit Log', href: '/audit', icon: '📋' },
     ],
   },
