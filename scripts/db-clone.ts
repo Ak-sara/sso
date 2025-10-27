@@ -1,17 +1,60 @@
+#!/usr/bin/env bun
+
 import { MongoClient } from 'mongodb';
-import { CLONE_INCLUDED_COLLECTIONS, CLONE_EXCLUDED_COLLECTIONS, DB_TARGETS } from '../src/lib/db/seeders/config';
 
 const MONGODB_URI = process.env.MONGODB_URI || '';
 
+// Default collections to exclude from cloning
+const DEFAULT_EXCLUDED_COLLECTIONS = ['system.indexes', 'system.users', 'system.profile'];
+
+// Define collection dependencies for proper cloning order
+// Collections are cloned in this order to respect foreign key relationships
+const COLLECTION_ORDER = [
+	// 1. Base collections (no dependencies)
+	'organizations',
+	'positions',
+
+	// 2. Collections that depend on base collections
+	'org_units',                    // depends on: organizations
+	'oauth_clients',                // depends on: organizations
+	'scim_clients',                 // depends on: organizations
+	'entraid_configs',              // depends on: organizations
+
+	// 3. Collections that depend on org structure
+	'identities',                   // depends on: organizations, org_units, positions
+	'org_structure_versions',       // depends on: organizations, org_units
+	'sk_penempatan',                // depends on: organizations, org_units, positions, identities
+	'employee_history',             // depends on: identities, org_units, positions
+
+	// 4. Transient/session data (no referential integrity concerns)
+	'auth_codes',
+	'refresh_tokens',
+	'sessions',
+	'scim_access_tokens',
+
+	// 5. Audit logs (depend on everything)
+	'audit_log',
+	'scim_audit_logs'
+];
+
 interface CloneOptions {
-	source: keyof typeof DB_TARGETS;
-	target: keyof typeof DB_TARGETS;
+	source: string;
+	target: string;
 	dryRun?: boolean;
 	clearTarget?: boolean;
+	excludeCollections?: string[];
+	includeCollections?: string[];
 }
 
 async function cloneDatabase(options: CloneOptions): Promise<void> {
-	const { source, target, dryRun = false, clearTarget = false } = options;
+	const {
+		source,
+		target,
+		dryRun = false,
+		clearTarget = false,
+		excludeCollections = DEFAULT_EXCLUDED_COLLECTIONS,
+		includeCollections = []
+	} = options;
 
 	if (!MONGODB_URI) {
 		throw new Error('MONGODB_URI environment variable is required');
@@ -21,8 +64,8 @@ async function cloneDatabase(options: CloneOptions): Promise<void> {
 		throw new Error('Source and target databases cannot be the same');
 	}
 
-	const sourceDBName = DB_TARGETS[source];
-	const targetDBName = DB_TARGETS[target];
+	const sourceDBName = source;
+	const targetDBName = target;
 
 	console.log(`\n🔄 Database Clone Tool`);
 	console.log(`   Source: ${sourceDBName}`);
@@ -44,18 +87,37 @@ async function cloneDatabase(options: CloneOptions): Promise<void> {
 		const existingCollections = sourceCollections.map(c => c.name);
 
 		const collectionsToClone = existingCollections.filter(name => {
-			if (CLONE_EXCLUDED_COLLECTIONS.includes(name)) {
+			// Skip system collections
+			if (excludeCollections.includes(name) || name.startsWith('system.')) {
 				console.log(`⏭️  Skipping ${name} (excluded collection)`);
 				return false;
 			}
-			if (!CLONE_INCLUDED_COLLECTIONS.includes(name)) {
+			// If includeCollections is specified, only clone those
+			if (includeCollections.length > 0 && !includeCollections.includes(name)) {
 				console.log(`⏭️  Skipping ${name} (not in included list)`);
 				return false;
 			}
 			return true;
 		});
 
-		console.log(`\n📋 Collections to clone: ${collectionsToClone.length}`);
+		// Sort collections by dependency order
+		collectionsToClone.sort((a, b) => {
+			const indexA = COLLECTION_ORDER.indexOf(a);
+			const indexB = COLLECTION_ORDER.indexOf(b);
+
+			// If both in COLLECTION_ORDER, sort by their position
+			if (indexA !== -1 && indexB !== -1) {
+				return indexA - indexB;
+			}
+			// If only A is in COLLECTION_ORDER, A comes first
+			if (indexA !== -1) return -1;
+			// If only B is in COLLECTION_ORDER, B comes first
+			if (indexB !== -1) return 1;
+			// If neither in COLLECTION_ORDER, keep original order
+			return 0;
+		});
+
+		console.log(`\n📋 Collections to clone (in dependency order): ${collectionsToClone.length}`);
 		collectionsToClone.forEach(name => console.log(`   - ${name}`));
 		console.log();
 
@@ -136,53 +198,47 @@ async function cloneDatabase(options: CloneOptions): Promise<void> {
 
 const args = process.argv.slice(2);
 
-if (args.length === 0 || args.includes('--help')) {
+if (args.length < 2 || args.includes('--help')) {
 	console.log(`
 Database Clone Tool
 
 Usage:
-  bun run db:clone <source> <target> [options]
+  bun run scripts/db-clone.ts <source> <target> [options]
 
 Arguments:
-  source    Source database (dev | uat | test)
-  target    Target database (dev | uat | test)
+  source    Source database name (any MongoDB database)
+  target    Target database name (any MongoDB database)
 
 Options:
   --dry-run       Preview what will be cloned without making changes
   --clear-target  Delete all documents in target collections before cloning
 
 Examples:
-  bun run db:clone dev uat
-  bun run db:clone dev uat --clear-target
-  bun run db:clone dev test --dry-run
+  bun run scripts/db-clone.ts aksara_sso dev_sso
+  bun run scripts/db-clone.ts aksara_sso dev_sso --clear-target
+  bun run scripts/db-clone.ts prod_db backup_db --dry-run
 
 Common workflows:
-  # Clone dev → uat (append mode)
-  bun run db:clone dev uat
+  # Clone production → backup (append mode)
+  bun run scripts/db-clone.ts aksara_sso aksara_sso_backup
 
-  # Clone dev → uat (replace mode)
-  bun run db:clone dev uat --clear-target
+  # Clone production → dev (replace mode)
+  bun run scripts/db-clone.ts aksara_sso dev_sso --clear-target
 
   # Preview clone without changes
-  bun run db:clone dev uat --dry-run
+  bun run scripts/db-clone.ts aksara_sso dev_sso --dry-run
 `);
 	process.exit(0);
 }
 
-const source = args[0] as keyof typeof DB_TARGETS;
-const target = args[1] as keyof typeof DB_TARGETS;
+const source = args[0];
+const target = args[1];
 const dryRun = args.includes('--dry-run');
 const clearTarget = args.includes('--clear-target');
 
-if (!DB_TARGETS[source]) {
-	console.error(`❌ Invalid source database: ${source}`);
-	console.error(`   Valid options: dev, uat, test`);
-	process.exit(1);
-}
-
-if (!DB_TARGETS[target]) {
-	console.error(`❌ Invalid target database: ${target}`);
-	console.error(`   Valid options: dev, uat, test`);
+if (!source || !target) {
+	console.error(`❌ Both source and target database names are required`);
+	console.error(`Usage: bun run scripts/db-clone.ts <source> <target>`);
 	process.exit(1);
 }
 

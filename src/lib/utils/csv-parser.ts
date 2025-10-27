@@ -208,3 +208,192 @@ export function validateEmployeeIds(rows: CSVReassignmentRow[], existingEmployee
 
 	return errors;
 }
+
+// ========================================
+// Generic CSV Parser for All Collections
+// ========================================
+
+export interface GenericCSVParseResult {
+	success: boolean;
+	data: Record<string, any>[];
+	errors: string[];
+	warnings: string[];
+	rowCount: number;
+	headers: string[];
+}
+
+/**
+ * Parse generic CSV file content into objects
+ */
+export async function parseCSV(fileContent: string): Promise<GenericCSVParseResult> {
+	const errors: string[] = [];
+	const warnings: string[] = [];
+	const data: Record<string, any>[] = [];
+
+	try {
+		// Split into lines
+		const lines = fileContent.split(/\r?\n/).filter(line => line.trim());
+
+		if (lines.length === 0) {
+			return {
+				success: false,
+				data: [],
+				errors: ['CSV file is empty'],
+				warnings: [],
+				rowCount: 0,
+				headers: []
+			};
+		}
+
+		// Parse header
+		const headerCells = parseCSVLine(lines[0]);
+		const headers = headerCells.map(h => h.trim());
+
+		if (headers.length === 0) {
+			errors.push('No headers found in CSV file');
+		}
+
+		// Parse data rows
+		for (let i = 1; i < lines.length; i++) {
+			const line = lines[i].trim();
+			if (!line) continue;
+
+			const rowNumber = i + 1;
+			const cells = parseCSVLine(line);
+
+			// Build row object
+			const row: Record<string, any> = {};
+			for (let j = 0; j < headers.length; j++) {
+				const header = headers[j];
+				const value = cells[j]?.trim() || '';
+
+				// Store raw value (will be transformed later)
+				row[header] = value;
+			}
+
+			data.push(row);
+		}
+
+		return {
+			success: errors.length === 0,
+			data,
+			errors,
+			warnings,
+			rowCount: data.length,
+			headers
+		};
+
+	} catch (error) {
+		return {
+			success: false,
+			data: [],
+			errors: [`Error parsing CSV: ${error instanceof Error ? error.message : String(error)}`],
+			warnings: [],
+			rowCount: 0,
+			headers: []
+		};
+	}
+}
+
+/**
+ * Parse CSV file from path
+ */
+export async function parseCSVFile(filePath: string): Promise<GenericCSVParseResult> {
+	try {
+		const file = Bun.file(filePath);
+		const content = await file.text();
+		return await parseCSV(content);
+	} catch (error) {
+		return {
+			success: false,
+			data: [],
+			errors: [`Error reading CSV file: ${error instanceof Error ? error.message : String(error)}`],
+			warnings: [],
+			rowCount: 0,
+			headers: []
+		};
+	}
+}
+
+/**
+ * Column mapping registry for flexible CSV imports
+ * Maps various CSV column names to standard database field names
+ */
+export const COLUMN_MAPPINGS: Record<string, Record<string, string[]>> = {
+	identities: {
+		email: ['email', 'Email', 'EMAIL', 'user_email'],
+		username: ['username', 'Username', 'USERNAME', 'user_name'],
+		firstName: ['firstName', 'FirstName', 'first_name', 'Firstname'],
+		lastName: ['lastName', 'LastName', 'last_name', 'Lastname'],
+		employeeId: ['employeeId', 'NIK', 'nik', 'employee_id', 'nip', 'NIP'],
+		organization: ['organization', 'Organization', 'org', 'company', 'orgCode'],
+		orgUnit: ['orgUnit', 'OrgUnit', 'org_unit', 'unit', 'department', 'officeLocation'],
+		position: ['position', 'Position', 'posisi', 'jabatan', 'title'],
+		manager: ['manager', 'Manager', 'manager_email', 'atasan'],
+		employmentType: ['employmentType', 'employment_type', 'type', 'contract_type'],
+		employmentStatus: ['employmentStatus', 'employment_status', 'status'],
+		isActive: ['isActive', 'is_active', 'active', 'status'],
+		identityType: ['identityType', 'identity_type', 'type', 'user_type'],
+		partnerType: ['partnerType', 'partner_type'],
+		companyName: ['companyName', 'company_name', 'company']
+	},
+	organizations: {
+		code: ['code', 'Code', 'CODE', 'org_code'],
+		name: ['name', 'Name', 'NAME', 'org_name'],
+		parentCode: ['parentCode', 'parent_code', 'parent', 'parent_org'],
+		realm: ['realm', 'Realm', 'REALM'],
+		isActive: ['isActive', 'is_active', 'active']
+	},
+	org_units: {
+		code: ['code', 'Code', 'CODE', 'unit_code'],
+		name: ['name', 'Name', 'NAME', 'unit_name'],
+		organization: ['organization', 'Organization', 'org', 'org_code'],
+		parentCode: ['parentCode', 'parent_code', 'parent', 'parent_unit'],
+		unitType: ['unitType', 'unit_type', 'type'],
+		description: ['description', 'Description', 'desc']
+	},
+	positions: {
+		code: ['code', 'Code', 'CODE', 'position_code'],
+		name: ['name', 'Name', 'NAME', 'position_name', 'title'],
+		level: ['level', 'Level', 'LEVEL', 'position_level'],
+		description: ['description', 'Description', 'desc']
+	}
+};
+
+/**
+ * Normalize CSV row using column mappings
+ * Converts various column name formats to standard field names
+ */
+export function normalizeCSVRow(
+	row: Record<string, any>,
+	collectionName: string
+): Record<string, any> {
+	const mappings = COLUMN_MAPPINGS[collectionName];
+	if (!mappings) {
+		return row; // No mappings, return as-is
+	}
+
+	const normalized: Record<string, any> = {};
+
+	// Map each CSV column to standard field name
+	for (const [csvKey, csvValue] of Object.entries(row)) {
+		const csvKeyLower = csvKey.toLowerCase().trim();
+		let matched = false;
+
+		// Check if this CSV column matches any standard field
+		for (const [standardField, possibleNames] of Object.entries(mappings)) {
+			if (possibleNames.some(name => name.toLowerCase() === csvKeyLower)) {
+				normalized[standardField] = csvValue;
+				matched = true;
+				break;
+			}
+		}
+
+		// If no match, keep original key
+		if (!matched) {
+			normalized[csvKey] = csvValue;
+		}
+	}
+
+	return normalized;
+}

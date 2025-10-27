@@ -79,6 +79,16 @@ A Keycloak-like SSO system with advanced employee lifecycle management, organiza
 - ✅ **Mermaid generator utility** - Auto-generate org charts
 - ✅ **Template generation** - Download CSV templates
 
+### Database Management & Seeding (October 27, 2025)
+- ✅ **CSV-based seeding system** - Replaced programmatic seeders with CSV files
+- ✅ **CSV Export utility** - Export collections to human-readable CSVs with reference resolution
+- ✅ **CSV Import utility** - Import CSVs with automatic ObjectId reference resolution
+- ✅ **Reference Resolver** - Converts human-readable names/codes to MongoDB ObjectIds
+- ✅ **Safe --clean mode** - Only drops collections that have corresponding CSV files
+- ✅ **Dependency-aware import order** - Ensures references exist before dependent data
+- ✅ **Database cloning tool** - Clone entire databases between environments
+- ✅ **Database statistics tool** - Compare document counts across databases
+
 ---
 
 ## Core Infrastructure
@@ -652,10 +662,27 @@ src/
 │   ├── db/
 │   │   ├── connection.ts          # MongoDB connection
 │   │   ├── schemas.ts             # Zod schemas for all collections
-│   │   ├── repositories.ts        # Data access layer
-│   │   └── seed.ts                # Seed data script
+│   │   └── repositories.ts        # Data access layer
+│   ├── utils/
+│   │   ├── csv-parser.ts          # Generic CSV parser with column mapping
+│   │   ├── csv-exporter.ts        # Export collections to CSV
+│   │   └── reference-resolver.ts  # Resolve human-readable refs to ObjectIds
 │   └── oauth/
 │       └── server.ts              # OAuth 2.0 implementation
+│
+├── scripts/
+│   ├── db-seed.ts                 # CSV-based seeding orchestrator
+│   ├── db-export.ts               # Export collections to CSV
+│   ├── db-import.ts               # Import CSV to collection
+│   ├── db-clone.ts                # Clone databases between environments
+│   ├── db-stats.ts                # Database statistics and comparison
+│   ├── seeders/                   # CSV seed data (version controlled)
+│   │   ├── organizations.csv
+│   │   ├── positions.csv
+│   │   ├── org_units.csv
+│   │   ├── identities.csv
+│   │   └── ...                    # 10+ CSV files
+│   └── output/                    # Temporary exports (gitignored)
 │
 ├── routes/
 │   ├── (app)/                     # Admin console routes
@@ -716,7 +743,18 @@ Documentation is in: DOCS/*.md
 bun install
 
 # Seed database (first time only)
-bun run seed
+bun run db:seed
+
+# Seed database with clean (drop collections with CSV files)
+bun run db:seed --clean
+
+# Export collections to CSV
+bun run db:export                    # All collections to scripts/output/
+bun run db:export identities         # Single collection
+
+# Import from CSV
+bun run db:import identities ./data.csv
+bun run db:import --dir ./scripts/seeders/  # Import all CSVs
 
 # Start development server
 bun run dev
@@ -726,6 +764,18 @@ bun test
 
 # Build for production
 bun run build
+```
+
+## Database Management
+```bash
+# Clone database between environments
+bun run scripts/db-clone.ts source_db target_db
+
+# View database statistics
+bun run scripts/db-stats.ts aksara_sso
+
+# Compare two databases
+bun run scripts/db-stats.ts compare aksara_sso dev_sso
 ```
 
 ## Testing OAuth Flow
@@ -743,11 +793,110 @@ const db = getDB();
 const employees = await db.collection('employees').find({}).toArray();
 ```
 
+## CSV-Based Seeding Workflow
+
+### Overview
+The seeding system uses CSV files as the single source of truth. This ensures:
+- **Consistency**: Same CSV = same database state every time
+- **Human-readable**: Use organization names/codes instead of ObjectIds
+- **Easy editing**: Modify seed data with Excel/spreadsheet tools
+- **Version control**: Track changes to seed data in git
+
+### Key Features
+- **Reference Resolution**: Converts human-readable names (e.g., "IT Division") to MongoDB ObjectIds automatically
+- **Dependency-Aware Import**: Imports collections in correct order (organizations before org_units before identities)
+- **Safe --clean mode**: Only drops collections that have corresponding CSV files (preserves transient data like sessions)
+- **Flexible Column Mapping**: Supports multiple CSV column name variations (e.g., "employeeId", "NIK", "nik", "employee_id")
+
+### Common Commands
+```bash
+# Seed from CSV files in scripts/seeders/
+bun run db:seed
+
+# Seed with clean (drop existing data first)
+bun run db:seed --clean
+
+# Export current database to CSV
+bun run db:export                   # All collections → scripts/output/
+bun run db:export identities        # Single collection
+
+# Import from CSV
+bun run db:import identities ./data.csv
+bun run db:import --dir ./scripts/seeders/
+```
+
+### CSV Format Requirements
+
+**Organizations (organizations.csv)**
+```csv
+code,name,parentCode,realm,isActive
+MASTER,Aksara SSO,,,true
+INJ,Injourney,,,true
+```
+
+**Organizational Units (org_units.csv)**
+```csv
+code,name,organization,parentCode,unitType,description
+IT-DIV,IT Division,Injourney,,division,Information Technology
+```
+
+**Identities (identities.csv)**
+```csv
+identityType,email,username,firstName,lastName,employeeId,organization,orgUnit,position,manager,employmentType,employmentStatus,isActive
+employee,john@example.com,john,John,Doe,NIK001,Injourney,IT-DIV,MGR,jane@example.com,permanent,active,true
+```
+
+**Key Points:**
+- Use `code` or `name` fields for references (NOT ObjectIds)
+- Leave empty cells blank (don't use "null" or "undefined")
+- Use pipe-separated values (`|`) for arrays (e.g., `scope1|scope2|scope3`)
+- Dates in ISO format: `2025-10-27T10:30:00.000Z`
+
+### Adding New Collections to Seeding
+
+1. **Add collection config** in `src/lib/utils/csv-exporter.ts`:
+```typescript
+export const COLLECTION_CONFIGS: Record<string, CollectionConfig> = {
+  my_collection: {
+    columns: ['id', 'name', 'referenceField'],
+    references: {
+      referenceField: { collection: 'other_collection', field: 'code' }
+    }
+  }
+};
+```
+
+2. **Add reference resolver** in `src/lib/utils/reference-resolver.ts`:
+```typescript
+export function resolveMyCollectionReferences(row: any, cache: ResolverCache) {
+  // Resolve human-readable references to ObjectIds
+}
+```
+
+3. **Add to import order** in `scripts/db-seed.ts`:
+```typescript
+const IMPORT_ORDER = [
+  'organizations',
+  'my_collection',  // Add here (respect dependencies)
+  'identities'
+];
+```
+
+4. **Add column mapping** (optional) in `src/lib/utils/csv-parser.ts`:
+```typescript
+export const COLUMN_MAPPINGS = {
+  my_collection: {
+    fieldName: ['fieldName', 'field_name', 'alternative_name']
+  }
+};
+```
+
 ## Adding New Schemas
 1. Define Zod schema in `src/lib/db/schemas.ts`
 2. Add TypeScript type export
 3. Create repository methods in `src/lib/db/repositories.ts`
-4. Add seed data if needed in `src/lib/db/seed.ts`
+4. Add CSV export/import configuration (see above)
+5. Create CSV seed data in `scripts/seeders/my_collection.csv`
 
 ---
 
@@ -759,8 +908,8 @@ const employees = await db.collection('employees').find({}).toArray();
 
 ---
 
-**Last Updated**: 2025-10-15
-**Current Phase**: Organization structure versioning & SK Penempatan completed, ready for SCIM/API implementation
+**Last Updated**: 2025-10-27
+**Current Phase**: CSV-based database seeding system completed, SCIM 2.0 implementation in progress
 
 ## 📊 Development Statistics
 - **Total Collections**: 15+ (users, employees, organizations, org_units, positions, sk_penempatan, org_structure_versions, etc.)

@@ -1,5 +1,6 @@
+#!/usr/bin/env bun
+
 import { MongoClient } from 'mongodb';
-import { CLONE_INCLUDED_COLLECTIONS, DB_TARGETS } from '../src/lib/db/seeders/config';
 
 const MONGODB_URI = process.env.MONGODB_URI || '';
 
@@ -37,12 +38,11 @@ async function getCollectionStats(db: any, collectionName: string): Promise<Coll
 	}
 }
 
-async function getDatabaseStats(database: keyof typeof DB_TARGETS): Promise<DatabaseStats> {
+async function getDatabaseStats(dbName: string): Promise<DatabaseStats> {
 	if (!MONGODB_URI) {
 		throw new Error('MONGODB_URI environment variable is required');
 	}
 
-	const dbName = DB_TARGETS[database];
 	const client = new MongoClient(MONGODB_URI);
 
 	try {
@@ -52,9 +52,8 @@ async function getDatabaseStats(database: keyof typeof DB_TARGETS): Promise<Data
 		const allCollections = await db.listCollections().toArray();
 		const collectionNames = allCollections.map(c => c.name);
 
-		const relevantCollections = collectionNames.filter(name =>
-			CLONE_INCLUDED_COLLECTIONS.includes(name)
-		);
+		// Filter out system collections
+		const relevantCollections = collectionNames.filter(name => !name.startsWith('system.'));
 
 		const collectionStats: CollectionStats[] = [];
 
@@ -98,8 +97,8 @@ function formatNumber(num: number): string {
 	return num.toLocaleString('id-ID');
 }
 
-async function printStats(database: keyof typeof DB_TARGETS, detailed: boolean = false): Promise<void> {
-	console.log(`\n📊 Database Statistics: ${DB_TARGETS[database]}\n`);
+async function printStats(database: string, detailed: boolean = false): Promise<void> {
+	console.log(`\n📊 Database Statistics: ${database}\n`);
 
 	const stats = await getDatabaseStats(database);
 
@@ -143,10 +142,10 @@ async function printStats(database: keyof typeof DB_TARGETS, detailed: boolean =
 	console.log();
 }
 
-async function compareStats(database1: keyof typeof DB_TARGETS, database2: keyof typeof DB_TARGETS): Promise<void> {
+async function compareStats(database1: string, database2: string): Promise<void> {
 	console.log(`\n🔍 Database Comparison\n`);
-	console.log(`   Database 1: ${DB_TARGETS[database1]}`);
-	console.log(`   Database 2: ${DB_TARGETS[database2]}\n`);
+	console.log(`   Database 1: ${database1}`);
+	console.log(`   Database 2: ${database2}\n`);
 
 	const [stats1, stats2] = await Promise.all([
 		getDatabaseStats(database1),
@@ -195,11 +194,11 @@ if (args.length === 0 || args.includes('--help')) {
 Database Statistics Tool
 
 Usage:
-  bun run db:stats <database> [options]
-  bun run db:stats compare <database1> <database2>
+  bun run scripts/db-stats.ts <database> [options]
+  bun run scripts/db-stats.ts compare <database1> <database2>
 
 Arguments:
-  database    Database to analyze (dev | uat | test)
+  database    Database name (any MongoDB database)
 
 Options:
   --detailed  Show detailed statistics (indexes, avg object size)
@@ -210,39 +209,33 @@ Commands:
 
 Examples:
   # Show basic stats
-  bun run db:stats dev
+  bun run scripts/db-stats.ts aksara_sso
 
   # Show detailed stats
-  bun run db:stats dev --detailed
+  bun run scripts/db-stats.ts aksara_sso --detailed
 
   # Compare two databases
-  bun run db:stats compare dev uat
+  bun run scripts/db-stats.ts compare aksara_sso dev_sso
 
 Use cases:
   # Check if seeding completed successfully
-  bun run db:stats dev
+  bun run scripts/db-stats.ts aksara_sso
 
   # Verify clone operation
-  bun run db:stats compare dev uat
+  bun run scripts/db-stats.ts compare aksara_sso dev_sso
 
   # Monitor database growth
-  bun run db:stats uat --detailed
+  bun run scripts/db-stats.ts aksara_sso --detailed
 `);
 	process.exit(0);
 }
 
 if (args[0] === 'compare') {
-	const db1 = args[1] as keyof typeof DB_TARGETS;
-	const db2 = args[2] as keyof typeof DB_TARGETS;
+	const db1 = args[1];
+	const db2 = args[2];
 
 	if (!db1 || !db2) {
-		console.error('❌ Usage: bun run db:stats compare <database1> <database2>');
-		process.exit(1);
-	}
-
-	if (!DB_TARGETS[db1] || !DB_TARGETS[db2]) {
-		console.error('❌ Invalid database names');
-		console.error('   Valid options: dev, uat, test');
+		console.error('❌ Usage: bun run scripts/db-stats.ts compare <database1> <database2>');
 		process.exit(1);
 	}
 
@@ -253,12 +246,12 @@ if (args[0] === 'compare') {
 			process.exit(1);
 		});
 } else {
-	const database = args[0] as keyof typeof DB_TARGETS;
+	const database = args[0];
 	const detailed = args.includes('--detailed');
 
-	if (!DB_TARGETS[database]) {
-		console.error(`❌ Invalid database: ${database}`);
-		console.error(`   Valid options: dev, uat, test`);
+	if (!database) {
+		console.error(`❌ Database name is required`);
+		console.error(`Usage: bun run scripts/db-stats.ts <database>`);
 		process.exit(1);
 	}
 
