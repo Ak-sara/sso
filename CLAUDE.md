@@ -726,7 +726,7 @@ src/
 Documentation is in: DOCS/*.md
 
 - ./DOCS/example_org_structure.md - example of organizations structure we need to implement.
-- ./DOCS/SESSION_SUMMARY_2025-10-15.md - Development Session Summary - October 15, 2025
+- ./DOCS/SSO_ADMIN_GUIDE.md - guide of configuring sso for app admin
 
 ## Important Reminders
 

@@ -225,7 +225,7 @@ export const OrgStructureVersionSchema = z.object({
 	organizationId: z.string(), // Which organization this version belongs to
 	effectiveDate: z.date(), // When this structure becomes active
 	endDate: z.date().optional(), // When this structure is superseded (null = current)
-	status: z.enum(['draft', 'pending_approval', 'active', 'archived']).default('draft'),
+	status: z.enum(['draft', 'active', 'archived']).default('draft'),
 
 	// Snapshot of the structure at this version
 	structure: z.object({
@@ -247,6 +247,39 @@ export const OrgStructureVersionSchema = z.object({
 			grade: z.string(),
 			reportingToPositionId: z.string().optional(),
 		})),
+		// Full employee snapshot (denormalized for historical accuracy)
+		employees: z.array(z.object({
+			// Identity reference
+			identityId: z.string(), // MongoDB _id
+			employeeId: z.string(), // NIK
+
+			// Personal info (denormalized for history)
+			fullName: z.string(),
+			email: z.string().optional(),
+
+			// Assignment at snapshot time (denormalized)
+			orgUnitId: z.string(),
+			orgUnitCode: z.string(),
+			orgUnitName: z.string(),
+			positionId: z.string(),
+			positionCode: z.string(),
+			positionName: z.string(),
+
+			// Manager (denormalized)
+			managerId: z.string().optional(),
+			managerName: z.string().optional(),
+
+			// Employment details
+			employmentType: z.string(),
+			employmentStatus: z.string(),
+			workLocation: z.string().optional(),
+			joinDate: z.date(),
+
+			// Snapshot metadata
+			snapshotDate: z.date()
+		})).default([]),
+		// Snapshot creation timestamp
+		snapshotCreatedAt: z.date().optional()
 	}),
 
 	// Changes from previous version
@@ -290,6 +323,50 @@ export const OrgStructureVersionSchema = z.object({
 	// Mermaid diagram (auto-generated)
 	mermaidDiagram: z.string().optional(),
 
+	// Mermaid configuration (for presentation layer - logical grouping, styling)
+	mermaidConfig: z.object({
+		// Logical grouping containers (NOT real org units, for diagram positioning only)
+		logicalGroups: z.array(z.object({
+			id: z.string(),                    // DIR, DDK, DDC, CSG, LOGG, etc.
+			label: z.string().optional(),       // Display name (often empty for transparent groups)
+			type: z.enum(['wrapper', 'positioning', 'alignment']),
+			direction: z.enum(['TB', 'LR', 'RL', 'BT']).optional(),
+			contains: z.array(z.string()),      // Codes of real org units to include in this group
+			styling: z.object({
+				transparent: z.boolean().default(false),
+			}).optional(),
+		})).default([]),
+
+		// Special connection rules (beyond parent-child hierarchy)
+		specialConnections: z.array(z.object({
+			from: z.string(),  // Unit code
+			to: z.string(),    // Unit code or logical group ID
+			type: z.enum(['hierarchy', 'matrix', 'alignment']),  // --> | -.-> | ~~~
+		})).default([]),
+
+		// Node styling overrides (for specific units)
+		nodeStyles: z.record(z.string(), z.object({
+			shape: z.enum(['rectangle', 'rounded', 'stadium', 'subprocess']).optional(),
+			cssClass: z.string().optional(),   // s-teal, s-yellow, s-green, etc.
+		})).default({}),
+	}).optional(),
+
+	// Publish progress tracking (for idempotent operations)
+	publishStatus: z.enum(['not_started', 'in_progress', 'completed', 'failed']).optional(),
+	publishProgress: z.object({
+		startedAt: z.date().optional(),
+		completedAt: z.date().optional(),
+		steps: z.array(z.object({
+			name: z.string(), // 'archive_old', 'activate_new', 'update_identities', 'create_history'
+			status: z.enum(['pending', 'in_progress', 'completed', 'failed']),
+			completedAt: z.date().optional(),
+			error: z.string().optional()
+		})),
+		totalIdentitiesUpdated: z.number().default(0),
+		totalHistoryEntriesCreated: z.number().default(0),
+		error: z.string().optional()
+	}).optional(),
+
 	// Metadata
 	createdBy: z.string(),
 	approvedBy: z.string().optional(),
@@ -300,6 +377,60 @@ export const OrgStructureVersionSchema = z.object({
 });
 
 export type OrgStructureVersion = z.infer<typeof OrgStructureVersionSchema>;
+
+// ============== Employee History Schema ==============
+// Tracks all employee assignment changes over time
+export const EmployeeHistorySchema = z.object({
+	_id: z.custom<ObjectId>().optional(),
+
+	// References
+	identityId: z.custom<ObjectId>(), // MongoDB _id of identity
+	employeeId: z.string(), // NIK for quick lookup
+
+	// Event details
+	eventType: z.enum([
+		'onboarding',
+		'mutation',
+		'transfer',
+		'promotion',
+		'demotion',
+		'offboarding',
+		'org_restructure'
+	]),
+	eventDate: z.date(),
+
+	// Previous state (before event)
+	previousOrgUnitId: z.custom<ObjectId>().optional(),
+	previousPositionId: z.custom<ObjectId>().optional(),
+	previousWorkLocation: z.string().optional(),
+
+	// New state (after event)
+	newOrgUnitId: z.custom<ObjectId>().optional(),
+	newPositionId: z.custom<ObjectId>().optional(),
+	newWorkLocation: z.string().optional(),
+
+	// Context
+	reason: z.string().optional(),
+	notes: z.string().optional(),
+
+	// Links to org structure version (if applicable)
+	details: z.object({
+		versionId: z.string().optional(),
+		versionNumber: z.number().optional(),
+		skNumber: z.string().optional(),
+		// Additional context for specific event types
+		previousOrgUnitName: z.string().optional(),
+		previousPositionName: z.string().optional(),
+		newOrgUnitName: z.string().optional(),
+		newPositionName: z.string().optional(),
+	}).optional(),
+
+	// Metadata
+	createdAt: z.date().default(() => new Date()),
+	createdBy: z.string()
+});
+
+export type EmployeeHistory = z.infer<typeof EmployeeHistorySchema>;
 
 // ============== Position/Job Title Schema ==============
 export const PositionSchema = z.object({

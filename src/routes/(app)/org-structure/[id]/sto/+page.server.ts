@@ -8,23 +8,20 @@ export const load: PageServerLoad = async ({ params }) => {
 	const db = getDB();
 
 	try {
-		// Get organization
-		const organization = await db.collection('organizations')
+		// Get org structure version by ID (params.id is the version _id, not organization _id)
+		const version = await db.collection('org_structure_versions')
 			.findOne({ _id: new ObjectId(params.id) });
+
+		if (!version) {
+			throw error(404, 'Organization structure version not found');
+		}
+
+		// Get organization using the version's organizationId
+		const organization = await db.collection('organizations')
+			.findOne({ _id: new ObjectId(version.organizationId) });
 
 		if (!organization) {
 			throw error(404, 'Organization not found');
-		}
-
-		// Get active org structure version for this organization
-		const version = await db.collection('org_structure_versions')
-			.findOne({
-				organizationId: params.id,
-				status: 'active'
-			});
-
-		if (!version) {
-			throw error(404, `No active organization structure version found for ${organization.name}`);
 		}
 
 		return {
@@ -51,15 +48,12 @@ export const actions = {
 		const db = getDB();
 
 		try {
-			// Get active version for this organization
+			// Get version by ID (params.id is the version _id)
 			const version = await db.collection('org_structure_versions')
-				.findOne({
-					organizationId: params.id,
-					status: 'active'
-				});
+				.findOne({ _id: new ObjectId(params.id) });
 
 			if (!version) {
-				return fail(404, { error: 'No active organization structure version found' });
+				return fail(404, { error: 'Organization structure version not found' });
 			}
 
 			// Generate new Mermaid diagram from structure

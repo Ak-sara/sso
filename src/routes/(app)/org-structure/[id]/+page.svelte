@@ -23,13 +23,13 @@
 					<span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
 						✓ AKTIF
 					</span>
-				{:else if data.version.status === 'pending_approval'}
-					<span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded-full">
-						MENUNGGU APPROVAL
-					</span>
 				{:else if data.version.status === 'draft'}
 					<span class="px-3 py-1 bg-gray-100 text-gray-800 text-sm font-semibold rounded-full">
 						DRAFT
+					</span>
+				{:else if data.version.status === 'archived'}
+					<span class="px-3 py-1 bg-gray-400 text-white text-sm font-semibold rounded-full">
+						ARSIP
 					</span>
 				{/if}
 			</div>
@@ -47,15 +47,19 @@
 				📊 View STO
 			</a>
 			{#if data.version.status === 'draft'}
-				<button onclick={() => showApproveModal = true}
-					class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700" >
-					Submit for Approval
-				</button>
-			{:else if data.version.status === 'pending_approval'}
-				<form method="POST" action="?/approve" class="inline">
+				<!-- NEW: Simple publish button -->
+				<form method="POST" action="?/publish" class="inline">
 					<button type="submit"
 						class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700" >
-						Approve & Activate
+						🚀 Publish & Activate
+					</button>
+				</form>
+			{:else if data.version.publishStatus === 'failed'}
+				<!-- Resume failed publish -->
+				<form method="POST" action="?/resumePublish" class="inline">
+					<button type="submit"
+						class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700" >
+						🔄 Resume Publish
 					</button>
 				</form>
 			{/if}

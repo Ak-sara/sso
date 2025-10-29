@@ -150,8 +150,15 @@
 					key: 'contractEndDate',
 					label: 'Contract End',
 					sortable: true,
-					render: (value: string | undefined) =>
-						value ? new Date(value).toLocaleDateString('id-ID') : '-'
+					render: (value: string | undefined) => {
+						if (!value || value.trim() === '') return '-';
+						try {
+							const date = new Date(value);
+							return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('id-ID');
+						} catch {
+							return '-';
+						}
+					}
 				},
 				{
 					key: 'isActive',

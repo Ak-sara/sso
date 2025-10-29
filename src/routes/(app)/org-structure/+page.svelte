@@ -99,10 +99,6 @@
 									<span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded">
 										AKTIF
 									</span>
-								{:else if version.status === 'pending_approval'}
-									<span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded">
-										MENUNGGU APPROVAL
-									</span>
 								{:else if version.status === 'draft'}
 									<span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded">
 										DRAFT

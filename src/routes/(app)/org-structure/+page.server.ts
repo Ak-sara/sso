@@ -1,8 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { getDB } from '$lib/db/connection';
-import { ObjectId } from 'mongodb';
 import { fail, redirect } from '@sveltejs/kit';
-import { generateOrgStructureMermaid } from '$lib/utils/mermaid-generator';
+import { versionManager } from '$lib/org-structure/version-manager';
 
 export const load: PageServerLoad = async ({ params, url }) => {
 	const db = getDB();
@@ -57,74 +56,16 @@ export const actions = {
 
 			const orgId = organization._id.toString();
 
-			// Get latest version number
-			const latestVersion = await db.collection('org_structure_versions')
-				.find({ organizationId: orgId })
-				.sort({ versionNumber: -1 })
-				.limit(1)
-				.toArray();
-
-			const nextVersionNumber = latestVersion.length > 0 ? latestVersion[0].versionNumber + 1 : 1;
-
-			// Get current org structure (all org units and positions)
-			const orgUnits = await db.collection('org_units')
-				.find({ organizationId: new ObjectId(orgId) })
-				.toArray();
-
-			const positions = await db.collection('positions')
-				.find({ organizationId: new ObjectId(orgId) })
-				.toArray();
-
-			// Create snapshot
-			const structure = {
-				orgUnits: orgUnits.map(u => ({
-					_id: u._id.toString(),
-					code: u.code,
-					name: u.name,
-					parentId: u.parentId?.toString(),
-					type: u.type,
-					level: u.level || 0,
-					sortOrder: u.sortOrder || 0,
-					headEmployeeId: u.managerId?.toString()
-				})),
-				positions: positions.map(p => ({
-					_id: p._id.toString(),
-					code: p.code,
-					name: p.name,
-					level: p.level,
-					grade: p.grade || '',
-					reportingToPositionId: null // TODO: Add this field to Position schema
-				}))
-			};
-
-			// Generate Mermaid diagram
-			const mermaidDiagram = generateOrgStructureMermaid({
-				structure,
-				versionNumber: nextVersionNumber
-			} as any);
-
-			// Create new version
-			const newVersion = {
-				versionNumber: nextVersionNumber,
+			// Use VersionManager to create version with snapshot
+			const versionId = await versionManager.createVersion(
+				orgId,
 				versionName,
-				organizationId: orgId,
-				effectiveDate: new Date(effectiveDate),
-				status: 'draft',
-				structure,
-				changes: [],
-				reassignments: [],
-				skAttachments: [],
-				mermaidDiagram, // Auto-generated diagram
-				notes,
-				createdBy: 'system', // TODO: Get from session
-				createdAt: new Date(),
-				updatedAt: new Date()
-			};
-
-			const result = await db.collection('org_structure_versions').insertOne(newVersion);
+				new Date(effectiveDate),
+				notes
+			);
 
 			// Redirect to edit page
-			throw redirect(303, `/org-structure/${result.insertedId}`);
+			throw redirect(303, `/org-structure/${versionId}`);
 		} catch (error) {
 			console.error('Create version error:', error);
 			if (error instanceof Response) throw error;

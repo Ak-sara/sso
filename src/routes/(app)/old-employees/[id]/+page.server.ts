@@ -106,14 +106,14 @@ export const actions = {
 			dateOfBirth: formData.get('dateOfBirth') ? new Date(formData.get('dateOfBirth') as string) : null,
 			employmentType: formData.get('employmentType') as string,
 			employmentStatus: formData.get('employmentStatus') as string,
-			joinDate: new Date(formData.get('joinDate') as string),
+			// ❌ REMOVED: joinDate should NEVER change after onboarding
 			probationEndDate: formData.get('probationEndDate') ? new Date(formData.get('probationEndDate') as string) : null,
 			updatedAt: new Date(),
 			updatedBy: 'system' // TODO: Get from session
 		};
 
 		// Validation
-		if (!updateData.firstName || !updateData.lastName || !updateData.email || !updateData.joinDate) {
+		if (!updateData.firstName || !updateData.lastName || !updateData.email) {
 			return fail(400, { error: 'Required fields missing' });
 		}
 

@@ -263,6 +263,21 @@ export function resolveIdentityReferences(
 		resolved.isActive = resolved.isActive.toLowerCase() === 'true';
 	}
 
+	// Parse date fields - convert strings to Date objects
+	const dateFields = ['joinDate', 'endDate', 'probationEndDate', 'dateOfBirth',
+	                    'contractStartDate', 'contractEndDate'];
+	for (const field of dateFields) {
+		if (row[field] && typeof row[field] === 'string' && row[field].trim() !== '') {
+			const parsed = new Date(row[field]);
+			if (!isNaN(parsed.getTime())) {
+				resolved[field] = parsed;
+			} else {
+				errors.push(`Invalid date format for ${field}: ${row[field]}`);
+			}
+		}
+		// Don't set field if empty (let schema handle defaults)
+	}
+
 	return errors.length > 0 ? { success: false, errors } : { success: true, resolved };
 }
 

@@ -2,6 +2,9 @@ import type { PageServerLoad, Actions } from './$types';
 import { getDB } from '$lib/db/connection';
 import { ObjectId } from 'mongodb';
 import { error, fail, redirect } from '@sveltejs/kit';
+import { versionPublisher } from '$lib/org-structure/publisher';
+import { buildDefaultMermaidConfig } from '$lib/utils/mermaid-config-builder';
+import { generateOrgStructureMermaid } from '$lib/utils/mermaid-generator';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const db = getDB();
@@ -107,130 +110,40 @@ export const actions = {
 		}
 	},
 
-	submitApproval: async ({ params }) => {
-		const db = getDB();
-
+	// NEW: Simple publish action (replaces submitApproval + approve workflow)
+	publish: async ({ params }) => {
 		try {
-			// Check if SK information is complete
-			const version = await db.collection('org_structure_versions')
-				.findOne({ _id: new ObjectId(params.id) });
+			const result = await versionPublisher.publishVersion(params.id);
 
-			if (!version) {
-				return fail(404, { error: 'Version not found' });
+			if (!result.success) {
+				return fail(500, { error: result.error });
 			}
 
-			if (!version.skNumber || !version.skDate) {
-				return fail(400, { error: 'SK number and date are required before submitting for approval' });
-			}
-
-			// Update status
-			await db.collection('org_structure_versions').updateOne(
-				{ _id: new ObjectId(params.id) },
-				{
-					$set: {
-						status: 'pending_approval',
-						updatedAt: new Date()
-					}
-				}
-			);
-
-			// TODO: Send notification to approvers
-
-			return { success: true };
-		} catch (err) {
-			console.error('Submit approval error:', err);
-			return fail(500, { error: 'Failed to submit for approval' });
+			return { success: true, message: result.message };
+		} catch (err: any) {
+			console.error('Publish error:', err);
+			return fail(500, { error: err.message || 'Failed to publish version' });
 		}
 	},
 
-	approve: async ({ params }) => {
-		const db = getDB();
-
+	// Resume failed publish
+	resumePublish: async ({ params }) => {
 		try {
-			const version = await db.collection('org_structure_versions')
-				.findOne({ _id: new ObjectId(params.id) });
+			const result = await versionPublisher.resumePublish(params.id);
 
-			if (!version) {
-				return fail(404, { error: 'Version not found' });
+			if (!result.success) {
+				return fail(500, { error: result.error });
 			}
 
-			if (version.status !== 'pending_approval') {
-				return fail(400, { error: 'Only pending versions can be approved' });
-			}
-
-			// Deactivate current active version
-			await db.collection('org_structure_versions').updateMany(
-				{
-					organizationId: version.organizationId,
-					status: 'active'
-				},
-				{
-					$set: {
-						status: 'archived',
-						endDate: new Date(),
-						updatedAt: new Date()
-					}
-				}
-			);
-
-			// Activate this version
-			await db.collection('org_structure_versions').updateOne(
-				{ _id: new ObjectId(params.id) },
-				{
-					$set: {
-						status: 'active',
-						approvedBy: 'system', // TODO: Get from session
-						approvedAt: new Date(),
-						updatedAt: new Date()
-					}
-				}
-			);
-
-			// Apply reassignments to employees
-			if (version.reassignments && version.reassignments.length > 0) {
-				for (const reassignment of version.reassignments) {
-					await db.collection('employees').updateOne(
-						{ employeeId: reassignment.employeeId },
-						{
-							$set: {
-								orgUnitId: reassignment.newOrgUnitId ? new ObjectId(reassignment.newOrgUnitId) : null,
-								positionId: reassignment.newPositionId ? new ObjectId(reassignment.newPositionId) : null,
-								updatedAt: new Date()
-							}
-						}
-					);
-
-					// Create employee history entry
-					await db.collection('employee_history').insertOne({
-						employeeId: new ObjectId(reassignment.employeeId),
-						eventType: 'org_restructure',
-						eventDate: version.effectiveDate,
-						organizationId: reassignment.newOrgUnitId ? new ObjectId(reassignment.newOrgUnitId) : null,
-						orgUnitId: reassignment.newOrgUnitId ? new ObjectId(reassignment.newOrgUnitId) : null,
-						positionId: reassignment.newPositionId ? new ObjectId(reassignment.newPositionId) : null,
-						details: {
-							versionId: params.id,
-							versionNumber: version.versionNumber,
-							skNumber: version.skNumber,
-							reason: reassignment.reason,
-							previousOrgUnitId: reassignment.oldOrgUnitId,
-							previousPositionId: reassignment.oldPositionId
-						},
-						createdAt: new Date(),
-						createdBy: 'system'
-					});
-				}
-			}
-
-			// TODO: Send notification to affected employees
-			// TODO: Trigger SCIM sync to update connected apps
-
-			return { success: true };
-		} catch (err) {
-			console.error('Approve version error:', err);
-			return fail(500, { error: 'Failed to approve version' });
+			return { success: true, message: result.message };
+		} catch (err: any) {
+			console.error('Resume publish error:', err);
+			return fail(500, { error: err.message || 'Failed to resume publish' });
 		}
 	},
+
+	// OLD submitApproval and approve actions REMOVED
+	// Now using versionPublisher.publishVersion() instead (see publish action above)
 
 	createSKPenempatan: async ({ params, request }) => {
 		const db = getDB();
@@ -301,6 +214,46 @@ export const actions = {
 			console.error('Create SK Penempatan error:', err);
 			if (err instanceof Response) throw err;
 			return fail(500, { error: 'Gagal membuat SK Penempatan' });
+		}
+	},
+
+	generateDefaultConfig: async ({ params }) => {
+		const db = getDB();
+
+		try {
+			// Get version
+			const version = await db.collection('org_structure_versions')
+				.findOne({ _id: new ObjectId(params.id) });
+
+			if (!version) {
+				return fail(404, { error: 'Version not found' });
+			}
+
+			// Generate default config from org units
+			const config = buildDefaultMermaidConfig(version.structure.orgUnits);
+
+			// Generate new mermaid diagram with config
+			const mermaidDiagram = generateOrgStructureMermaid({
+				...version,
+				mermaidConfig: config
+			});
+
+			// Update version with config and regenerated diagram
+			await db.collection('org_structure_versions').updateOne(
+				{ _id: new ObjectId(params.id) },
+				{
+					$set: {
+						mermaidConfig: config,
+						mermaidDiagram,
+						updatedAt: new Date()
+					}
+				}
+			);
+
+			return { success: true, message: 'Default Mermaid config generated successfully' };
+		} catch (err) {
+			console.error('Generate default config error:', err);
+			return fail(500, { error: 'Failed to generate default config' });
 		}
 	}
 } satisfies Actions;
