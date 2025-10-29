@@ -2,7 +2,6 @@ import type { PageServerLoad, Actions } from './$types';
 import { getDB } from '$lib/db/connection';
 import { ObjectId } from 'mongodb';
 import { error, fail, redirect } from '@sveltejs/kit';
-import { generateOrgStructureMermaid } from '$lib/utils/mermaid-generator';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const db = getDB();
@@ -230,38 +229,6 @@ export const actions = {
 		} catch (err) {
 			console.error('Approve version error:', err);
 			return fail(500, { error: 'Failed to approve version' });
-		}
-	},
-
-	regenerateMermaid: async ({ params }) => {
-		const db = getDB();
-
-		try {
-			const version = await db.collection('org_structure_versions')
-				.findOne({ _id: new ObjectId(params.id) });
-
-			if (!version) {
-				return fail(404, { error: 'Version not found' });
-			}
-
-			// Generate new Mermaid diagram from structure
-			const mermaidDiagram = generateOrgStructureMermaid(version as any);
-
-			// Update version with new diagram
-			await db.collection('org_structure_versions').updateOne(
-				{ _id: new ObjectId(params.id) },
-				{
-					$set: {
-						mermaidDiagram,
-						updatedAt: new Date()
-					}
-				}
-			);
-
-			return { success: true, mermaidDiagram };
-		} catch (err) {
-			console.error('Regenerate Mermaid error:', err);
-			return fail(500, { error: 'Failed to regenerate diagram' });
 		}
 	},
 

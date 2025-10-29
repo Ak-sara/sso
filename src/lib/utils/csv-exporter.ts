@@ -17,6 +17,10 @@ export interface ExportOptions {
 	columnOrder?: string[];
 	/** Columns to exclude from export */
 	excludeColumns?: string[];
+	/** Auto-detect all fields from database (ignores column config) */
+	autoDetect?: boolean;
+	/** Fields to always exclude in auto-detect mode */
+	alwaysExclude?: string[];
 }
 
 export interface CollectionConfig {
@@ -49,6 +53,39 @@ export interface ReferenceDefinition {
 }
 
 /**
+ * Auto-detect columns from collection data
+ */
+function autoDetectColumns(
+	documents: Document[],
+	excludeFields: string[] = []
+): ColumnDefinition[] {
+	if (documents.length === 0) return [];
+
+	// Default fields to exclude
+	const defaultExclude = ['_id', '__v', 'createdAt', 'updatedAt', 'password', 'passwordHash'];
+	const allExclude = [...defaultExclude, ...excludeFields];
+
+	// Get all unique field names from first 100 documents
+	const fieldSet = new Set<string>();
+	const sampleSize = Math.min(100, documents.length);
+
+	for (let i = 0; i < sampleSize; i++) {
+		const doc = documents[i];
+		Object.keys(doc).forEach((key) => {
+			if (!allExclude.includes(key)) {
+				fieldSet.add(key);
+			}
+		});
+	}
+
+	// Convert to column definitions
+	return Array.from(fieldSet).sort().map((field) => ({
+		name: field,
+		field: field
+	}));
+}
+
+/**
  * Export a collection to CSV string
  */
 export async function exportCollectionToCSV(
@@ -56,14 +93,25 @@ export async function exportCollectionToCSV(
 	config: CollectionConfig,
 	options: ExportOptions = {}
 ): Promise<string> {
-	const { resolveReferences = true, includeHeaders = true } = options;
+	const {
+		resolveReferences = true,
+		includeHeaders = true,
+		autoDetect = false,
+		alwaysExclude = []
+	} = options;
 
 	// Fetch all documents
 	const documents = await db.collection(config.collection).find().toArray();
 
 	if (documents.length === 0) {
-		return includeHeaders ? config.columns.map((c) => c.name).join(',') + '\n' : '';
+		const cols = autoDetect ? [] : config.columns;
+		return includeHeaders ? cols.map((c) => c.name).join(',') + '\n' : '';
 	}
+
+	// Use auto-detected columns or configured columns
+	const columns = autoDetect
+		? autoDetectColumns(documents, alwaysExclude)
+		: config.columns;
 
 	// Build reference lookup cache
 	const referenceCache = new Map<string, Map<string, string>>();
@@ -88,14 +136,14 @@ export async function exportCollectionToCSV(
 
 	// Headers
 	if (includeHeaders) {
-		rows.push(config.columns.map((c) => escapeCSVValue(c.name)).join(','));
+		rows.push(columns.map((c) => escapeCSVValue(c.name)).join(','));
 	}
 
 	// Data rows
 	for (const doc of documents) {
 		const values: string[] = [];
 
-		for (const col of config.columns) {
+		for (const col of columns) {
 			let value = getNestedValue(doc, col.field);
 
 			// Resolve references FIRST (before other transforms)
@@ -107,7 +155,9 @@ export async function exportCollectionToCSV(
 					if (resolvedValue) {
 						value = resolvedValue;
 					} else {
-						value = value.toString(); // Keep ObjectId as fallback
+						// Reference not found in database - output empty string instead of ObjectId
+						console.warn(`  ⚠️  Reference not found for ${col.field}: ${value.toString()} (outputting empty)`);
+						value = '';
 					}
 				}
 			}

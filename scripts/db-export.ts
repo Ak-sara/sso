@@ -6,9 +6,15 @@
  * Exports MongoDB collections to CSV files with human-readable references.
  *
  * Usage:
- *   bun run scripts/db-export.ts                    # Export all collections
+ *   bun run scripts/db-export.ts                    # Export all collections (configured columns)
  *   bun run scripts/db-export.ts identities         # Export specific collection
+ *   bun run scripts/db-export.ts --auto-detect      # Export all collections (auto-detect all fields)
+ *   bun run scripts/db-export.ts identities --auto  # Export with auto-detected columns
  *   bun run scripts/db-export.ts --output ./backup/ # Custom output directory
+ *
+ * Modes:
+ *   Default: Uses hardcoded column configuration (maintains consistency)
+ *   --auto-detect: Scans database and exports ALL fields (adapts to schema changes)
  */
 
 import { connectDB, disconnectDB, getDB } from '../src/lib/db/connection';
@@ -25,6 +31,7 @@ async function main() {
 	let outputDir = DEFAULT_OUTPUT_DIR;
 	let collectionName: string | null = null;
 	let exportAll = false;
+	let autoDetect = false;
 
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i];
@@ -33,6 +40,8 @@ async function main() {
 			outputDir = args[++i];
 		} else if (arg === '--all' || arg === '-a') {
 			exportAll = true;
+		} else if (arg === '--auto-detect' || arg === '--auto') {
+			autoDetect = true;
 		} else if (!collectionName) {
 			collectionName = arg;
 		}
@@ -55,7 +64,7 @@ async function main() {
 
 	try {
 		if (exportAll) {
-			console.log('📦 Exporting all collections...\n');
+			console.log(`📦 Exporting all collections${autoDetect ? ' (auto-detect mode)' : ''}...\n`);
 
 			const collections = Object.keys(COLLECTION_CONFIGS);
 			let successCount = 0;
@@ -65,7 +74,7 @@ async function main() {
 				const outputPath = join(outputDir, `${collection}.csv`);
 
 				try {
-					await exportCollectionToFile(db, config, outputPath);
+					await exportCollectionToFile(db, config, outputPath, { autoDetect });
 					successCount++;
 				} catch (error) {
 					console.error(`✗ Failed to export ${collection}:`, error);
@@ -74,7 +83,7 @@ async function main() {
 
 			console.log(`\n✓ Exported ${successCount}/${collections.length} collections to ${outputDir}`);
 		} else if (collectionName) {
-			console.log(`📦 Exporting ${collectionName}...\n`);
+			console.log(`📦 Exporting ${collectionName}${autoDetect ? ' (auto-detect mode)' : ''}...\n`);
 
 			const config = COLLECTION_CONFIGS[collectionName];
 			if (!config) {
@@ -84,7 +93,7 @@ async function main() {
 			}
 
 			const outputPath = join(outputDir, `${collectionName}.csv`);
-			await exportCollectionToFile(db, config, outputPath);
+			await exportCollectionToFile(db, config, outputPath, { autoDetect });
 
 			console.log(`\n✓ Exported ${collectionName} to ${outputPath}`);
 		}

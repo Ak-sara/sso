@@ -732,6 +732,7 @@ Documentation is in: DOCS/*.md
 
 - **Update CLAUDE.md _📋 Implementation Todos_ as you complete tasks** (mark with `[✅]`)
 - **Make reusable code** dont make more than ~500 lines of codes in one file, implements utils/library
+- **dont make Documentation if user not request it**, just very quick and important summary is enought.
 
 ---
 

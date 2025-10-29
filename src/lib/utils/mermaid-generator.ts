@@ -44,20 +44,27 @@ export function generateOrgStructureMermaid(version: OrgStructureVersion): strin
 
 	// Generate node label based on type
 	const getNodeStyle = (unit: typeof orgUnits[0]) => {
+		// Escape special characters in unit names for Mermaid
+		const escapeName = (name: string) => {
+			return name.replace(/"/g, '#quot;');
+		};
+
+		const safeName = escapeName(unit.name);
+
 		switch (unit.type) {
 			case 'board':
-				return `${getNodeId(unit)}[${unit.name}]`;
+				return `${getNodeId(unit)}["${safeName}"]`;
 			case 'directorate':
 			case 'sbu':
-				return `${getNodeId(unit)}[${unit.name}]`;
+				return `${getNodeId(unit)}["${safeName}"]`;
 			case 'division':
-				return `${getNodeId(unit)}(${unit.name})`;
+				return `${getNodeId(unit)}("${safeName}")`;
 			case 'department':
-				return `${getNodeId(unit)}([${unit.name}])`;
+				return `${getNodeId(unit)}(["${safeName}"])`;
 			case 'section':
-				return `${getNodeId(unit)}>${unit.name}]`;
+				return `${getNodeId(unit)}[/"${safeName}"/]`;  // Trapezoid shape for sections
 			default:
-				return `${getNodeId(unit)}[${unit.name}]`;
+				return `${getNodeId(unit)}["${safeName}"]`;
 		}
 	};
 
@@ -165,14 +172,23 @@ export function generateSimplifiedMermaid(version: OrgStructureVersion, maxLevel
 		return unit.code.replace(/[^a-zA-Z0-9]/g, '_');
 	};
 
-	// Simple node labels
-	mermaid += `    ${getNodeId(root)}[${root.name}]\n`;
+	const escapeName = (name: string) => {
+		return name.replace(/"/g, '#quot;');
+	};
 
-	// Add all relationships
+	// Define all nodes first
+	mermaid += `    ${getNodeId(root)}["${escapeName(root.name)}"]\n`;
+	for (const unit of orgUnits) {
+		if (unit._id !== root._id) {
+			mermaid += `    ${getNodeId(unit)}["${escapeName(unit.name)}"]\n`;
+		}
+	}
+
+	// Then add all relationships
 	for (const unit of orgUnits) {
 		if (unit.parentId && unitMap.has(unit.parentId)) {
 			const parent = unitMap.get(unit.parentId)!;
-			mermaid += `    ${getNodeId(parent)} --> ${getNodeId(unit)}[${unit.name}]\n`;
+			mermaid += `    ${getNodeId(parent)} --> ${getNodeId(unit)}\n`;
 		}
 	}
 
@@ -226,14 +242,23 @@ export function generateBranchMermaid(
 		return unit.code.replace(/[^a-zA-Z0-9]/g, '_');
 	};
 
-	// Add root
-	mermaid += `    ${getNodeId(rootUnit)}[${rootUnit.name}]\n`;
+	const escapeName = (name: string) => {
+		return name.replace(/"/g, '#quot;');
+	};
 
-	// Add all relationships
+	// Define all nodes first
+	mermaid += `    ${getNodeId(rootUnit)}["${escapeName(rootUnit.name)}"]\n`;
+	for (const unit of orgUnits) {
+		if (unit._id !== rootUnitId) {
+			mermaid += `    ${getNodeId(unit)}["${escapeName(unit.name)}"]\n`;
+		}
+	}
+
+	// Then add all relationships
 	for (const unit of orgUnits) {
 		if (unit.parentId && unitMap.has(unit.parentId) && descendants.has(unit.parentId)) {
 			const parent = unitMap.get(unit.parentId)!;
-			mermaid += `    ${getNodeId(parent)} --> ${getNodeId(unit)}[${unit.name}]\n`;
+			mermaid += `    ${getNodeId(parent)} --> ${getNodeId(unit)}\n`;
 		}
 	}
 

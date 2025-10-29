@@ -1,31 +1,11 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { onMount } from 'svelte';
-	import mermaid from 'mermaid';
 
 	let { data }: { data: PageData } = $props();
 
 	let activeTab = $state('structure');
 	let showApproveModal = $state(false);
 	let showCreateSKModal = $state(false);
-
-	// Initialize Mermaid
-	onMount(() => {
-		mermaid.initialize({
-			startOnLoad: true,
-			theme: 'default',
-			flowchart: {
-				useMaxWidth: true,
-				htmlLabels: true,
-				curve: 'basis'
-			}
-		});
-
-		// Render diagrams after mount
-		setTimeout(() => {
-			mermaid.contentLoaded();
-		}, 100);
-	});
 </script>
 
 <div class="space-y-6">
@@ -33,7 +13,7 @@
 	<div class="flex items-center justify-between">
 		<div>
 			<div class="flex items-center space-x-3">
-				<a href="/org-structure/versions" class="text-gray-500 hover:text-gray-700">
+				<a href="/org-structure" class="text-gray-500 hover:text-gray-700">
 					← Kembali
 				</a>
 				<h2 class="text-2xl font-bold">
@@ -62,6 +42,10 @@
 		</div>
 
 		<div class="flex space-x-2">
+			<a href="/org-structure/{data.version._id}/sto"
+				class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 border border-gray-300">
+				📊 View STO
+			</a>
 			{#if data.version.status === 'draft'}
 				<button onclick={() => showApproveModal = true}
 					class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700" >
@@ -160,12 +144,6 @@
 				📊 Struktur Organisasi
 			</button>
 			<button
-				onclick={() => activeTab = 'sk'}
-				class="py-2 px-1 border-b-2 font-medium text-sm {activeTab === 'sk' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
-			>
-				📋 STO
-			</button>
-			<button
 				onclick={() => activeTab = 'changes'}
 				class="py-2 px-1 border-b-2 font-medium text-sm {activeTab === 'changes' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
 			>
@@ -262,42 +240,6 @@
 							</div>
 						</div>
 					{/each}
-				</div>
-			{/if}
-		</div>
-
-	{:else if activeTab === 'sk'}
-		<!-- SK Organization Structure (Header/Parent) -->
-		<div class="bg-white shadow rounded-lg p-6">
-			<div class="flex justify-between items-center mb-4">
-				<h3 class="text-lg font-medium">Mermaid Diagram</h3>
-				<form method="POST" action="?/regenerateMermaid">
-					<button
-						type="submit"
-						class="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-					>
-						🔄 Regenerate Diagram
-					</button>
-				</form>
-			</div>
-
-			{#if data.version.mermaidDiagram}
-				<div class="border rounded p-4 bg-gray-50 mb-4">
-					<div class="mb-4">
-						<pre class="mermaid text-sm">{data.version.mermaidDiagram}</pre>
-					</div>
-					<details class="mt-4">
-						<summary class="cursor-pointer text-sm text-gray-600 hover:text-gray-800">
-							📝 View Mermaid Source Code
-						</summary>
-						<pre class="mt-2 text-xs overflow-x-auto bg-white p-3 rounded border">{data.version.mermaidDiagram}</pre>
-					</details>
-				</div>
-			{:else}
-				<div class="border border-yellow-300 rounded p-4 bg-yellow-50 mb-4">
-					<p class="text-yellow-800 text-sm">
-						⚠️ Diagram belum dibuat. Klik tombol <strong>Regenerate Diagram</strong> di atas untuk generate otomatis.
-					</p>
 				</div>
 			{/if}
 		</div>

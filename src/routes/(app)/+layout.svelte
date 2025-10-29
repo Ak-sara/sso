@@ -56,7 +56,7 @@
 				{ name: 'Realm/Entitas', href: '/realms', icon: '🌐' },
 				{ name: 'Unit Kerja/Divisi', href: '/org-units', icon: '🏛️' },
 				{ name: 'Posisi/Jabatan', href: '/positions', icon: '💼' },
-				{ name: 'Struktur Organisasi', href: '/org-structure/versions', icon: '🌳' }
+				{ name: 'Struktur Organisasi', href: '/org-structure', icon: '🌳' }
 			],
 		},
 		{

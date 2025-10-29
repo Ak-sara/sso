@@ -124,7 +124,7 @@ export const actions = {
 			const result = await db.collection('org_structure_versions').insertOne(newVersion);
 
 			// Redirect to edit page
-			throw redirect(303, `/org-structure/versions/${result.insertedId}`);
+			throw redirect(303, `/org-structure/${result.insertedId}`);
 		} catch (error) {
 			console.error('Create version error:', error);
 			if (error instanceof Response) throw error;

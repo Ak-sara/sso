@@ -7,6 +7,13 @@
 
 import type { Db, ObjectId } from 'mongodb';
 
+/**
+ * Check if a string looks like a MongoDB ObjectId (24 hex characters)
+ */
+function isObjectIdFormat(value: string): boolean {
+	return /^[a-f0-9]{24}$/i.test(value.trim());
+}
+
 export interface ResolverCache {
 	organizations: Map<string, ObjectId>;
 	orgUnits: Map<string, ObjectId>;
@@ -80,6 +87,12 @@ export function resolveOrganization(
 		return { success: true }; // Empty is valid (no reference)
 	}
 
+	// Skip ObjectId strings from exports (treat as empty reference)
+	if (isObjectIdFormat(value)) {
+		console.warn(`  ⚠️  Skipping ObjectId string in CSV: ${value} (treat as empty)`);
+		return { success: true }; // Empty is valid
+	}
+
 	const normalized = value.trim().toLowerCase();
 	const objectId = cache.organizations.get(normalized);
 
@@ -102,6 +115,12 @@ export function resolveOrgUnit(
 ): ResolutionResult {
 	if (!value || value.trim() === '') {
 		return { success: true }; // Empty is valid
+	}
+
+	// Skip ObjectId strings from exports (treat as empty reference)
+	if (isObjectIdFormat(value)) {
+		console.warn(`  ⚠️  Skipping ObjectId string in CSV: ${value} (treat as empty)`);
+		return { success: true };
 	}
 
 	const normalized = value.trim().toLowerCase();
@@ -128,6 +147,12 @@ export function resolvePosition(
 		return { success: true }; // Empty is valid
 	}
 
+	// Skip ObjectId strings from exports (treat as empty reference)
+	if (isObjectIdFormat(value)) {
+		console.warn(`  ⚠️  Skipping ObjectId string in CSV: ${value} (treat as empty)`);
+		return { success: true };
+	}
+
 	const normalized = value.trim().toLowerCase();
 	const objectId = cache.positions.get(normalized);
 
@@ -150,6 +175,12 @@ export function resolveIdentity(
 ): ResolutionResult {
 	if (!value || value.trim() === '') {
 		return { success: true }; // Empty is valid
+	}
+
+	// Skip ObjectId strings from exports (treat as empty reference)
+	if (isObjectIdFormat(value)) {
+		console.warn(`  ⚠️  Skipping ObjectId string in CSV: ${value} (treat as empty)`);
+		return { success: true };
 	}
 
 	const normalized = value.trim().toLowerCase();
@@ -181,6 +212,8 @@ export function resolveIdentityReferences(
 		if (result.success && result.objectId) {
 			resolved.organizationId = result.objectId;
 			delete resolved.organization;
+		} else if (result.success && !result.objectId) {
+			delete resolved.organization;
 		} else if (!result.success) {
 			errors.push(result.error!);
 		}
@@ -191,6 +224,8 @@ export function resolveIdentityReferences(
 		const result = resolveOrgUnit(row.orgUnit, cache);
 		if (result.success && result.objectId) {
 			resolved.orgUnitId = result.objectId;
+			delete resolved.orgUnit;
+		} else if (result.success && !result.objectId) {
 			delete resolved.orgUnit;
 		} else if (!result.success) {
 			errors.push(result.error!);
@@ -203,6 +238,8 @@ export function resolveIdentityReferences(
 		if (result.success && result.objectId) {
 			resolved.positionId = result.objectId;
 			delete resolved.position;
+		} else if (result.success && !result.objectId) {
+			delete resolved.position;
 		} else if (!result.success) {
 			errors.push(result.error!);
 		}
@@ -213,6 +250,8 @@ export function resolveIdentityReferences(
 		const result = resolveIdentity(row.manager, cache);
 		if (result.success && result.objectId) {
 			resolved.managerId = result.objectId;
+			delete resolved.manager;
+		} else if (result.success && !result.objectId) {
 			delete resolved.manager;
 		} else if (!result.success) {
 			errors.push(result.error!);
@@ -243,6 +282,8 @@ export function resolveOrgUnitReferences(
 		if (result.success && result.objectId) {
 			resolved.organizationId = result.objectId;
 			delete resolved.organization;
+		} else if (result.success && !result.objectId) {
+			delete resolved.organization;
 		} else if (!result.success) {
 			errors.push(result.error!);
 		}
@@ -253,6 +294,8 @@ export function resolveOrgUnitReferences(
 		const result = resolveOrgUnit(row.parentCode, cache);
 		if (result.success && result.objectId) {
 			resolved.parentId = result.objectId;
+			delete resolved.parentCode;
+		} else if (result.success && !result.objectId) {
 			delete resolved.parentCode;
 		} else if (!result.success) {
 			errors.push(result.error!);
@@ -277,6 +320,9 @@ export function resolveOrganizationReferences(
 		const result = resolveOrganization(row.parentCode, cache);
 		if (result.success && result.objectId) {
 			resolved.parentId = result.objectId;
+			delete resolved.parentCode;
+		} else if (result.success && !result.objectId) {
+			// ObjectId string was skipped - delete the field entirely
 			delete resolved.parentCode;
 		} else if (!result.success) {
 			errors.push(result.error!);
@@ -306,6 +352,8 @@ export function resolveSKPenempatanReferences(
 		const result = resolveOrganization(row.organization, cache);
 		if (result.success && result.objectId) {
 			resolved.organizationId = result.objectId;
+			delete resolved.organization;
+		} else if (result.success && !result.objectId) {
 			delete resolved.organization;
 		} else if (!result.success) {
 			errors.push(result.error!);
@@ -338,6 +386,8 @@ export function resolveEntraidConfigReferences(
 		const result = resolveOrganization(row.organization, cache);
 		if (result.success && result.objectId) {
 			resolved.organizationId = result.objectId;
+			delete resolved.organization;
+		} else if (result.success && !result.objectId) {
 			delete resolved.organization;
 		} else if (!result.success) {
 			errors.push(result.error!);
@@ -376,6 +426,8 @@ export function resolveOrgStructureVersionReferences(
 		const result = resolveOrganization(row.organization, cache);
 		if (result.success && result.objectId) {
 			resolved.organizationId = result.objectId;
+			delete resolved.organization;
+		} else if (result.success && !result.objectId) {
 			delete resolved.organization;
 		} else if (!result.success) {
 			errors.push(result.error!);

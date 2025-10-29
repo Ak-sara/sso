@@ -14,6 +14,11 @@
 import { connectDB, disconnectDB, getDB } from '../src/lib/db/connection';
 import { parseCSVFile, normalizeCSVRow } from '../src/lib/utils/csv-parser';
 import { buildCache, resolveReferences } from '../src/lib/utils/reference-resolver';
+import {
+	detectNIKEmailConflicts,
+	detectConflictsWithDatabase,
+	getIdentityUniqueFilter
+} from '../src/lib/utils/identity-import';
 import { readdirSync } from 'fs';
 import { join, basename } from 'path';
 
@@ -86,6 +91,36 @@ async function importCollection(
 
 	console.log(`✓ Resolved ${resolvedDocs.length} rows`);
 
+	// Detect conflicts for identities collection
+	if (collectionName === 'identities' && resolvedDocs.length > 0) {
+		console.log(`\n🔍 Checking for NIK ↔ Email conflicts...`);
+
+		// Check conflicts within CSV data
+		const csvConflicts = detectNIKEmailConflicts(resolvedDocs);
+
+		// Check conflicts with existing database records
+		const dbConflicts = await detectConflictsWithDatabase(db, resolvedDocs);
+
+		// Combine all conflicts
+		const allConflicts = [...csvConflicts, ...dbConflicts];
+
+		if (allConflicts.length > 0) {
+			console.error(`\n⚠️  Found ${allConflicts.length} identity conflicts:`);
+			allConflicts.slice(0, 10).forEach((conflict) => console.error(`  ${conflict.message}`));
+			if (allConflicts.length > 10) {
+				console.error(`  ... and ${allConflicts.length - 10} more conflicts`);
+			}
+
+			if (!options.skipErrors) {
+				throw new Error(`Import aborted due to ${allConflicts.length} identity conflicts. Use --skip-errors to force import.`);
+			} else {
+				console.warn(`\n⚠️  Continuing import despite conflicts (--skip-errors enabled)`);
+			}
+		} else {
+			console.log(`✓ No conflicts detected`);
+		}
+	}
+
 	// Validate only mode
 	if (options.validateOnly) {
 		console.log(`\n✓ Validation complete. No data imported (validate-only mode).`);
@@ -130,7 +165,7 @@ async function importCollection(
 function getUniqueFilter(collectionName: string, doc: any): any {
 	switch (collectionName) {
 		case 'identities':
-			return doc.email ? { email: doc.email } : { username: doc.username };
+			return getIdentityUniqueFilter(doc);
 		case 'organizations':
 			return { code: doc.code };
 		case 'org_units':

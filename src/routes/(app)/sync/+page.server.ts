@@ -4,6 +4,12 @@ import { identityRepository } from '$lib/db/identity-repository';
 import type { Identity, EntraIDConfig } from '$lib/db/schemas';
 import { getDB } from '$lib/db/connection';
 import { testEntraIDConnection, getMicrosoftGraphToken, getEntraIDUsers } from '$lib/entraid/microsoft-graph';
+import {
+	detectNIKEmailConflicts,
+	normalizeCSVColumns,
+	validateIdentityFields,
+	generateDataWarnings
+} from '$lib/utils/identity-import';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const tab = url.searchParams.get('tab') || 'csv';
@@ -118,53 +124,57 @@ export const actions: Actions = {
 			};
 
 			for (const row of rows) {
-				// Required fields
-				const nik = row.NIK || row.nik || row.employeeId;
-				const firstName = row.FirstName || row.firstName || row.first_name;
-				const lastName = row.LastName || row.lastName || row.last_name;
+				// Normalize CSV columns
+				const normalized = normalizeCSVColumns(row);
+				const { nik, email, firstName, lastName, orgUnit, position, employmentType, workLocation } = normalized;
 
-				if (!nik) {
-					preview.errors.push({ row, error: 'NIK is required' });
+				// Validate required fields
+				const validation = validateIdentityFields({ nik, email, firstName, lastName });
+				if (!validation.valid) {
+					validation.errors.forEach(error => {
+						preview.errors.push({ row, error });
+					});
 					continue;
 				}
 
-				if (!firstName || !lastName) {
-					preview.errors.push({ row, error: 'FirstName and LastName are required' });
-					continue;
+				// Smart identity lookup: Try NIK first, then email
+				let existing = null;
+				if (nik) {
+					existing = await identityRepository.findByEmployeeId(nik);
 				}
-
-				// Check if identity exists
-				const existing = await identityRepository.findByEmployeeId(nik);
-
-				const email = row.Email || row.email;
-				const orgUnit = row.OrgUnit || row.orgUnit || row.org_unit;
-				const position = row.Position || row.position;
-				const employmentType = (row.EmploymentType || row.employmentType || row.employment_type || 'permanent').toLowerCase() as any;
-				const workLocation = row.WorkLocation || row.workLocation || row.work_location;
+				if (!existing && email) {
+					existing = await identityRepository.findByEmail(email);
+				}
 
 				if (existing) {
-					// Will update
+					// Will update existing identity
 					const changes: Partial<Identity> = {};
 
+					// Update email if provided and different
 					if (email && email !== existing.email) changes.email = email;
+
+					// Update NIK if provided and different (or if existing doesn't have one)
+					if (nik && nik !== existing.employeeId) changes.employeeId = nik;
+
+					// Always update name fields
 					if (firstName !== existing.firstName) changes.firstName = firstName;
 					if (lastName !== existing.lastName) changes.lastName = lastName;
-					changes.fullName = `${firstName} ${lastName}`;
+					changes.fullName = `${firstName} ${lastName || ''}`.trim();
 
 					// Only add to update list if there are actual changes
 					if (Object.keys(changes).length > 1) { // > 1 because fullName is always set
 						preview.toUpdate.push({ identity: existing, changes });
 					}
 				} else {
-					// Will create
+					// Will create new identity
 					const newIdentity: Partial<Identity> = {
 						identityType: 'employee',
-						username: email || nik,
+						username: email || nik, // Use email as username if available, otherwise NIK
 						email: email || undefined,
+						employeeId: nik || undefined,
 						firstName,
 						lastName,
-						fullName: `${firstName} ${lastName}`,
-						employeeId: nik,
+						fullName: `${firstName} ${lastName || ''}`.trim(),
 						employmentType,
 						employmentStatus: 'active',
 						isActive: true, // Active by default
@@ -177,14 +187,25 @@ export const actions: Actions = {
 
 					preview.toCreate.push(newIdentity);
 
-					// Warning if no email
-					if (!email) {
-						preview.warnings.push({
-							row,
-							warning: `No email provided for ${firstName} ${lastName} - NIK will be used as username`
-						});
-					}
+					// Generate warnings for incomplete data
+					const warnings = generateDataWarnings({ nik, email, firstName: firstName!, lastName: lastName || '' });
+					warnings.forEach(warning => {
+						preview.warnings.push({ row, warning });
+					});
 				}
+			}
+
+			// Detect NIK ↔ Email conflicts
+			const allIdentities = [
+				...preview.toCreate,
+				...preview.toUpdate.map(u => ({ ...u.identity, ...u.changes }))
+			];
+			const conflicts = detectNIKEmailConflicts(allIdentities);
+			if (conflicts.length > 0) {
+				// Add conflicts to warnings
+				conflicts.forEach(conflict => {
+					preview.warnings.push({ row: {}, warning: `⚠️ ${conflict.message}` });
+				});
 			}
 
 			return {
