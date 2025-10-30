@@ -5,6 +5,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { versionPublisher } from '$lib/org-structure/publisher';
 import { buildDefaultMermaidConfig } from '$lib/utils/mermaid-config-builder';
 import { generateOrgStructureMermaid } from '$lib/utils/mermaid-generator';
+import { serializeObjectIds } from '$lib/utils/serialize';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const db = getDB();
@@ -59,19 +60,10 @@ export const load: PageServerLoad = async ({ params }) => {
 		}
 
 		return {
-			version: {
-				...version,
-				_id: version._id.toString(),
-				skAttachments: version.skAttachments || [],
-				reassignments: version.reassignments || [],
-				changes: version.changes || []
-			},
+			version: serializeObjectIds(version),
 			directors: directorsWithPositions.filter(d => d.positionName.includes('Direktur')),
-			linkedSKPenempatan: linkedSKPenempatan.map(sk => ({
-				...sk,
-				_id: sk._id.toString()
-			})),
-			aggregatedReassignments,
+			linkedSKPenempatan: serializeObjectIds(linkedSKPenempatan),
+			aggregatedReassignments: serializeObjectIds(aggregatedReassignments),
 			totalAffectedEmployees
 		};
 	} catch (err) {

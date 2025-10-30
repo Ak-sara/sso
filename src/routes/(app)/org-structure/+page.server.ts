@@ -2,6 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { getDB } from '$lib/db/connection';
 import { fail, redirect } from '@sveltejs/kit';
 import { versionManager } from '$lib/org-structure/version-manager';
+import { serializeObjectIds } from '$lib/utils/serialize';
 
 export const load: PageServerLoad = async ({ params, url }) => {
 	const db = getDB();
@@ -22,14 +23,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	const currentVersion = versions.find(v => v.status === 'active');
 
 	return {
-		versions: versions.map(v => ({
-			...v,
-			_id: v._id.toString()
-		})),
-		currentVersion: currentVersion ? {
-			...currentVersion,
-			_id: currentVersion._id.toString()
-		} : null,
+		versions: serializeObjectIds(versions),
+		currentVersion: currentVersion ? serializeObjectIds(currentVersion) : null,
 		organizationId: organization._id.toString()
 	};
 };
