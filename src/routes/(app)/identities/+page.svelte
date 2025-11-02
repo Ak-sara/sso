@@ -33,26 +33,12 @@
 		goto(`/identities/${identity._id}`);
 	}
 
-	async function handleToggleActive(identity: Identity) {
-		const form = document.createElement('form');
-		form.method = 'POST';
-		form.action = '?/toggleActive';
-
-		const input = document.createElement('input');
-		input.type = 'hidden';
-		input.name = 'identityId';
-		input.value = identity._id as string;
-		form.appendChild(input);
-
-		document.body.appendChild(form);
-		form.requestSubmit();
-		document.body.removeChild(form);
-
-		await invalidateAll();
+	function handleCreate() {
+		goto('/identities/new');
 	}
 
 	async function handleDelete(identity: Identity) {
-		if (!confirm(`Are you sure you want to delete ${identity.fullName}? This action cannot be undone.`)) {
+		if (!confirm(`Apakah Anda yakin ingin menghapus ${identity.fullName}? Tindakan ini tidak dapat dibatalkan.`)) {
 			return;
 		}
 
@@ -216,11 +202,11 @@
 		<div class="mt-4 flex md:mt-0 md:ml-4">
 			<button
 				type="button"
-				onclick={() => (showCreateModal = true)}
+				onclick={handleCreate}
 				class="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
 			>
 				<span class="mr-2">➕</span>
-				Create Identity
+				Tambah Identitas
 			</button>
 		</div>
 	</div>
@@ -269,49 +255,9 @@
 			{columns}
 			pageSize={50}
 			searchable={true}
-			exportable={true}
-			actions={(row) => [
-				{
-					label: 'Edit',
-					onClick: () => handleEdit(row),
-					class: 'text-indigo-600 hover:text-indigo-900'
-				},
-				{
-					label: row.isActive ? 'Deactivate' : 'Activate',
-					onClick: () => handleToggleActive(row),
-					class: 'text-blue-600 hover:text-blue-900'
-				},
-				{
-					label: 'Delete',
-					onClick: () => handleDelete(row),
-					class: 'text-red-600 hover:text-red-900'
-				}
-			]}
-			emptyMessage={`No ${tabs.find(t => t.id === currentTab)?.name || 'identities'} found`}
+			onEdit={handleEdit}
+			onDelete={handleDelete}
+			emptyMessage={`Tidak ada ${tabs.find(t => t.id === currentTab)?.name || 'identitas'}`}
 		/>
 	</div>
 </div>
-
-<!-- TODO: Create Identity Modal (to be implemented) -->
-{#if showCreateModal}
-	<div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-		<div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-			<div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick={() => (showCreateModal = false)}></div>
-			<div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-				<div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-					<h3 class="text-lg font-medium text-gray-900">Create New Identity</h3>
-					<p class="mt-2 text-sm text-gray-500">Feature coming soon...</p>
-				</div>
-				<div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-					<button
-						type="button"
-						onclick={() => (showCreateModal = false)}
-						class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
-					>
-						Close
-					</button>
-				</div>
-			</div>
-		</div>
-	</div>
-{/if}

@@ -9,6 +9,13 @@
 		class?: string;
 	}
 
+	interface ActionButton {
+		label: string;
+		onClick: () => void;
+		class?: string;
+		icon?: string;
+	}
+
 	interface Props {
 		data: T[];
 		columns: Column<T>[];
@@ -32,6 +39,8 @@
 		// Actions
 		showActions?: boolean;
 		actionColumn?: Snippet<[{ row: T }]>;
+		actions?: (row: T) => ActionButton[];
+		exportable?: boolean;
 		// Loading & Empty
 		loading?: boolean;
 		emptyMessage?: string;
@@ -40,6 +49,8 @@
 		onPageSizeChange?: (pageSize: number) => void;
 		onSort?: (event: { key: keyof T | string; direction: 'asc' | 'desc' }) => void;
 		onSearch?: (query: string) => void;
+		onEdit?: (row: T) => void;
+		onDelete?: (row: T) => void;
 	}
 
 	let {
@@ -60,13 +71,22 @@
 		compact = false,
 		showActions = false,
 		actionColumn,
+		actions,
+		exportable = false,
 		loading = false,
 		emptyMessage = 'Tidak ada data',
 		onPageChange,
 		onPageSizeChange,
 		onSort,
-		onSearch
+		onSearch,
+		onEdit,
+		onDelete
 	}: Props = $props();
+
+	// Determine if we should show actions column
+	const hasActions = $derived(
+		showActions || !!actionColumn || !!actions || !!onEdit || !!onDelete
+	);
 
 	let searchQuery = $state('');
 	let currentPage = $state(page);
@@ -257,7 +277,7 @@
 							</div>
 						</th>
 					{/each}
-					{#if showActions}
+					{#if hasActions}
 						<th class="px-4 py-3 font-semibold text-gray-700 text-right">Aksi</th>
 					{/if}
 				</tr>
@@ -265,7 +285,7 @@
 			<tbody>
 				{#if loading}
 					<tr>
-						<td colspan={columns.length + (showActions ? 1 : 0)} class="px-4 py-8 text-center">
+						<td colspan={columns.length + (hasActions ? 1 : 0)} class="px-4 py-8 text-center">
 							<div class="flex items-center justify-center gap-2 text-gray-500">
 								<svg
 									class="animate-spin h-5 w-5"
@@ -292,7 +312,7 @@
 					</tr>
 				{:else if paginatedData().length === 0}
 					<tr>
-						<td colspan={columns.length + (showActions ? 1 : 0)} class="px-4 py-8 text-center">
+						<td colspan={columns.length + (hasActions ? 1 : 0)} class="px-4 py-8 text-center">
 							<div class="text-gray-500">
 								<svg
 									class="mx-auto h-12 w-12 text-gray-400 mb-2"
@@ -319,9 +339,51 @@
 									{@html getCellValue(row, column)}
 								</td>
 							{/each}
-							{#if showActions && actionColumn}
+							{#if hasActions}
 								<td class="px-4 py-3 text-right">
-									{@render actionColumn({ row })}
+									<div class="flex justify-end gap-2">
+										{#if actionColumn}
+											{@render actionColumn({ row })}
+										{:else if actions}
+											{#each actions(row) as action}
+												<button
+													type="button"
+													onclick={action.onClick}
+													class="text-sm font-medium {action.class || 'text-indigo-600 hover:text-indigo-900'}"
+												>
+													{#if action.icon}
+														<span class="mr-1">{action.icon}</span>
+													{/if}
+													{action.label}
+												</button>
+											{/each}
+										{:else}
+											{#if onEdit}
+												<button
+													type="button"
+													onclick={() => onEdit?.(row)}
+													class="text-indigo-600 hover:text-indigo-900"
+													title="Edit"
+												>
+													<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+													</svg>
+												</button>
+											{/if}
+											{#if onDelete}
+												<button
+													type="button"
+													onclick={() => onDelete?.(row)}
+													class="text-red-600 hover:text-red-900"
+													title="Delete"
+												>
+													<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+													</svg>
+												</button>
+											{/if}
+										{/if}
+									</div>
 								</td>
 							{/if}
 						</tr>

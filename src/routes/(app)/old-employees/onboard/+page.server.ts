@@ -4,11 +4,16 @@ import { ObjectId } from 'mongodb';
 import { fail, redirect } from '@sveltejs/kit';
 import { hash } from '@node-rs/argon2';
 import { identityRepository } from '$lib/db/identity-repository';
+import { logEmployeeLifecycle } from '$lib/audit/logger';
 
 export const actions = {
-	default: async ({ request }) => {
+	default: async ({ request, getClientAddress, locals }) => {
 		const db = getDB();
 		const formData = await request.formData();
+
+		const ipAddress = getClientAddress();
+		const userAgent = request.headers.get('user-agent') || undefined;
+		const performedBy = locals.user?.userId?.toString() || 'system';
 
 		// Parse form data
 		const data = {
@@ -110,23 +115,29 @@ export const actions = {
 				createdBy: 'system' // TODO: Get from session
 			});
 
-			// Log audit trail
-			await db.collection('audit_log').insertOne({
-				timestamp: new Date(),
-				action: 'employee.onboarding',
-				resourceType: 'identity',
-				resourceId: identity._id?.toString(),
-				identityId: identity._id?.toString(), // Updated field name
-				details: {
-					employeeId: data.employeeId,
-					fullName: `${data.firstName} ${data.lastName}`,
-					ssoAccountCreated: data.createSSOAccount,
-					username: identity.username,
-					isActive: identity.isActive
-				},
-				ipAddress: null,
-				userAgent: null
-			});
+			// Get org unit and position names for audit log
+			const orgUnit = data.orgUnitId
+				? await db.collection('org_units').findOne({ _id: new ObjectId(data.orgUnitId) })
+				: null;
+			const position = data.positionId
+				? await db.collection('positions').findOne({ _id: new ObjectId(data.positionId) })
+				: null;
+
+			// Log employee onboarding
+			await logEmployeeLifecycle(
+				'employee_onboard',
+				performedBy,
+				data.employeeId,
+				{
+					employeeName: `${data.firstName} ${data.lastName}`,
+					newOrgUnit: orgUnit?.name,
+					newPosition: position?.name,
+					effectiveDate: new Date(data.joinDate),
+					ipAddress,
+					userAgent,
+					organizationId: data.organizationId
+				}
+			);
 
 			// Create assignment history entry
 			await db.collection('employee_history').insertOne({

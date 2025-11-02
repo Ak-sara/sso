@@ -14,19 +14,48 @@ export const load: PageServerLoad = async () => {
 		};
 	}
 
+	// Helper to convert date to ISO string (handles both Date objects and strings)
+	const toISOStringSafe = (date: any): string | undefined => {
+		if (!date) return undefined;
+		if (typeof date === 'string') return date;
+		if (date instanceof Date) return date.toISOString();
+		try {
+			return new Date(date).toISOString();
+		} catch {
+			return undefined;
+		}
+	};
+
+	// Helper to convert ObjectId to string
+	const toStringSafe = (value: any): string | undefined => {
+		if (!value) return undefined;
+		if (typeof value === 'string') return value;
+		return value.toString();
+	};
+
 	return {
 		identities: allIdentities.map(identity => ({
 			...identity,
 			_id: identity._id?.toString() || '',
-			createdAt: identity.createdAt?.toISOString() || new Date().toISOString(),
-			updatedAt: identity.updatedAt?.toISOString() || new Date().toISOString(),
-			lastLogin: identity.lastLogin?.toISOString(),
-			joinDate: identity.joinDate?.toISOString(),
-			endDate: identity.endDate?.toISOString(),
-			probationEndDate: identity.probationEndDate?.toISOString(),
-			dateOfBirth: identity.dateOfBirth?.toISOString(),
-			contractStartDate: identity.contractStartDate?.toISOString(),
-			contractEndDate: identity.contractEndDate?.toISOString()
+			organizationId: toStringSafe(identity.organizationId),
+			orgUnitId: toStringSafe(identity.orgUnitId),
+			positionId: toStringSafe(identity.positionId),
+			managerId: toStringSafe(identity.managerId),
+			createdAt: toISOStringSafe(identity.createdAt) || new Date().toISOString(),
+			updatedAt: toISOStringSafe(identity.updatedAt) || new Date().toISOString(),
+			lastLogin: toISOStringSafe(identity.lastLogin),
+			joinDate: toISOStringSafe(identity.joinDate),
+			endDate: toISOStringSafe(identity.endDate),
+			probationEndDate: toISOStringSafe(identity.probationEndDate),
+			dateOfBirth: toISOStringSafe(identity.dateOfBirth),
+			contractStartDate: toISOStringSafe(identity.contractStartDate),
+			contractEndDate: toISOStringSafe(identity.contractEndDate),
+			// Convert arrays of ObjectIds if they exist
+			secondaryAssignments: identity.secondaryAssignments?.map((assignment: any) => ({
+				...assignment,
+				orgUnitId: toStringSafe(assignment.orgUnitId),
+				positionId: toStringSafe(assignment.positionId)
+			}))
 		}))
 	};
 };

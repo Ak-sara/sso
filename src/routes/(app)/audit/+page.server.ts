@@ -1,6 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { getDB } from '$lib/db/connection';
 import { sanitizePaginationParams } from '$lib/utils/pagination';
+import { ObjectId } from 'mongodb';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const db = getDB();
@@ -17,9 +18,8 @@ export const load: PageServerLoad = async ({ url }) => {
 		? {
 				$or: [
 					{ action: { $regex: params.search, $options: 'i' } },
-					{ userId: { $regex: params.search, $options: 'i' } },
-					{ targetType: { $regex: params.search, $options: 'i' } },
-					{ details: { $regex: params.search, $options: 'i' } }
+					{ resource: { $regex: params.search, $options: 'i' } },
+					{ resourceId: { $regex: params.search, $options: 'i' } }
 				]
 		  }
 		: {};
@@ -38,12 +38,46 @@ export const load: PageServerLoad = async ({ url }) => {
 		db.collection('audit_logs').countDocuments(searchFilter)
 	]);
 
+	// Fetch user info for identityId references
+	const identityIds = auditLogs
+		.map(log => log.identityId)
+		.filter(id => id && id !== 'system' && ObjectId.isValid(id));
+
+	const identities = identityIds.length > 0
+		? await db.collection('identities')
+			.find({ _id: { $in: identityIds.map(id => new ObjectId(id)) } })
+			.toArray()
+		: [];
+
+	const identityMap = new Map(
+		identities.map(identity => [
+			identity._id.toString(),
+			{
+				fullName: identity.fullName,
+				email: identity.email,
+				username: identity.username,
+				employeeId: identity.employeeId
+			}
+		])
+	);
+
 	return {
-		auditLogs: auditLogs.map((log) => ({
-			...log,
-			_id: log._id.toString(),
-			timestamp: log.timestamp.toISOString()
-		})),
+		auditLogs: auditLogs.map((log) => {
+			const identity = log.identityId && log.identityId !== 'system'
+				? identityMap.get(log.identityId)
+				: null;
+
+			return {
+				...log,
+				_id: log._id.toString(),
+				timestamp: log.timestamp.toISOString(),
+				identityInfo: identity ? {
+					name: identity.fullName || identity.username,
+					email: identity.email,
+					employeeId: identity.employeeId
+				} : (log.identityId === 'system' ? { name: 'System', email: null, employeeId: null } : null)
+			};
+		}),
 		pagination: {
 			page: params.page,
 			pageSize: params.pageSize,

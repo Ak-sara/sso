@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { identityRepository } from '$lib/db/identity-repository';
 import { passwordService } from '$lib/auth/password';
 import { sessionManager } from '$lib/auth/session';
+import { logAuth } from '$lib/audit/logger';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -13,10 +14,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, cookies }) => {
+	default: async ({ request, cookies, getClientAddress }) => {
 		const data = await request.formData();
 		const username = data.get('email')?.toString(); // Can be email or NIK
 		const password = data.get('password')?.toString();
+
+		const ipAddress = getClientAddress();
+		const userAgent = request.headers.get('user-agent') || undefined;
 
 		if (!username || !password) {
 			return fail(400, {
@@ -29,6 +33,14 @@ export const actions: Actions = {
 		const identity = await identityRepository.findByEmailOrNIK(username);
 
 		if (!identity) {
+			// Log failed login attempt
+			await logAuth('login_failed', undefined, {
+				ipAddress,
+				userAgent,
+				username,
+				reason: 'Identity not found'
+			});
+
 			return fail(401, {
 				error: 'Username/Email/NIK atau password salah',
 				email: username,
@@ -36,6 +48,15 @@ export const actions: Actions = {
 		}
 
 		if (!identity.isActive) {
+			// Log failed login attempt (inactive account)
+			await logAuth('login_failed', identity._id!.toString(), {
+				ipAddress,
+				userAgent,
+				email: identity.email,
+				username: identity.username,
+				reason: 'Account inactive'
+			});
+
 			return fail(403, {
 				error: 'Akun Anda tidak aktif. Silakan hubungi administrator.',
 				email: username,
@@ -45,6 +66,15 @@ export const actions: Actions = {
 		const isPasswordValid = await passwordService.verifyPassword(identity.password, password);
 
 		if (!isPasswordValid) {
+			// Log failed login attempt (wrong password)
+			await logAuth('login_failed', identity._id!.toString(), {
+				ipAddress,
+				userAgent,
+				email: identity.email,
+				username: identity.username,
+				reason: 'Invalid password'
+			});
+
 			return fail(401, {
 				error: 'Username/Email/NIK atau password salah',
 				email: username,
@@ -64,6 +94,14 @@ export const actions: Actions = {
 		);
 
 		sessionManager.setSessionCookie(cookies, session.sessionId);
+
+		// Log successful login
+		await logAuth('login', identity._id!.toString(), {
+			ipAddress,
+			userAgent,
+			email: identity.email,
+			username: identity.username
+		});
 
 		throw redirect(302, '/');
 	},

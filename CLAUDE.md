@@ -219,13 +219,21 @@ A Keycloak-like SSO system with advanced employee lifecycle management, organiza
 - ✅ **SCIM 2.0**: Full implementation with /Users and /Groups endpoints (uses unified identity model)
 
 ## Audit & Logging
+- ✅ **Comprehensive Audit Logging System** ✨ NEW! (November 2025)
+  - ✅ Reusable audit logger utility with helper functions
+  - ✅ Middleware for automatic 401/403 tracking
+  - ✅ Type-safe audit actions with TypeScript
+  - ✅ Request metadata capture (IP, user agent)
+  - ✅ Non-blocking - audit failures don't break operations
 - ✅ Audit log schema
-- ✅ Audit log UI (stub page)
+- ✅ Audit log UI (fully functional with pagination, search, filters)
 - ✅ Automatic audit trail for:
-  - Employee onboarding
-  - Employee mutation
-  - Employee offboarding
-  - User creation
+  - **Authentication**: login, logout, login failures
+  - **Employee lifecycle**: onboarding, mutation, transfer, promotion, demotion, offboarding
+  - **OAuth**: token grants, token refresh, client operations
+  - **Identity operations**: create, update, delete, activate, deactivate
+  - **Organization management**: org/unit/position CRUD
+  - **Access control**: access granted/denied events
 
 ## SCIM 2.0 Integration (ENTERPRISE-GRADE! 🏆)
 
@@ -339,15 +347,8 @@ Aksara SSO implements Keycloak-like features with HR-centric enhancements:
 ## 🚧 Keycloak Features TO IMPLEMENT
 
 ### High Priority
-- [ ] **Identity Providers (Social Login)**:
-  - [ ] Google OAuth
-  - [ ] Microsoft Azure AD / Entra ID (as IdP, not just sync)
-  - [ ] SAML 2.0 support
-  - [ ] Identity Brokering
-
 - [ ] **Multi-Factor Authentication (MFA)**:
   - [ ] TOTP (Time-based One-Time Password)
-  - [ ] SMS OTP
   - [ ] Email OTP
   - [ ] Backup codes
 
@@ -413,6 +414,29 @@ Aksara SSO implements Keycloak-like features with HR-centric enhancements:
 ---
 
 # 📋 Implementation Todos (Updated)
+## Unfinished last-session
+simplify and standardize Datatable Pattern, Should Be:
+1. DataTable: Only onEdit (which opens detail/edit page) and onDelete
+2. Create button: Opens same page with empty data
+3. Detail page: Handles create/view/edit in one unified form
+<DataTable
+    onEdit={(row) => edit(row)}
+    onDelete={(row) => delete(row)}
+  />
+☐ Simplify DataTable - remove onView, keep only onEdit and onDelete
+☐ Update identities to support create with unified form
+☐ Apply pattern to org-units
+☐ Apply pattern to other entities (old-employees, etc)
+
+## ✨ Recent Completions (November 2, 2025)
+- [✅] **Comprehensive Audit Logging System**
+  - Created reusable audit logger utility (`src/lib/audit/logger.ts`)
+  - Implemented audit middleware in `hooks.server.ts`
+  - Integrated into authentication (login/logout/failures)
+  - Integrated into employee lifecycle (onboard/mutation/offboard)
+  - Integrated into OAuth operations (token grant/refresh)
+  - Non-blocking, type-safe, with automatic metadata capture
+  - Full documentation in `src/lib/audit/README.md`
 
 ## Core Authentication & Authorization
 - [x] Setup MongoDB Atlas connection and schemas
@@ -504,7 +528,7 @@ Aksara SSO implements Keycloak-like features with HR-centric enhancements:
 - [ ] Add partner profile management
 
 ## Security & Compliance
-- [x] Implement audit logging (schema + UI stub)
+- [x] **✅ Comprehensive audit logging system** (COMPLETED - November 2025)
 - [ ] Add data encryption at rest
 - [ ] Implement API rate limiting
 - [ ] Create security headers and CORS policies

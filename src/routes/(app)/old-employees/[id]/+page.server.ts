@@ -2,6 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { getDB } from '$lib/db/connection';
 import { ObjectId } from 'mongodb';
 import { error, fail } from '@sveltejs/kit';
+import { logEmployeeLifecycle, logIdentityOperation } from '$lib/audit/logger';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const db = getDB();
@@ -92,9 +93,13 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions = {
-	update: async ({ request, params }) => {
+	update: async ({ request, params, getClientAddress, locals }) => {
 		const db = getDB();
 		const formData = await request.formData();
+
+		const ipAddress = getClientAddress();
+		const userAgent = request.headers.get('user-agent') || undefined;
+		const performedBy = locals.user?.userId?.toString() || 'system';
 
 		const updateData = {
 			firstName: formData.get('firstName') as string,
@@ -124,17 +129,18 @@ export const actions = {
 				{ $set: updateData }
 			);
 
-			// Create audit log
-			await db.collection('audit_log').insertOne({
-				timestamp: new Date(),
-				action: 'employee.update',
-				resourceType: 'employee',
-				resourceId: params.id,
-				userId: 'system',
-				details: updateData,
-				ipAddress: null,
-				userAgent: null
-			});
+			// Log identity update
+			await logIdentityOperation(
+				'update_identity',
+				performedBy,
+				params.id,
+				{
+					identityType: 'employee',
+					changes: updateData,
+					ipAddress,
+					userAgent
+				}
+			);
 
 			return { success: true };
 		} catch (err) {
@@ -143,9 +149,13 @@ export const actions = {
 		}
 	},
 
-	mutation: async ({ request, params }) => {
+	mutation: async ({ request, params, getClientAddress, locals }) => {
 		const db = getDB();
 		const formData = await request.formData();
+
+		const ipAddress = getClientAddress();
+		const userAgent = request.headers.get('user-agent') || undefined;
+		const performedBy = locals.user?.userId?.toString() || 'system';
 
 		const mutationData = {
 			organizationId: formData.get('organizationId') as string,
@@ -204,17 +214,43 @@ export const actions = {
 				createdBy: 'system'
 			});
 
-			// Audit log
-			await db.collection('audit_log').insertOne({
-				timestamp: new Date(),
-				action: 'employee.mutation',
-				resourceType: 'employee',
-				resourceId: params.id,
-				userId: 'system',
-				details: mutationData,
-				ipAddress: null,
-				userAgent: null
-			});
+			// Get org unit and position names for audit log
+			const orgUnit = mutationData.orgUnitId
+				? await db.collection('org_units').findOne({ _id: new ObjectId(mutationData.orgUnitId) })
+				: null;
+			const position = mutationData.positionId
+				? await db.collection('positions').findOne({ _id: new ObjectId(mutationData.positionId) })
+				: null;
+			const prevOrgUnit = employee.orgUnitId
+				? await db.collection('org_units').findOne({ _id: new ObjectId(employee.orgUnitId.toString()) })
+				: null;
+			const prevPosition = employee.positionId
+				? await db.collection('positions').findOne({ _id: new ObjectId(employee.positionId.toString()) })
+				: null;
+
+			// Determine mutation action type
+			const mutationAction = mutationData.mutationType === 'promotion' ? 'employee_promotion' :
+				mutationData.mutationType === 'demotion' ? 'employee_demotion' :
+				mutationData.mutationType === 'transfer' ? 'employee_transfer' : 'employee_mutation';
+
+			// Log employee mutation
+			await logEmployeeLifecycle(
+				mutationAction as any,
+				performedBy,
+				employee.employeeId,
+				{
+					employeeName: employee.fullName,
+					previousOrgUnit: prevOrgUnit?.name,
+					newOrgUnit: orgUnit?.name,
+					previousPosition: prevPosition?.name,
+					newPosition: position?.name,
+					reason: mutationData.mutationType,
+					effectiveDate: new Date(mutationData.effectiveDate),
+					ipAddress,
+					userAgent,
+					organizationId: mutationData.organizationId
+				}
+			);
 
 			return { success: true };
 		} catch (err) {
@@ -223,9 +259,13 @@ export const actions = {
 		}
 	},
 
-	offboard: async ({ request, params }) => {
+	offboard: async ({ request, params, getClientAddress, locals }) => {
 		const db = getDB();
 		const formData = await request.formData();
+
+		const ipAddress = getClientAddress();
+		const userAgent = request.headers.get('user-agent') || undefined;
+		const performedBy = locals.user?.userId?.toString() || 'system';
 
 		const offboardData = {
 			terminationDate: formData.get('terminationDate') as string,
@@ -290,17 +330,30 @@ export const actions = {
 				createdBy: 'system'
 			});
 
-			// Audit log
-			await db.collection('audit_log').insertOne({
-				timestamp: new Date(),
-				action: 'employee.offboarding',
-				resourceType: 'employee',
-				resourceId: params.id,
-				userId: 'system',
-				details: offboardData,
-				ipAddress: null,
-				userAgent: null
-			});
+			// Get current assignment info for audit log
+			const orgUnit = employee.orgUnitId
+				? await db.collection('org_units').findOne({ _id: employee.orgUnitId })
+				: null;
+			const position = employee.positionId
+				? await db.collection('positions').findOne({ _id: employee.positionId })
+				: null;
+
+			// Log employee offboarding
+			await logEmployeeLifecycle(
+				'employee_offboard',
+				performedBy,
+				employee.employeeId,
+				{
+					employeeName: employee.fullName,
+					previousOrgUnit: orgUnit?.name,
+					previousPosition: position?.name,
+					reason: offboardData.terminationReason,
+					effectiveDate: new Date(offboardData.terminationDate),
+					ipAddress,
+					userAgent,
+					organizationId: employee.organizationId?.toString()
+				}
+			);
 
 			return { success: true };
 		} catch (err) {
