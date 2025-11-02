@@ -57,12 +57,16 @@ export const actions = {
 
 			// Generate default config
 			const config = buildDefaultMermaidConfig(version.structure.orgUnits);
+			console.log('Generated config:', JSON.stringify(config, null, 2));
 
 			// Regenerate diagram with new config
 			const mermaidDiagram = generateOrgStructureMermaid({
 				...version,
 				mermaidConfig: config
 			} as any);
+
+			console.log('Generated mermaid diagram:');
+			console.log(mermaidDiagram);
 
 			// Update version
 			await db.collection('org_structure_versions').updateOne(
@@ -79,7 +83,8 @@ export const actions = {
 			return { success: true, message: 'Config generated successfully' };
 		} catch (err) {
 			console.error('Generate config error:', err);
-			return fail(500, { error: 'Failed to generate config' });
+			const errorMessage = err instanceof Error ? err.message : 'Failed to generate config';
+			return fail(500, { error: errorMessage });
 		}
 	},
 
@@ -103,11 +108,16 @@ export const actions = {
 				return fail(404, { error: 'Version not found' });
 			}
 
+			console.log('Saving config:', JSON.stringify(config, null, 2));
+
 			// Regenerate diagram with updated config
 			const mermaidDiagram = generateOrgStructureMermaid({
 				...version,
 				mermaidConfig: config
 			} as any);
+
+			console.log('Generated mermaid diagram:');
+			console.log(mermaidDiagram);
 
 			// Update version
 			await db.collection('org_structure_versions').updateOne(
@@ -124,7 +134,8 @@ export const actions = {
 			return { success: true, mermaidDiagram };
 		} catch (err) {
 			console.error('Save config error:', err);
-			return fail(500, { error: 'Failed to save config' });
+			const errorMessage = err instanceof Error ? err.message : 'Failed to save config';
+			return fail(500, { error: errorMessage });
 		}
 	},
 

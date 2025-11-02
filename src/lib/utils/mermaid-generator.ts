@@ -70,7 +70,8 @@ function generateWithConfig(
 
 	// 1. Render all logical groups as subgraphs
 	for (const group of config.logicalGroups) {
-		const label = group.label !== undefined ? `["${escapeName(group.label)}"]` : '[ ]';
+		// Only add label if it exists and is not empty
+		const label = group.label && group.label.trim() !== '' ? ` ["${escapeName(group.label)}"]` : '';
 		mermaid += `    subgraph ${group.id}${label}\n`;
 
 		if (group.direction) {
@@ -89,7 +90,7 @@ function generateWithConfig(
 		mermaid += `    end\n\n`;
 	}
 
-	// 2. Render hierarchy connections for units in logical groups
+	// 2. Build children map for all parent-child relationships
 	const childrenMap = new Map<string | null, typeof orgUnits>();
 	for (const unit of orgUnits) {
 		const parentId = unit.parentId || null;
@@ -99,20 +100,66 @@ function generateWithConfig(
 		childrenMap.get(parentId)!.push(unit);
 	}
 
+	// 3. Render units not in any logical group
+	// Skip units whose code matches a logical group ID (they're just containers)
+	const logicalGroupIds = new Set(config.logicalGroups.map(g => g.id));
+
 	for (const unit of orgUnits) {
-		if (processedUnits.has(unit.code)) {
-			const children = childrenMap.get(unit._id) || [];
-			for (const child of children) {
-				if (processedUnits.has(child.code)) {
-					mermaid += `    ${getNodeId(unit.code)} --> ${getNodeId(child.code)}\n`;
-				}
-			}
+		if (!processedUnits.has(unit.code) && !logicalGroupIds.has(unit.code)) {
+			mermaid += `    ${getNodeShape(unit)}\n`;
 		}
 	}
 
 	mermaid += '\n';
 
-	// 3. Render special connections
+	// 4. Build set of connections that have special overrides
+	const specialConnectionPairs = new Set<string>();
+	for (const conn of config.specialConnections) {
+		if (conn.type === 'hierarchy') {
+			// For hierarchy type, we're overriding the parent-child relationship
+			specialConnectionPairs.add(`${conn.from}-->${conn.to}`);
+		}
+	}
+
+	// Also track which units are inside logical groups
+	const unitsInLogicalGroups = new Set<string>();
+	for (const group of config.logicalGroups) {
+		for (const code of group.contains) {
+			unitsInLogicalGroups.add(code);
+		}
+	}
+
+	// 5. Render hierarchy connections, but skip:
+	// - Connections involving units that match logical group IDs
+	// - Connections that have special connection overrides
+	// - Connections between units in the same logical group
+	for (const unit of orgUnits) {
+		// Skip if this unit's code matches a logical group ID
+		if (logicalGroupIds.has(unit.code)) {
+			continue;
+		}
+
+		const children = childrenMap.get(unit._id) || [];
+		for (const child of children) {
+			// Skip if child's code matches a logical group ID
+			if (logicalGroupIds.has(child.code)) {
+				continue;
+			}
+
+			const connectionKey = `${unit.code}-->${child.code}`;
+
+			// Skip if there's a special connection override
+			if (specialConnectionPairs.has(connectionKey)) {
+				continue;
+			}
+
+			mermaid += `    ${getNodeId(unit.code)} --> ${getNodeId(child.code)}\n`;
+		}
+	}
+
+	mermaid += '\n';
+
+	// 6. Render special connections
 	for (const conn of config.specialConnections) {
 		const arrow = conn.type === 'matrix' ? '-.-> ' :
 		              conn.type === 'alignment' ? '~~~ ' :
@@ -120,19 +167,7 @@ function generateWithConfig(
 		mermaid += `    ${getNodeId(conn.from)} ${arrow}${getNodeId(conn.to)}\n`;
 	}
 
-	// 4. Render units not in any logical group
-	for (const unit of orgUnits) {
-		if (!processedUnits.has(unit.code)) {
-			mermaid += `    ${getNodeShape(unit)}\n`;
-
-			const children = childrenMap.get(unit._id) || [];
-			for (const child of children) {
-				mermaid += `    ${getNodeId(unit.code)} --> ${getNodeId(child.code)}\n`;
-			}
-		}
-	}
-
-	// 5. Add CSS class styling
+	// 7. Add CSS class styling
 	mermaid += '\n';
 	mermaid += '    classDef board fill:#e3f2fd,stroke:#1976d2,stroke-width:3px\n';
 	mermaid += '    classDef directorate fill:#fff3e0,stroke:#f57c00,stroke-width:2px\n';

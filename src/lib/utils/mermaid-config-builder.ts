@@ -32,17 +32,42 @@ export function buildDefaultMermaidConfig(orgUnits: OrgUnit[]): MermaidConfig {
 	};
 
 	// Find key units
+	const bod = unitByCode.get('BOD'); // Board of Directors (actual unit, not logical group)
 	const du = unitByCode.get('DU'); // Direktur Utama
 	const dc = unitByCode.get('DC'); // Direktur Komersial
 	const sbucl = unitByCode.get('SBUCL'); // SBU Cargo & Logistics
 
-	if (!du) {
-		// No DU found, return simple config
+	// If BOD exists as an actual unit, directors are children of BOD
+	// Otherwise, directors are children of DU
+	const directorsParent = bod || du;
+
+	if (!directorsParent) {
+		// No BOD or DU found, return simple config
 		return config;
 	}
 
-	// Get all directors under DU
-	const directors = (childrenMap.get(du._id) || []).filter(u => u.type === 'directorate');
+	// Get all children of BOD/DU
+	const directorsParentChildren = childrenMap.get(directorsParent._id) || [];
+
+	// Separate directors from other children
+	const directors = directorsParentChildren.filter(u => u.type === 'directorate');
+
+	console.log('[Config Builder] Found directors under', directorsParent.code + ':', directors.map(d => d.code));
+
+	// If BOD exists, create BOD logical group with all directors
+	if (bod) {
+		const bodMembers = directors.map(d => d.code);
+		console.log('[Config Builder] Creating BOD logical group with:', bodMembers);
+
+		config.logicalGroups.push({
+			id: 'BOD',
+			label: '',
+			type: 'wrapper',
+			direction: 'TB',
+			contains: bodMembers,
+			styling: { transparent: false },
+		});
+	}
 
 	// Collect all division codes across all directors
 	const allDivisionCodes: string[] = [];
@@ -51,20 +76,58 @@ export function buildDefaultMermaidConfig(orgUnits: OrgUnit[]): MermaidConfig {
 	for (const director of directors) {
 		const divisions = childrenMap.get(director._id) || [];
 
-		if (divisions.length > 0) {
-			const divisionCodes = divisions.map(d => d.code);
-			allDivisionCodes.push(...divisionCodes);
+		console.log(`[Config Builder] Director ${director.code} has children:`, divisions.map(d => d.code));
 
-			// Create a logical group for this director's divisions
-			// DD + director code (e.g., DDC, DDO, DDR)
-			config.logicalGroups.push({
-				id: `DD${director.code}`,
-				label: '',
-				type: 'positioning',
-				direction: 'LR',
-				contains: divisionCodes,
-				styling: { transparent: true },
-			});
+		// Handle special case: DDB is a directorate unit under DU, not a logical group
+		if (director.code === 'DU') {
+			// DU's children include DDB directorate
+			const ddb = divisions.find(d => d.code === 'DDB');
+			if (ddb) {
+				// Get divisions under DDB
+				const ddbDivisions = childrenMap.get(ddb._id) || [];
+				if (ddbDivisions.length > 0) {
+					const ddbCodes = ddbDivisions.map(d => d.code);
+					console.log('[Config Builder] Creating DDB logical group with:', ddbCodes);
+
+					config.logicalGroups.push({
+						id: 'DDB',
+						label: '',
+						type: 'positioning',
+						direction: 'TB',
+						contains: ddbCodes,
+						styling: { transparent: true },
+					});
+
+					// Add special connection DU --> DDB
+					config.specialConnections.push({
+						from: 'DU',
+						to: 'DDB',
+						type: 'hierarchy',
+					});
+				}
+			}
+		} else {
+			// For other directors, create logical groups for their divisions
+			const divisionsOnly = divisions.filter(d => d.type === 'division');
+
+			if (divisionsOnly.length > 0) {
+				const divisionCodes = divisionsOnly.map(d => d.code);
+				allDivisionCodes.push(...divisionCodes);
+
+				// Create a logical group for this director's divisions
+				// DD + director code (e.g., DDC, DDO, DDR, DDK, DDH)
+				const groupId = `DD${director.code}`;
+				console.log(`[Config Builder] Creating logical group ${groupId} with:`, divisionCodes);
+
+				config.logicalGroups.push({
+					id: groupId,
+					label: '',
+					type: 'positioning',
+					direction: 'LR',
+					contains: divisionCodes,
+					styling: { transparent: true },
+				});
+			}
 		}
 	}
 
@@ -79,13 +142,27 @@ export function buildDefaultMermaidConfig(orgUnits: OrgUnit[]): MermaidConfig {
 		});
 	}
 
+	// Add connections from DU to other directors (override database structure)
+	// In the database, BOD is parent of all directors, but visually we want DU --> other directors
+	if (du) {
+		const otherDirectors = directors.filter(d => d.code !== 'DU');
+		for (const director of otherDirectors) {
+			config.specialConnections.push({
+				from: 'DU',
+				to: director.code,
+				type: 'hierarchy',
+			});
+		}
+		console.log('[Config Builder] Added DU --> director connections:', otherDirectors.map(d => d.code));
+	}
+
 	// Add special connections
 	// BOD --> SBUCL (if SBU exists)
 	if (sbucl) {
 		config.specialConnections.push({
 			from: 'BOD',
 			to: 'SBUCL',
-			type: 'hierarchy',
+			type: 'alignment',
 		});
 
 		// DC -.-> SBUCL (matrix reporting)
