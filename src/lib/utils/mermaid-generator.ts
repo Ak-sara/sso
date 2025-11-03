@@ -68,26 +68,50 @@ function generateWithConfig(
 		}
 	};
 
-	// 1. Render all logical groups as subgraphs
-	for (const group of config.logicalGroups) {
-		// Only add label if it exists and is not empty
+	// 1. Render logical groups as nested subgraphs
+	// Build group hierarchy
+	const groupMap = new Map(config.logicalGroups.map(g => [g.id, g]));
+	const processedGroups = new Set<string>();
+
+	// Recursive function to render a group and its nested children
+	const renderGroup = (group: typeof config.logicalGroups[0], depth: number = 0): string => {
+		if (processedGroups.has(group.id)) return '';
+		processedGroups.add(group.id);
+
+		const indent = '    '.repeat(depth + 1);
 		const label = group.label && group.label.trim() !== '' ? ` ["${escapeName(group.label)}"]` : '';
-		mermaid += `    subgraph ${group.id}${label}\n`;
+		let groupMermaid = `${indent}subgraph ${group.id}${label}\n`;
 
 		if (group.direction) {
-			mermaid += `        direction ${group.direction}\n`;
+			groupMermaid += `${indent}    direction ${group.direction}\n`;
 		}
 
-		// Render units inside this logical group
-		for (const unitCode of group.contains) {
-			const unit = unitMap.get(unitCode);
-			if (unit) {
-				mermaid += `        ${getNodeShape(unit)}\n`;
-				processedUnits.add(unitCode);
+		// Render items in contains (could be child groups OR units)
+		for (const itemCode of group.contains) {
+			// First, check if it's a child group
+			const childGroup = groupMap.get(itemCode);
+			if (childGroup) {
+				// It's a group - render it recursively (nested subgraph)
+				groupMermaid += renderGroup(childGroup, depth + 1);
+			} else {
+				// It's not a group - check if it's a unit
+				const unit = unitMap.get(itemCode);
+				if (unit) {
+					groupMermaid += `${indent}    ${getNodeShape(unit)}\n`;
+					processedUnits.add(itemCode);
+				}
 			}
 		}
 
-		mermaid += `    end\n\n`;
+		groupMermaid += `${indent}end\n\n`;
+		return groupMermaid;
+	};
+
+	// Render top-level groups (those without a parent)
+	for (const group of config.logicalGroups) {
+		if (!group.parent) {
+			mermaid += renderGroup(group);
+		}
 	}
 
 	// 2. Build children map for all parent-child relationships
@@ -159,7 +183,23 @@ function generateWithConfig(
 
 	mermaid += '\n';
 
-	// 6. Render special connections
+	// 6. Render logical group parent connections (unit → group arrows)
+	// When a group has a parent that is a unit code (not a group ID), create arrow
+	for (const group of config.logicalGroups) {
+		if (group.parent) {
+			// Check if parent is a unit code (not a group ID)
+			const parentUnit = unitMap.get(group.parent);
+			if (parentUnit) {
+				// It's a unit → group connection
+				mermaid += `    ${getNodeId(group.parent)} --> ${group.id}\n`;
+			}
+			// If parent is a group ID, nesting is already handled in renderGroup()
+		}
+	}
+
+	mermaid += '\n';
+
+	// 7. Render special connections
 	for (const conn of config.specialConnections) {
 		const arrow = conn.type === 'matrix' ? '-.-> ' :
 		              conn.type === 'alignment' ? '~~~ ' :
@@ -167,7 +207,7 @@ function generateWithConfig(
 		mermaid += `    ${getNodeId(conn.from)} ${arrow}${getNodeId(conn.to)}\n`;
 	}
 
-	// 7. Add CSS class styling
+	// 8. Add CSS class styling
 	mermaid += '\n';
 	mermaid += '    classDef board fill:#e3f2fd,stroke:#1976d2,stroke-width:3px\n';
 	mermaid += '    classDef directorate fill:#fff3e0,stroke:#f57c00,stroke-width:2px\n';

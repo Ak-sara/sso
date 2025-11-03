@@ -307,6 +307,36 @@
 		return str.split(',').map(s => s.trim()).filter(s => s.length > 0);
 	}
 
+	// Get parent options for logical groups (both units and other groups)
+	function getGroupParentOptions(currentGroupId: string) {
+		const options: Array<{ value: string | null; label: string; group?: string }> = [];
+
+		// Add empty option
+		options.push({ value: null, label: '-- No Parent (Top Level) --' });
+
+		// Add org units
+		for (const unit of data.version.structure.orgUnits) {
+			options.push({
+				value: unit.code,
+				label: `${unit.code} - ${unit.name}`,
+				group: 'Org Units (Unit → Group Arrow)'
+			});
+		}
+
+		// Add other logical groups
+		for (const group of config.logicalGroups) {
+			if (group.id !== currentGroupId) {
+				options.push({
+					value: group.id,
+					label: `${group.id}${group.label ? ` - ${group.label}` : ''}`,
+					group: 'Logical Groups (Group Nesting)'
+				});
+			}
+		}
+
+		return options;
+	}
+
 	// Remove logical group
 	function removeLogicalGroup(index: number) {
 		config.logicalGroups.splice(index, 1);
@@ -565,6 +595,10 @@
 							{:else}
 								<div class="space-y-3">
 									{#each config.logicalGroups as group, i}
+										{@const parentOpts = getGroupParentOptions(group.id)}
+										{@const emptyOpts = parentOpts.filter(o => !o.group)}
+										{@const unitOpts = parentOpts.filter(o => o.group === 'Org Units (Unit → Group Arrow)')}
+										{@const groupOpts = parentOpts.filter(o => o.group === 'Logical Groups (Group Nesting)')}
 										<div class="border rounded p-3 bg-gray-50">
 											<div class="flex items-center justify-between mb-2">
 												<input
@@ -586,6 +620,24 @@
 												placeholder="Label (optional)"
 												class="text-xs px-2 py-1 border rounded w-full mb-2"
 											/>
+											<select
+												bind:value={group.parent}
+												class="text-xs px-2 py-1 border rounded w-full mb-2"
+											>
+												{#each emptyOpts as option}
+													<option value={option.value}>{option.label}</option>
+												{/each}
+												<optgroup label="Org Units (Unit → Group Arrow)">
+													{#each unitOpts as option}
+														<option value={option.value}>{option.label}</option>
+													{/each}
+												</optgroup>
+												<optgroup label="Logical Groups (Group Nesting)">
+													{#each groupOpts as option}
+														<option value={option.value}>{option.label}</option>
+													{/each}
+												</optgroup>
+											</select>
 											<div class="grid grid-cols-2 gap-2 mb-2">
 												<select bind:value={group.type} class="text-xs px-2 py-1 border rounded">
 													<option value="wrapper">Wrapper</option>
@@ -652,18 +704,34 @@
 													🗑️
 												</button>
 											</div>
-											<input
-												type="text"
+											<label class="block text-xs text-gray-600 mb-1">From (Unit)</label>
+											<select
 												bind:value={conn.from}
-												placeholder="From (unit code)"
-												class="text-xs px-2 py-1 border rounded w-full mb-2 font-mono"
-											/>
-											<input
-												type="text"
+												class="text-xs px-2 py-1 border rounded w-full mb-2"
+											>
+												<option value="">-- Select Unit --</option>
+												{#each data.version.structure.orgUnits as unit}
+													<option value={unit.code}>{unit.code} - {unit.name}</option>
+												{/each}
+											</select>
+
+											<label class="block text-xs text-gray-600 mb-1">To (Unit or Group)</label>
+											<select
 												bind:value={conn.to}
-												placeholder="To (unit code)"
-												class="text-xs px-2 py-1 border rounded w-full mb-2 font-mono"
-											/>
+												class="text-xs px-2 py-1 border rounded w-full mb-2"
+											>
+												<option value="">-- Select Target --</option>
+												<optgroup label="Logical Groups">
+													{#each config.logicalGroups as group}
+														<option value={group.id}>{group.id} {group.label ? `- ${group.label}` : ''}</option>
+													{/each}
+												</optgroup>
+												<optgroup label="Org Units">
+													{#each data.version.structure.orgUnits as unit}
+														<option value={unit.code}>{unit.code} - {unit.name}</option>
+													{/each}
+												</optgroup>
+											</select>
 											<select bind:value={conn.type} class="text-xs px-2 py-1 border rounded w-full">
 												<option value="hierarchy">Hierarchy (→)</option>
 												<option value="matrix">Matrix (-.→)</option>

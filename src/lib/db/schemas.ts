@@ -329,9 +329,10 @@ export const OrgStructureVersionSchema = z.object({
 		logicalGroups: z.array(z.object({
 			id: z.string(),                    // DIR, DDK, DDC, CSG, LOGG, etc.
 			label: z.string().optional(),       // Display name (often empty for transparent groups)
+			parent: z.string().nullable().optional(), // Parent group ID for nesting (null/undefined = top-level)
 			type: z.enum(['wrapper', 'positioning', 'alignment']),
 			direction: z.enum(['TB', 'LR', 'RL', 'BT']).optional(),
-			contains: z.array(z.string()),      // Codes of real org units to include in this group
+			contains: z.array(z.string()),      // Codes of real org units OR child group IDs
 			styling: z.object({
 				transparent: z.boolean().default(false),
 			}).optional(),

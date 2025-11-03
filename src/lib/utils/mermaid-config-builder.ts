@@ -62,6 +62,7 @@ export function buildDefaultMermaidConfig(orgUnits: OrgUnit[]): MermaidConfig {
 		config.logicalGroups.push({
 			id: 'BOD',
 			label: '',
+			parent: null, // Top-level group
 			type: 'wrapper',
 			direction: 'TB',
 			contains: bodMembers,
@@ -69,8 +70,8 @@ export function buildDefaultMermaidConfig(orgUnits: OrgUnit[]): MermaidConfig {
 		});
 	}
 
-	// Collect all division codes across all directors
-	const allDivisionCodes: string[] = [];
+	// Collect group IDs that will be nested under DIR
+	const nestedGroupIds: string[] = [];
 
 	// Create logical groups for each director's divisions
 	for (const director of directors) {
@@ -92,11 +93,14 @@ export function buildDefaultMermaidConfig(orgUnits: OrgUnit[]): MermaidConfig {
 					config.logicalGroups.push({
 						id: 'DDB',
 						label: '',
+						parent: null, // Nesting handled by DIR.contains, parent is for arrows only
 						type: 'positioning',
 						direction: 'TB',
 						contains: ddbCodes,
 						styling: { transparent: true },
 					});
+
+					nestedGroupIds.push('DDB');
 
 					// Add special connection DU --> DDB
 					config.specialConnections.push({
@@ -112,32 +116,35 @@ export function buildDefaultMermaidConfig(orgUnits: OrgUnit[]): MermaidConfig {
 
 			if (divisionsOnly.length > 0) {
 				const divisionCodes = divisionsOnly.map(d => d.code);
-				allDivisionCodes.push(...divisionCodes);
 
 				// Create a logical group for this director's divisions
-				// DD + director code (e.g., DDC, DDO, DDR, DDK, DDH)
+				// DD + director code (e.g., DDC, DDDO, DDDR, DDDK, DDDH)
 				const groupId = `DD${director.code}`;
 				console.log(`[Config Builder] Creating logical group ${groupId} with:`, divisionCodes);
 
 				config.logicalGroups.push({
 					id: groupId,
 					label: '',
+					parent: null, // Nesting handled by DIR.contains, parent is for arrows only
 					type: 'positioning',
 					direction: 'LR',
 					contains: divisionCodes,
 					styling: { transparent: true },
 				});
+
+				nestedGroupIds.push(groupId);
 			}
 		}
 	}
 
-	// Create wrapper group DIR that contains all directorate divisions
-	if (allDivisionCodes.length > 0) {
+	// Create wrapper group DIR that contains nested group IDs (not division codes)
+	if (nestedGroupIds.length > 0) {
 		config.logicalGroups.unshift({
 			id: 'DIR',
 			label: '',
+			parent: null, // Top-level group
 			type: 'wrapper',
-			contains: allDivisionCodes,
+			contains: nestedGroupIds, // Contains group IDs: ['DDB', 'DDDC', 'DDDO', ...]
 			styling: { transparent: true },
 		});
 	}

@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bun -e:*)"
+      "Bash(bun -e:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

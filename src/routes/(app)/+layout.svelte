@@ -53,6 +53,7 @@
 			icon: '🏢',
 			items: [
 				{ name: 'Identitas', href: '/identities', icon: '👥' },
+				{ name: 'SK Penempatan', href: '/sk-penempatan', icon: '📋' },
 				{ name: 'Realm/Entitas', href: '/realms', icon: '🌐' },
 				{ name: 'Unit Kerja/Divisi', href: '/org-units', icon: '🏛️' },
 				{ name: 'Posisi/Jabatan', href: '/positions', icon: '💼' },
