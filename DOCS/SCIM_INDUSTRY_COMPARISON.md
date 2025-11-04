@@ -156,7 +156,7 @@ name.familyName co "Smith"
   "id": "507f...",
   "displayName": "IAS - Finance Division",
   "x-orgUnit": {
-    "unitType": "division",
+    "type": "division",
     "level": 3,
     "parentUnitId": "507f...",  // ✅ Parent reference
     "managerId": "user-123"      // ✅ Unit manager
@@ -310,7 +310,7 @@ const directManager = await getUser(employee.manager.value);
 ```json
 {
   "x-orgUnit": {
-    "unitType": "division",
+    "type": "division",
     "level": 3,
     "parentUnitId": "unit-parent",  // ✅ Hierarchy
     "managerId": "user-123"         // ✅ Manager assignment

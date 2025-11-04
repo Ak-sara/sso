@@ -369,7 +369,7 @@ Same query parameters as Users.
         }
       ],
       "x-orgUnit": {
-        "unitType": "division",
+        "type": "division",
         "level": 3,
         "parentUnitId": "507f1f77bcf86cd799439003",
         "managerId": "507f1f77bcf86cd799439015"
@@ -771,7 +771,7 @@ If webhook delivery fails:
 │  OFM App (localhost:5174)                   │
 │  - Periodic sync (every 6 hours)            │
 │  - Webhook receiver (real-time updates)     │
-│  - Local MongoDB (users, organizationalUnits)│
+│  - Local MongoDB (users, org_units)│
 │  - Approval logic (queries local DB)        │
 └──────────────────────────────────────────────┘
 ```
@@ -864,12 +864,12 @@ async function syncOrgUnits(groups: any[]) {
   for (const group of groups) {
     const orgUnitExt = group['x-orgUnit'];
 
-    await db.collection('organizationalUnits').updateOne(
+    await db.collection('org_units').updateOne(
       { _id: group.id },
       {
         $set: {
           unitName: group.displayName,
-          unitType: orgUnitExt?.unitType || 'department',
+          type: orgUnitExt?.type || 'department',
           level: orgUnitExt?.level || 1,
           parentUnitId: orgUnitExt?.parentUnitId,
           managerId: orgUnitExt?.managerId,
@@ -923,7 +923,7 @@ export async function getApprover(requestId: string) {
     .findOne({ userId: request.userId });
 
   // Get org unit
-  const orgUnit = await db.collection('organizationalUnits')
+  const orgUnit = await db.collection('org_units')
     .findOne({ _id: employee.departmentId });
 
   // Get manager (LOCAL QUERY - no SSO call!)
@@ -960,11 +960,11 @@ export async function getEscalationApprover(requestId: string) {
   const employee = await db.collection('users')
     .findOne({ userId: request.userId });
 
-  const orgUnit = await db.collection('organizationalUnits')
+  const orgUnit = await db.collection('org_units')
     .findOne({ _id: employee.departmentId });
 
   // Get parent unit
-  const parentUnit = await db.collection('organizationalUnits')
+  const parentUnit = await db.collection('org_units')
     .findOne({ _id: orgUnit.parentUnitId });
 
   // Get parent unit manager
@@ -1046,7 +1046,7 @@ export const POST: RequestHandler = async ({ request }) => {
       const group = event.data;
       const orgUnitExt = group['x-orgUnit'];
 
-      await db.collection('organizationalUnits').updateOne(
+      await db.collection('org_units').updateOne(
         { _id: group.id },
         {
           $set: {
@@ -1219,7 +1219,7 @@ curl -X PATCH http://localhost:5173/scim/v2/Users/507f... \
 ```json
 {
   "x-orgUnit": {
-    "unitType": "division",
+    "type": "division",
     "level": 3,
     "parentUnitId": "unit-parent",
     "managerId": "user-123"

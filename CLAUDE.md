@@ -34,9 +34,43 @@ A Keycloak-like SSO system with advanced employee lifecycle management, organiza
 
 # ✅ Completed Features
 
-## 🆕 Recent Additions (October 2025)
+## 🆕 Recent Additions (November 2025)
 
-### 🎉 Unified Identity Model (Latest - October 20, 2025)
+### 🎨 UI/UX Component System (Latest - November 4, 2025)
+- ✅ **LookupModal component** - Reusable modal-based lookup with server-side pagination
+  - Replaces long dropdown lists with searchable DataTable modal
+  - Used for parent unit selection, manager selection, etc.
+  - Supports row-click selection (no action buttons needed)
+  - Fixed pagination bug (proper URL query parameter handling)
+- ✅ **Enhanced DataTable** - Added `onRowClick` prop for lookup scenarios
+  - Entire rows clickable when used in lookup context
+  - Hides action column when only row click is needed
+  - Maintains existing action buttons for normal table usage
+- ✅ **Unified Edit Modals** - Consistent pattern across org-units and STO pages
+  - All canonical fields (type, organizationId, not deprecated fields)
+  - Read-only fields marked (level, sortOrder auto-calculated)
+  - Organization dropdown for short lists
+  - LookupModal for long lists (parent units, managers)
+- ✅ **Active Version Live Data** - STO page uses live org_units data for active versions
+  - Historical versions use frozen snapshots
+  - Edit changes immediately reflected in active version diagrams
+  - Non-active versions remain read-only with VIEW ONLY badge
+
+### 🧹 Codebase Cleanup (November 4, 2025)
+- ✅ **Script cleanup** - Removed 20 obsolete one-time migration/test scripts
+  - Kept core database management tools (seed, export, import, clone, stats)
+  - Kept integration utilities (SCIM client creation, regenerate mermaid)
+  - Removed analysis/check/test/migration scripts
+- ✅ **Documentation cleanup** - Removed 2 obsolete docs, auto-fixed 4 SCIM docs
+  - Deleted: STO_DATA_FIX_GUIDE.md, CSV_IMPORT_ENHANCEMENTS.md
+  - Auto-fixed: unitType → type, organizationalUnits → org_units
+  - Created manual update guide for 4 remaining docs needing review
+- ✅ **Field standardization** - All code uses canonical schema fields
+  - `type` (not `unitType`)
+  - `organizationId` (not `organization`)
+  - Cleanup script available for database
+
+### 🎉 Unified Identity Model (October 20, 2025)
 - ✅ **Single `identities` collection** - Replaces separate `users`, `employees`, `partners` collections
 - ✅ **Polymorphic schema** - One model for all identity types (employee, partner, external, service_account)
 - ✅ **Identity-based authentication** - Login with email, username, or NIK (employee ID)
@@ -414,19 +448,24 @@ Aksara SSO implements Keycloak-like features with HR-centric enhancements:
 ---
 
 # 📋 Implementation Todos (Updated)
-## Unfinished last-session
-simplify and standardize Datatable Pattern, Should Be:
-1. DataTable: Only onEdit (which opens detail/edit page) and onDelete
-2. Create button: Opens same page with empty data
-3. Detail page: Handles create/view/edit in one unified form
-<DataTable
-    onEdit={(row) => edit(row)}
-    onDelete={(row) => delete(row)}
-  />
-☐ Simplify DataTable - remove onView, keep only onEdit and onDelete
-☐ Update identities to support create with unified form
-☐ Apply pattern to org-units
-☐ Apply pattern to other entities (old-employees, etc)
+
+## ✨ Recent Completions (November 4, 2025)
+- [✅] **LookupModal Component System**
+  - Created reusable LookupModal component (`src/lib/components/LookupModal.svelte`)
+  - Enhanced DataTable with `onRowClick` prop for row-based selection
+  - Applied to org-units page (parent unit lookup, manager lookup)
+  - Applied to STO page edit modal (same pattern as org-units)
+  - Fixed pagination bug in LookupModal (proper URL query parameter handling)
+- [✅] **Active Version Live Data**
+  - Updated STO page load function to use live org_units data for active versions
+  - Historical versions use frozen snapshots from version.structure
+  - All STO actions (load, generateDefaultConfig, saveConfig, regenerateMermaid) support both modes
+- [✅] **Codebase Cleanup**
+  - Removed 20 obsolete scripts (analysis, check, test, migration)
+  - Kept 11 core scripts (database management + integration utilities)
+  - Removed 2 obsolete documentation files
+  - Auto-fixed 4 SCIM docs (unitType → type, organizationalUnits → org_units)
+  - Created _MANUAL_UPDATE_NEEDED.md guide for remaining docs
 
 ## ✨ Recent Completions (November 2, 2025)
 - [✅] **Comprehensive Audit Logging System**
@@ -683,6 +722,9 @@ simplify and standardize Datatable Pattern, Should Be:
 ```
 src/
 ├── lib/
+│   ├── components/
+│   │   ├── DataTable.svelte       # Reusable data table with pagination, search, sort
+│   │   └── LookupModal.svelte     # Modal-based lookup with server-side pagination (NEW!)
 │   ├── db/
 │   │   ├── connection.ts          # MongoDB connection
 │   │   ├── schemas.ts             # Zod schemas for all collections
@@ -690,7 +732,8 @@ src/
 │   ├── utils/
 │   │   ├── csv-parser.ts          # Generic CSV parser with column mapping
 │   │   ├── csv-exporter.ts        # Export collections to CSV
-│   │   └── reference-resolver.ts  # Resolve human-readable refs to ObjectIds
+│   │   ├── reference-resolver.ts  # Resolve human-readable refs to ObjectIds
+│   │   └── mermaid-generator.ts   # Generate org chart diagrams
 │   └── oauth/
 │       └── server.ts              # OAuth 2.0 implementation
 │
@@ -712,27 +755,30 @@ src/
 │   ├── (app)/                     # Admin console routes
 │   │   ├── +layout.svelte         # Main layout with navigation
 │   │   ├── +page.svelte           # Dashboard
-│   │   ├── employees/
-│   │   │   ├── +page.svelte       # Employee list
-│   │   │   ├── [id]/
-│   │   │   │   ├── +page.svelte   # Employee detail (4 tabs)
-│   │   │   │   └── +page.server.ts # Mutation/offboard actions
-│   │   │   ├── onboard/
-│   │   │   │   ├── +page.svelte   # Onboarding wizard
-│   │   │   │   └── +page.server.ts # Onboarding action
-│   │   │   └── sync/
-│   │   │       ├── +page.svelte   # Data sync UI
-│   │   │       └── +page.server.ts # Sync comparison logic
-│   │   ├── users/                 # SSO user management
-│   │   ├── partners/              # Partner management
-│   │   ├── realms/                # Realm/Organization management
+│   │   ├── identities/            # Unified identity management (NEW!)
+│   │   │   └── +page.svelte       # Tabbed interface for all identity types
 │   │   ├── org-units/             # Org unit management
+│   │   │   └── +page.svelte       # List with edit modal (uses LookupModal)
 │   │   ├── org-structure/         # Org chart visualizer
+│   │   │   └── [id]/sto/
+│   │   │       ├── +page.svelte   # Interactive diagram with pan/zoom
+│   │   │       └── +page.server.ts # Live data for active versions (NEW!)
 │   │   ├── positions/             # Position management
+│   │   ├── realms/                # Realm/Organization management
 │   │   ├── clients/               # OAuth client management
-│   │   ├── scim/                  # SCIM configuration
+│   │   ├── clients-scim/          # SCIM client management
+│   │   ├── sk-penempatan/         # Employee assignment decrees
 │   │   ├── entraid-sync/          # Entra ID sync config
 │   │   └── audit/                 # Audit log viewer
+│   │
+│   ├── api/                       # API endpoints (NEW section!)
+│   │   ├── identities/
+│   │   │   └── search/+server.ts  # Paginated identity search for lookup
+│   │   ├── org-units/
+│   │   │   ├── [code]/+server.ts  # Get/Update org unit by code
+│   │   │   └── search/+server.ts  # Paginated org unit search for lookup
+│   │   └── org-structure-versions/
+│   │       └── [id]/save-config/+server.ts
 │   │
 │   └── oauth/                     # OAuth endpoints
 │       ├── authorize/+server.ts
@@ -933,8 +979,8 @@ export const COLUMN_MAPPINGS = {
 
 ---
 
-**Last Updated**: 2025-10-27
-**Current Phase**: CSV-based database seeding system completed, SCIM 2.0 implementation in progress
+**Last Updated**: 2025-11-04
+**Current Phase**: LookupModal component system completed, active version live data implemented, codebase cleanup completed
 
 ## 📊 Development Statistics
 - **Total Collections**: 15+ (users, employees, organizations, org_units, positions, sk_penempatan, org_structure_versions, etc.)

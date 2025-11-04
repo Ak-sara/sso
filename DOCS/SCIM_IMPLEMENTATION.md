@@ -239,7 +239,7 @@ GET /scim/v2/Groups?startIndex=1&count=100
         }
       ],
       "x-orgUnit": {
-        "unitType": "division",
+        "type": "division",
         "level": 3,
         "parentUnitId": "507f1f77bcf86cd799439003",
         "managerId": "507f1f77bcf86cd799439015"
@@ -271,7 +271,7 @@ Content-Type: application/scim+json
   "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
   "displayName": "New Department",
   "x-orgUnit": {
-    "unitType": "department",
+    "type": "department",
     "level": 4,
     "parentUnitId": "507f1f77bcf86cd799439012"
   }
@@ -338,7 +338,7 @@ Provides organizational unit metadata:
 ```json
 {
   "x-orgUnit": {
-    "unitType": "division",
+    "type": "division",
     "level": 3,
     "parentUnitId": "507f1f77bcf86cd799439003",
     "managerId": "507f1f77bcf86cd799439015"
@@ -387,12 +387,12 @@ async function fullSync() {
   const groupsData = await groupsResponse.json();
 
   for (const group of groupsData.Resources) {
-    await db.collection('organizationalUnits').updateOne(
+    await db.collection('org_units').updateOne(
       { _id: new ObjectId(group.id) },
       {
         $set: {
           unitName: group.displayName,
-          unitType: group['x-orgUnit'].unitType,
+          type: group['x-orgUnit'].type,
           level: group['x-orgUnit'].level,
           parentUnitId: group['x-orgUnit'].parentUnitId,
           managerId: group['x-orgUnit'].managerId,
@@ -414,7 +414,7 @@ export async function getApproverForRequest(requestId: string) {
   const employee = await db.collection('users').findOne({ userId: request.userId });
 
   // Find manager of employee's unit (LOCAL QUERY - no need to call SSO)
-  const unit = await db.collection('organizationalUnits').findOne({ _id: new ObjectId(employee.departmentId) });
+  const unit = await db.collection('org_units').findOne({ _id: new ObjectId(employee.departmentId) });
   const manager = await db.collection('users').findOne({ _id: new ObjectId(unit.managerId) });
 
   return manager;
