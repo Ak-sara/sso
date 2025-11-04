@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import mermaid from 'mermaid';
 	import { createPanZoom, type PanZoomInstance } from '$lib/utils/pan-zoom';
+	import LookupModal from '$lib/components/LookupModal.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -29,7 +30,6 @@
 	let showNodeEditor = $state(false);
 	let selectedNode: any = $state(null);
 	let isEditable = $state(data.version.status === 'active');
-	let parentOptions = $state<Array<{ value: string; label: string }>>([]);
 
 	// Track if initial mount is done
 	let isMounted = $state(false);
@@ -180,17 +180,6 @@
 			const response = await fetch(`/api/org-units/${nodeCode}`);
 			if (response.ok) {
 				selectedNode = await response.json();
-
-				// Convert null parentId to empty string for select binding
-				if (selectedNode.parentId === null || selectedNode.parentId === undefined) {
-					selectedNode.parentId = '';
-				}
-
-				// Load parent options if editable
-				if (isEditable) {
-					await loadParentOptions(selectedNode._id, data.organization._id);
-				}
-
 				showNodeEditor = true;
 			} else {
 				console.error('Failed to fetch org unit:', nodeCode);
@@ -199,31 +188,6 @@
 		} catch (err) {
 			console.error('Error fetching org unit:', err);
 			alert('Gagal memuat data unit');
-		}
-	}
-
-	// Load parent options from API
-	async function loadParentOptions(currentUnitId?: string, organizationId?: string) {
-		try {
-			const params = new URLSearchParams();
-			if (currentUnitId) params.set('currentUnitId', currentUnitId);
-			if (organizationId) params.set('organizationId', organizationId);
-
-			const url = `/api/org-units/parent-options?${params}`;
-			console.log('[STO] Fetching parent options from:', url);
-
-			const response = await fetch(url);
-			if (response.ok) {
-				const options = await response.json();
-				console.log('[STO] ✅ Loaded parent options:', options.length, 'items');
-				parentOptions = options;
-			} else {
-				console.error('[STO] ❌ Failed to fetch parent options:', response.status);
-				parentOptions = [];
-			}
-		} catch (err) {
-			console.error('[STO] ❌ Exception loading parent options:', err);
-			parentOptions = [];
 		}
 	}
 
@@ -240,10 +204,15 @@
 		try {
 			const updateData = {
 				name: selectedNode.name,
-				unitType: selectedNode.unitType,
-				description: selectedNode.description,
-				isActive: selectedNode.isActive,
-				parentId: selectedNode.parentId === '' ? null : selectedNode.parentId
+				shortName: selectedNode.shortName || '',
+				type: selectedNode.type, // CANONICAL field
+				description: selectedNode.description || '',
+				organizationId: selectedNode.organizationId, // CANONICAL field
+				parentId: selectedNode.parentId || null,
+				managerId: selectedNode.managerId || null,
+				level: selectedNode.level || 0,
+				sortOrder: selectedNode.sortOrder || 0,
+				isActive: selectedNode.isActive
 			};
 
 			const response = await fetch(`/api/org-units/${selectedNode.code}`, {
@@ -255,10 +224,11 @@
 			if (response.ok) {
 				alert('Perubahan berhasil disimpan');
 				closeNodeEditor();
-				// Optionally refresh the page to see updated diagram
+				// Refresh the page to see updated diagram
 				window.location.reload();
 			} else {
-				alert('Gagal menyimpan perubahan');
+				const error = await response.json();
+				alert('Gagal menyimpan perubahan: ' + (error.message || ''));
 			}
 		} catch (err) {
 			console.error('Error saving org unit:', err);
@@ -783,12 +753,12 @@
 	<!-- Node Editor Modal -->
 	{#if showNodeEditor && selectedNode}
 		<div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onclick={closeNodeEditor}>
-			<div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-auto" onclick={(e) => e.stopPropagation()}>
+			<div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-auto" onclick={(e) => e.stopPropagation()}>
 				<!-- Header -->
 				<div class="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
 					<div>
-						<h3 class="text-xl font-bold">{selectedNode.name}</h3>
-						<p class="text-sm text-gray-500">Kode: {selectedNode.code}</p>
+						<h3 class="text-xl font-bold">Edit Unit Kerja</h3>
+						<p class="text-sm text-gray-500">{selectedNode.code} - {selectedNode.name}</p>
 					</div>
 					<div class="flex items-center gap-2">
 						{#if !isEditable}
@@ -807,34 +777,55 @@
 
 				<!-- Content -->
 				<div class="p-6 space-y-4">
-					<!-- Name -->
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-1">Nama Unit</label>
-						{#if isEditable}
-							<input
-								type="text"
-								bind:value={selectedNode.name}
-								class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
-							/>
-						{:else}
-							<p class="px-3 py-2 bg-gray-50 rounded-md">{selectedNode.name}</p>
-						{/if}
+					<!-- Name & Short Name (Grid) -->
+					<div class="grid grid-cols-2 gap-4">
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">Nama Unit *</label>
+							{#if isEditable}
+								<input
+									type="text"
+									bind:value={selectedNode.name}
+									class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+									required
+								/>
+							{:else}
+								<p class="px-3 py-2 bg-gray-50 rounded-md">{selectedNode.name}</p>
+							{/if}
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">Nama Singkat</label>
+							{#if isEditable}
+								<input
+									type="text"
+									bind:value={selectedNode.shortName}
+									class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+								/>
+							{:else}
+								<p class="px-3 py-2 bg-gray-50 rounded-md">{selectedNode.shortName || '-'}</p>
+							{/if}
+						</div>
 					</div>
 
-					<!-- Code -->
+					<!-- Code (Read-only) -->
 					<div>
 						<label class="block text-sm font-medium text-gray-700 mb-1">Kode Unit</label>
-						<p class="px-3 py-2 bg-gray-100 rounded-md text-gray-600">{selectedNode.code}</p>
+						<input
+							type="text"
+							value={selectedNode.code}
+							readonly
+							class="w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
+						/>
 						<p class="text-xs text-gray-500 mt-1">Kode tidak dapat diubah</p>
 					</div>
 
-					<!-- Unit Type -->
+					<!-- Type (Canonical field) -->
 					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-1">Tipe Unit</label>
+						<label class="block text-sm font-medium text-gray-700 mb-1">Tipe Unit *</label>
 						{#if isEditable}
 							<select
-								bind:value={selectedNode.unitType}
+								bind:value={selectedNode.type}
 								class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+								required
 							>
 								<option value="board">Board</option>
 								<option value="directorate">Directorate</option>
@@ -847,8 +838,32 @@
 								<option value="station">Station</option>
 							</select>
 						{:else}
-							<p class="px-3 py-2 bg-gray-50 rounded-md capitalize">{selectedNode.unitType}</p>
+							<p class="px-3 py-2 bg-gray-50 rounded-md capitalize">{selectedNode.type}</p>
 						{/if}
+					</div>
+
+					<!-- Level & Sort Order (Grid, Read-only) -->
+					<div class="grid grid-cols-2 gap-4">
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">Level</label>
+							<input
+								type="number"
+								value={selectedNode.level || 0}
+								readonly
+								class="w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
+							/>
+							<p class="text-xs text-gray-500 mt-1">Auto-calculated</p>
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">Sort Order</label>
+							<input
+								type="number"
+								value={selectedNode.sortOrder || 0}
+								readonly
+								class="w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
+							/>
+							<p class="text-xs text-gray-500 mt-1">Auto-calculated</p>
+						</div>
 					</div>
 
 					<!-- Description -->
@@ -865,40 +880,77 @@
 						{/if}
 					</div>
 
-					<!-- Parent Unit -->
+					<!-- Organization (Read-only in version context) -->
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">Organisasi</label>
+						<input
+							type="text"
+							value={data.organization.name}
+							readonly
+							class="w-full px-3 py-2 border rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
+						/>
+						<p class="text-xs text-gray-500 mt-1">Organization is fixed for this version</p>
+					</div>
+
+					<!-- Parent Unit (LookupModal) -->
 					<div>
 						<label class="block text-sm font-medium text-gray-700 mb-1">Parent Unit</label>
 						{#if isEditable}
-							<select
+							<LookupModal
 								bind:value={selectedNode.parentId}
-								class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
-								size="1"
-							>
-								{#each parentOptions as option}
-									<option value={option.value}>{option.label}</option>
-								{/each}
-							</select>
-							<div class="mt-1 text-xs">
-								<span class="text-gray-500">
-									📊 Total options loaded: <strong>{parentOptions.length}</strong>
-								</span>
-								<br />
-								<span class="text-blue-600">
-									Selected: <strong>{selectedNode.parentId || '(none - top level)'}</strong>
-								</span>
-							</div>
+								displayValue={selectedNode.parentName || ''}
+								fetchEndpoint="/api/org-units/search?organizationId={selectedNode.organizationId}&currentUnitId={selectedNode._id}"
+								columns={[
+									{ key: 'code', label: 'Kode' },
+									{ key: 'name', label: 'Nama' },
+									{ key: 'type', label: 'Tipe' },
+									{ key: 'level', label: 'Level' }
+								]}
+								title="Pilih Parent Unit"
+								onSelect={(item) => {
+									if (item) {
+										selectedNode.parentId = item._id;
+										selectedNode.parentName = `${item.code} - ${item.name}`;
+									} else {
+										selectedNode.parentId = null;
+										selectedNode.parentName = '';
+									}
+								}}
+							/>
 						{:else}
 							<p class="px-3 py-2 bg-gray-50 rounded-md">{selectedNode.parentName || 'No Parent (Top Level)'}</p>
 						{/if}
 					</div>
 
-					<!-- Level -->
-					{#if selectedNode.level !== undefined}
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-1">Level</label>
-							<p class="px-3 py-2 bg-gray-50 rounded-md">{selectedNode.level}</p>
-						</div>
-					{/if}
+					<!-- Manager (LookupModal) -->
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">Manager (Unit Head)</label>
+						{#if isEditable}
+							<LookupModal
+								bind:value={selectedNode.managerId}
+								displayValue={selectedNode.managerName || ''}
+								fetchEndpoint="/api/identities/search?identityType=employee"
+								columns={[
+									{ key: 'employeeId', label: 'NIK' },
+									{ key: 'fullName', label: 'Nama' },
+									{ key: 'orgUnitName', label: 'Unit' },
+									{ key: 'positionName', label: 'Posisi' }
+								]}
+								title="Pilih Manager"
+								onSelect={(item) => {
+									if (item) {
+										selectedNode.managerId = item._id;
+										selectedNode.managerName = `${item.employeeId} - ${item.fullName}`;
+									} else {
+										selectedNode.managerId = null;
+										selectedNode.managerName = '';
+									}
+								}}
+							/>
+						{:else}
+							<p class="px-3 py-2 bg-gray-50 rounded-md">{selectedNode.managerName || '-'}</p>
+						{/if}
+					</div>
 
 					<!-- Active Status -->
 					<div>

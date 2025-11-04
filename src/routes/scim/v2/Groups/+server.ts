@@ -112,11 +112,11 @@ export const POST: RequestHandler = async (event) => {
 
 		const orgUnitData = scimGroup['x-orgUnit'];
 
-		// Map SCIM group to org unit
+		// Map SCIM group to org unit (using canonical field names)
 		const newOrgUnit = {
 			code: scimGroup.externalId || `OU-${Date.now()}`,
 			name: scimGroup.displayName,
-			type: orgUnitData?.unitType || 'department',
+			type: orgUnitData?.type || 'department', // CANONICAL: use 'type' not 'unitType'
 			level: orgUnitData?.level || 1,
 			parentId: orgUnitData?.parentUnitId || null,
 			isActive: true

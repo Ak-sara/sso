@@ -51,6 +51,7 @@
 		onSearch?: (query: string) => void;
 		onEdit?: (row: T) => void;
 		onDelete?: (row: T) => void;
+		onRowClick?: (row: T) => void; // NEW: Make entire row clickable
 	}
 
 	let {
@@ -80,12 +81,13 @@
 		onSort,
 		onSearch,
 		onEdit,
-		onDelete
+		onDelete,
+		onRowClick
 	}: Props = $props();
 
-	// Determine if we should show actions column
+	// Determine if we should show actions column (not if only onRowClick is provided)
 	const hasActions = $derived(
-		showActions || !!actionColumn || !!actions || !!onEdit || !!onDelete
+		(showActions || !!actionColumn || !!actions || !!onEdit || !!onDelete) && !onRowClick
 	);
 
 	let searchQuery = $state('');
@@ -333,7 +335,11 @@
 					</tr>
 				{:else}
 					{#each paginatedData() as row, i (i)}
-						<tr>
+						<tr
+							class:cursor-pointer={!!onRowClick}
+							class:hover:bg-gray-100={!!onRowClick}
+							onclick={() => onRowClick?.(row)}
+						>
 							{#each columns as column}
 								<td class="px-4 py-3 {column.class || ''}">
 									{@html getCellValue(row, column)}

@@ -23,15 +23,28 @@ export const GET: RequestHandler = async ({ params }) => {
 			parentName = parent?.name || null;
 		}
 
+		// Fetch manager name if managerId exists
+		let managerName = null;
+		if (orgUnit.managerId) {
+			const manager = await db.collection('identities')
+				.findOne({ _id: new ObjectId(orgUnit.managerId) });
+			managerName = manager?.fullName || null;
+		}
+
 		return json({
 			_id: orgUnit._id.toString(),
 			code: orgUnit.code,
 			name: orgUnit.name,
-			unitType: orgUnit.unitType,
+			shortName: orgUnit.shortName || '',
+			type: orgUnit.type, // CANONICAL field (not unitType)
 			description: orgUnit.description || '',
+			organizationId: orgUnit.organizationId?.toString() || null, // CANONICAL field
 			parentId: orgUnit.parentId?.toString() || null,
 			parentName,
-			level: orgUnit.level,
+			managerId: orgUnit.managerId?.toString() || null,
+			managerName,
+			level: orgUnit.level || 0,
+			sortOrder: orgUnit.sortOrder || 0,
 			isActive: orgUnit.isActive !== false
 		});
 	} catch (err) {
@@ -56,25 +69,31 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			throw error(404, 'Organization unit not found');
 		}
 
-		// Update only allowed fields
+		// Update only allowed fields (using canonical schema field names)
 		const updateData: any = {
 			updatedAt: new Date()
 		};
 
+		// Basic fields
 		if (body.name !== undefined) updateData.name = body.name;
 		if (body.shortName !== undefined) updateData.shortName = body.shortName;
-		if (body.type !== undefined) updateData.type = body.type;
+		if (body.type !== undefined) updateData.type = body.type; // CANONICAL field (not unitType)
 		if (body.description !== undefined) updateData.description = body.description;
 		if (body.isActive !== undefined) updateData.isActive = body.isActive;
+		if (body.level !== undefined) updateData.level = typeof body.level === 'number' ? body.level : parseInt(body.level);
+		if (body.sortOrder !== undefined) updateData.sortOrder = typeof body.sortOrder === 'number' ? body.sortOrder : parseInt(body.sortOrder);
 
-		// Handle parentId (empty string means no parent)
-		if (body.parentId !== undefined) {
-			updateData.parentId = body.parentId === '' ? null : body.parentId;
+		// ObjectId fields - convert strings to ObjectId
+		if (body.organizationId !== undefined) {
+			updateData.organizationId = body.organizationId ? new ObjectId(body.organizationId) : null;
 		}
 
-		// Handle organizationId
-		if (body.organizationId !== undefined) {
-			updateData.organizationId = body.organizationId;
+		if (body.parentId !== undefined) {
+			updateData.parentId = body.parentId ? new ObjectId(body.parentId) : null;
+		}
+
+		if (body.managerId !== undefined) {
+			updateData.managerId = body.managerId ? new ObjectId(body.managerId) : null;
 		}
 
 		// Update the org unit

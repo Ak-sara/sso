@@ -99,10 +99,10 @@ export const PUT: RequestHandler = async (event) => {
 
 		const orgUnitData = scimGroup['x-orgUnit'];
 
-		// Map SCIM group to org unit update
+		// Map SCIM group to org unit update (using canonical field names)
 		const updates: any = {
 			name: scimGroup.displayName || existingOrgUnit.name,
-			type: orgUnitData?.unitType || existingOrgUnit.type,
+			type: orgUnitData?.type || existingOrgUnit.type, // CANONICAL: use 'type' not 'unitType'
 			level: orgUnitData?.level ?? existingOrgUnit.level,
 			parentId: orgUnitData?.parentUnitId
 				? new ObjectId(orgUnitData.parentUnitId)
@@ -185,7 +185,7 @@ export const PATCH: RequestHandler = async (event) => {
 			if (op.op === 'replace') {
 				if (op.path === 'displayName') {
 					updates.name = op.value;
-				} else if (op.path === 'x-orgUnit.unitType') {
+				} else if (op.path === 'x-orgUnit.type') { // CANONICAL: use 'type' not 'unitType'
 					updates.type = op.value;
 				} else if (op.path === 'x-orgUnit.parentUnitId') {
 					updates.parentId = op.value ? new ObjectId(op.value) : null;
