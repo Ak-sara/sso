@@ -2,445 +2,389 @@
 
 > **Last Updated**: November 2025
 
----
-
-## Industry Comparison (Our Advantages)
-
-- 🏆 **Better than Okta**: 2x bulk operations limit (1000 vs 500)
-- 🏆 **Better than Azure AD**: Full filter syntax support
-- 🏆 **Better than Google**: All advanced features they lack
-- 🏆 **Unique**: Hierarchical org units with unit-level managers
-- 🏆 **Free**: No per-user pricing, unlimited API calls
-
-**Benefits for Consumer Apps (OFM, etc):**
-- Auto-sync employees and org structure
-- Approval workflows determine managers dynamically
-- Team member queries run locally (no SSO calls)
-- Bulk operations for mass onboarding/offboarding
-- Single source of truth for organizational hierarchy
-- Enterprise-grade security with OAuth 2.0
-
----
-
 # FEATURES
 
 > This section describes what the final application will be capable of (the vision/target state).
 
-## 1. Authentication & Security
+## F1. Authentication & Security
 
-### Core Authentication
-- **OAuth 2.0 / OIDC Provider** - Full-featured identity provider with authorization code flow
-- **PKCE Support** - Enhanced security for public clients
-- **Token Management** - Access tokens, refresh tokens, token introspection, token revocation
-- **Session Management** - 24-hour session duration, 2-hour idle timeout, httpOnly secure cookies
-- **Password Security** - Argon2 hashing, complexity requirements (min 12 chars)
-- **Multi-Login Support** - Login with email, username, or NIK (employee ID)
-- **Role-Based Access Control (RBAC)** - Flexible role assignment per identity
+### F1.1 Core Authentication
+- **F1.1.1 OAuth 2.0 / OIDC Provider** ✅ - Full-featured identity provider with authorization code flow
+- **F1.1.2 PKCE Support** - Enhanced security for public clients
+- **F1.1.3 Token Management** ✅ - Access tokens, refresh tokens, token introspection, token revocation
+- **F1.1.4 Session Management** ✅ - 24-hour session duration, 2-hour idle timeout, httpOnly secure cookies
+- **F1.1.5 Password Security** ✅ - Argon2 hashing, complexity requirements (min 12 chars)
+- **F1.1.6 Multi-Login Support** ✅ - Login with email, username, or NIK (employee ID)
+- **F1.1.7 Role-Based Access Control (RBAC)** ✅ - Flexible role assignment per identity
 
-### Advanced Security
-- **Multi-Factor Authentication (MFA/2FA)** - TOTP (Google Authenticator), SMS OTP, Email OTP, backup codes
-- **IP Whitelisting** - CIDR notation support for admin access and SCIM endpoints
-- **Rate Limiting** - Sliding window algorithm, per-client configuration, default 100 req/min
-- **Field-Level Encryption** - MongoDB Client-Side FLE for sensitive data (KTP, NPWP, DOB, phone)
-- **Data Masking** - UI-level masking for KTP, NPWP, phone, email
-- **Security Headers** - CORS policies, CSRF protection, XSS prevention
-- **Input Validation** - Comprehensive sanitization across all endpoints
+### F1.2 Advanced Security
+- **F1.2.1 Multi-Factor Authentication (MFA/2FA)** - TOTP (Google Authenticator), SMS OTP, Email OTP, backup codes
+- **F1.2.2 IP Whitelisting** - CIDR notation support for admin access and SCIM endpoints
+- **F1.2.3 Rate Limiting** - Sliding window algorithm, per-client configuration, default 100 req/min
+- **F1.2.4 Field-Level Encryption** - MongoDB Client-Side FLE for sensitive data (KTP, NPWP, DOB, phone)
+- **F1.2.5 Data Masking** - UI-level masking for KTP, NPWP, phone, email
+- **F1.2.6 Security Headers** - CORS policies, CSRF protection, XSS prevention
+- **F1.2.7 Input Validation** - Comprehensive sanitization across all endpoints
 
 ---
 
-## 2. Identity & User Management
+## F2. Identity & User Management
 
-### Unified Identity Model
-- **Single Collection** - Polymorphic `identities` collection for all user types
-- **Identity Types**:
+### F2.1 Unified Identity Model ✅
+- **F2.1.1 Single Collection** ✅ - Polymorphic `identities` collection for all user types
+- **F2.1.2 Identity Types** ✅:
   - **Employees** - NIK, position, org unit, employment type (PKWT/OS/Permanent)
   - **Partners** - Company affiliation, contract dates, partner type categorization
   - **External Users** - Temporary access, limited permissions
   - **Service Accounts** - OAuth client credentials, API-only access
 
-### Employee Lifecycle Management
-- **Onboarding Wizard** (5 steps):
+### F2.2 Employee Lifecycle Management
+- **F2.2.1 Onboarding Wizard** (5 steps):
   1. Personal Information (NIK, name, DOB, KTP, NPWP)
   2. Employment Information (type, status, join date)
   3. Assignment (Realm → Org Unit → Position → Location)
   4. SSO Access (optional account creation)
   5. Review & Confirmation
-- **Mutation/Transfer Workflow**:
+- **F2.2.2 Mutation/Transfer Workflow**:
   - Types: Transfer, Promosi (promotion), Demosi (demotion)
   - Entity/unit/position selection via lookup modals
   - Effective date tracking
   - Previous assignment capture
-- **Offboarding Workflow**:
+- **F2.2.3 Offboarding Workflow**:
   - Termination date and reason
   - Optional SSO access revocation
   - Automated checklist (IT asset return, final payroll, exit interview)
   - Integration with external systems (SCIM deprovision)
-- **Assignment History Timeline**:
+- **F2.2.4 Assignment History Timeline**:
   - Color-coded events (🟢 Onboarding, 🔵 Mutation, 🔴 Offboarding)
   - Visual timeline with connecting lines
   - Full context for each historical event
 
-### User Profile & Self-Service
-- **Employee Detail Page** - 4 tabs (Overview, Penempatan, SSO Access, History)
-- **Inline Edit Mode** - Edit employee details directly on detail page
-- **Account Self-Service Portal**:
+### F2.3 User Profile & Self-Service
+- **F2.3.1 Employee Detail Page** ✅ - 4 tabs (Overview, Penempatan, SSO Access, History)
+- **F2.3.2 Inline Edit Mode** - Edit employee details directly on detail page
+- **F2.3.3 Account Self-Service Portal**:
   - Profile editing (personal information)
   - Password change
   - MFA setup and management
   - View SSO-connected applications
   - Download personal data (GDPR/PDP compliance)
   - Account deletion request (GDPR/PDP right to be forgotten)
-- **Password Reset Flow** - Email-based password recovery
-- **Email Verification** - Verify email addresses on registration
+- **F2.3.4 Password Reset Flow** - Email-based password recovery
+- **F2.3.5 Email Verification** - Verify email addresses on registration
 
-### Secondary Assignments
-- **Multi-Company Placement** - Employees can be assigned to multiple entities simultaneously
-- **Cross-Entity Roles** - Different roles in different organizational contexts
+### F2.4 Secondary Assignments
+- **F2.4.1 Multi-Company Placement** - Employees can be assigned to multiple entities simultaneously
+- **F2.4.2 Cross-Entity Roles** - Different roles in different organizational contexts
 
----
+## F3. Organization Structure
 
-## 3. Organization Structure
+### F3.1 Organizational Hierarchy ✅
+- **F3.1.1 Realm/Organization Management** ✅ - Merged concept (each organization IS a realm)
+- **F3.1.2 Organizational Units** ✅ - Direktorat, Divisi, Departemen, Bagian, Seksi
+- **F3.1.3 Multi-Level Hierarchy** ✅ - Holding → Subsidiary → Branch → Divisions → Departments
+- **F3.1.4 Position/Jabatan Management** ✅ - Job titles with levels, manager flags
+- **F3.1.5 Mermaid Diagram Visualization** ✅ - Auto-generated org charts with pan/zoom
+- **F3.1.6 Matrix Reporting Structures** - Support for multiple reporting lines
 
-### Organizational Hierarchy
-- **Realm/Organization Management** - Merged concept (each organization IS a realm)
-- **Organizational Units** - Direktorat, Divisi, Departemen, Bagian, Seksi
-- **Multi-Level Hierarchy** - Holding → Subsidiary → Branch → Divisions → Departments
-- **Regional Office Structure** - Regional 1-4 with stations
-- **Position/Jabatan Management** - Job titles with levels, manager flags
-- **Mermaid Diagram Visualization** - Auto-generated org charts with pan/zoom
-- **Matrix Reporting Structures** - Support for multiple reporting lines
+### F3.2 Organization Structure Versioning ✅
+- **F3.2.1 Snapshot-Based Versioning** ✅ - Complete structure capture at any point in time
+- **F3.2.2 SK (Surat Keputusan) Tracking** ✅ - Official decree documentation
+- **F3.2.3 Employee Snapshot** ✅ - Captured with each version
+- **F3.2.4 Workflow** ✅ - Draft → Active → Archived (no approval step)
+- **F3.2.5 Idempotent Publishing** ✅ - Resume-capable, no MongoDB transactions needed
+- **F3.2.6 Automatic Mermaid Generation** ✅ - Visual org charts from structure data
+- **F3.2.7 Active Version Live Data** ✅ - STO page uses live org_units data for active versions
+- **F3.2.8 Historical Snapshots** ✅ - Non-active versions remain read-only with frozen data
+- **F3.2.9 Validation & Correction** - Detect orphaned units, circular references, detect promotion chains
 
-### Organization Structure Versioning
-- **Snapshot-Based Versioning** - Complete structure capture at any point in time
-- **SK (Surat Keputusan) Tracking** - Official decree documentation
-- **Employee Snapshot** - Captured with each version
-- **Workflow** - Draft → Active → Archived (no approval step)
-- **Idempotent Publishing** - Resume-capable, no MongoDB transactions needed
-- **Automatic Mermaid Generation** - Visual org charts from structure data
-- **On-Demand Regeneration** - Update diagrams anytime
-- **Change Tracking** - Diff between versions
-- **Active Version Live Data** - STO page uses live org_units data for active versions
-- **Historical Snapshots** - Non-active versions remain read-only with frozen data
-- **Validation & Correction** - Detect orphaned units, circular references, detect promotion chains
+### F3.3 SK Penempatan Karyawan (Employee Assignment Decree) 🚧
+- **F3.3.1 Bulk Reassignment System** 🚧 - Manage hundreds of employees at once (UI complete)
+- **F3.3.2 CSV Import** 🚧 - Mass import with flexible column mapping (UI complete)
+- **F3.3.3 CSV Template Download** - Pre-formatted template for users
+- **F3.3.4 Smart Validation** - Validates employee IDs, org units, positions
+- **F3.3.5 Previous Assignment Capture** - Automatic tracking of current assignments
+- **F3.3.6 Error Reporting** - Line-by-line validation errors
+- **F3.3.7 Workflow** - Draft → Pending Approval → Approved → Executed
+- **F3.3.8 History Integration** - Creates employee history entries on execution
+- **F3.3.9 Excel Export** - Export SK attachment for official documentation
 
-### SK Penempatan Karyawan (Employee Assignment Decree)
-- **Bulk Reassignment System** - Manage hundreds of employees at once
-- **CSV Import** - Mass import with flexible column mapping
-- **CSV Template Download** - Pre-formatted template for users
-- **Smart Validation** - Validates employee IDs, org units, positions
-- **Previous Assignment Capture** - Automatic tracking of current assignments
-- **Error Reporting** - Line-by-line validation errors
-- **Workflow** - Draft → Pending Approval → Approved → Executed
-- **History Integration** - Creates employee history entries on execution
-- **Excel Export** - Export SK attachment for official documentation
+## F4. SCIM 2.0 Integration (Enterprise-Grade)
 
----
-
-## 4. SCIM 2.0 Integration (Enterprise-Grade)
-
-### Core SCIM API
-- **Full RFC Compliance** - SCIM 2.0 (RFC 7643/7644)
-- **Unified Identity Model** - All endpoints query the single `identities` collection
-- **Users Endpoint** (`/scim/v2/Users`):
+### F4.1 Core SCIM API ✅
+- **F4.1.1 Users Endpoint** ✅ (`/scim/v2/Users`):
   - GET (list with pagination & filtering) - Returns employee identities
   - GET /{id} (single user)
   - POST (create user) - Creates employee identity
   - PUT (full update)
   - PATCH (partial update)
   - DELETE (deactivate)
-- **Groups Endpoint** (`/scim/v2/Groups`):
+- **F4.1.2 Groups Endpoint** ✅ (`/scim/v2/Groups`):
   - Full CRUD for organizational units
   - Hierarchical group membership
   - Member management (add/remove)
-- **Bulk Operations** (`/scim/v2/Bulk`):
+- **F4.1.3 Bulk Operations** ✅ (`/scim/v2/Bulk`):
   - Up to 1,000 operations per request (beats Okta's 500!)
   - POST, PUT, PATCH, DELETE in single request
   - 10MB max payload
   - Error handling with `failOnErrors` parameter
 
-### Advanced SCIM Features
-- **Advanced Filter Parser** - ALL operators supported:
+### F4.2 Advanced SCIM Features
+- **F4.2.1 Advanced Filter Parser** 🚧 - ALL operators supported (3 tests failing):
   - Comparison: `eq`, `ne`, `co`, `sw`, `ew`, `gt`, `ge`, `lt`, `le`, `pr`
   - Logical: `and`, `or`, `not`, `()`
   - Complex queries: `(active eq true and userName ew "@ias.co.id") or x-position.isManager eq true`
-- **Pagination** - startIndex + count (max 1,000 results per page)
-- **Sorting** - sortBy + sortOrder (ascending/descending)
-- **Attribute Selection** - Return only specified attributes
-- **Manager Lookup** - Automatically determines manager from org hierarchy
-- **Team Member Lookup** - Finds all employees in same org unit
+- **F4.2.2 Pagination** ✅ - startIndex + count (max 1,000 results per page)
+- **F4.2.3 Sorting** ✅ - sortBy + sortOrder (ascending/descending)
+- **F4.2.4 Attribute Selection** - Return only specified attributes
+- **F4.2.5 Manager Lookup** - Automatically determines manager from org hierarchy
+- **F4.2.6 Team Member Lookup** - Finds all employees in same org unit
 
-### Custom Extensions
-- **x-position** - Employee position details (isManager, level, title)
-- **x-orgUnit** - Hierarchical org unit metadata (type, parent, manager, path)
+### F4.3 Custom Extensions
+- **F4.3.1 x-position** - Employee position details (isManager, level, title)
+- **F4.3.2 x-orgUnit** - Hierarchical org unit metadata (type, parent, manager, path)
 
-### SCIM Authentication & Security
-- **OAuth 2.0 Client Credentials Grant** (RFC 6749)
-- **Per-Client Credentials** - Like Okta/Azure AD
-- **JWT Access Tokens** - 1-hour expiration
-- **Token Endpoint** - `/scim/v2/token`
-- **Scope-Based Permissions** - 7 scopes:
-  - `read:users`, `write:users`, `delete:users`
-  - `read:groups`, `write:groups`, `delete:groups`
-  - `bulk:operations`
-- **IP Whitelisting** - CIDR notation support
-- **Per-Client Rate Limiting** - Configurable, default 100 req/min
-- **Argon2 Secret Hashing** - Secure credential storage
+### F4.4 SCIM Authentication & Security ✅
+- **F4.4.1 OAuth 2.0 Client Credentials Grant** ✅ (RFC 6749)
+- **F4.4.2 JWT Access Tokens** ✅ - 1-hour expiration
+- **F4.4.3 Scope-Based Permissions** ✅ - 7 scopes (read:users, write:users, delete:users, read:groups, write:groups, delete:groups, bulk:operations)
+- **F4.4.4 IP Whitelisting** - CIDR notation support
+- **F4.4.5 Per-Client Rate Limiting** - Configurable, default 100 req/min
 
-### SCIM Admin UI
-- **Client Management Dashboard** (`/clients-scim`):
+### F4.5 SCIM Admin UI ✅
+- **F4.5.1 Client Management Dashboard** ✅ (`/clients-scim`):
   - Create/deactivate clients
   - Generate and rotate secrets
   - View usage statistics
   - Monitor performance metrics
   - Track error rates
 
-### SCIM Webhooks
-- **Real-Time Event Notifications** - Push changes to consumer apps
-- **HMAC-SHA256 Signatures** - Verify webhook authenticity
-- **Event Types** - user.created, user.updated, user.deleted, group.created, etc.
-- **Retry Logic** - Exponential backoff with DLQ (Dead Letter Queue)
-- **Webhook Management UI** - Subscribe/unsubscribe, view logs
+### F4.6 SCIM Webhooks
+- **F4.6.1 Real-Time Event Notifications** - Push changes to consumer apps
+- **F4.6.2 HMAC-SHA256 Signatures** - Verify webhook authenticity
+- **F4.6.3 Event Types** - user.created, user.updated, user.deleted, group.created, etc.
+- **F4.6.4 Retry Logic** - Exponential backoff with DLQ (Dead Letter Queue)
+- **F4.6.5 Webhook Management UI** - Subscribe/unsubscribe, view logs
 
----
+## F5. Microsoft Entra ID Sync
 
-## 5. Microsoft Entra ID Sync
-
-### Bidirectional Synchronization
-- **Sync Directions**:
+### F5.1 Bidirectional Synchronization
+- **F5.1.1 Sync Directions**:
   - Aksara SSO → Entra ID (push)
   - Entra ID → Aksara SSO (pull)
   - Bidirectional (two-way sync)
-- **Microsoft Graph API Integration** - OAuth 2.0 authentication
-- **User Sync** - Employee identity synchronization
-- **Group Sync** - Organizational unit synchronization
+- **F5.1.2 Microsoft Graph API Integration** - OAuth 2.0 authentication
+- **F5.1.3 User Sync** - Employee identity synchronization
+- **F5.1.4 Group Sync** - Organizational unit synchronization
 
-### Sync Configuration
-- **Field Mapping** - Flexible mapping between Aksara and Entra ID fields
-- **Custom Field Support** - Add new field mappings via UI
-- **Sync Direction Per Field** - Control per-field sync direction
-- **Connection Testing** - Test Entra ID credentials before saving
+### F5.2 Sync Configuration
+- **F5.2.1 Field Mapping** - Flexible mapping between Aksara and Entra ID fields
+- **F5.2.2 Custom Field Support** - Add new field mappings via UI
+- **F5.2.3 Sync Direction Per Field** - Control per-field sync direction
+- **F5.2.4 Connection Testing** - Test Entra ID credentials before saving
 
-### Conflict Resolution
-- **Three-Way Comparison UI** - App DB | Entra ID | Result
-- **Per-Field Actions**:
-  - Keep App DB value
-  - Use Entra ID value
-  - Sync both ways
-  - Skip field
-- **Bulk Selection** - Select All / Deselect All
-- **Preview Changes** - Show what will change before sync
+### F5.3 Conflict Resolution
+- **F5.3.1 Three-Way Comparison UI** - App DB | Entra ID | Result
+- **F5.3.2 Per-Field Actions** - Keep App DB value, Use Entra ID value, Sync both ways, Skip field
+- **F5.3.3 Bulk Selection** - Select All / Deselect All
+- **F5.3.4 Preview Changes** - Show what will change before sync
 
-### Sync Management
-- **Manual Sync Trigger** - On-demand sync execution
-- **Auto-Sync Scheduling** - Cron-based scheduled sync (hourly, daily, weekly)
-- **Sync History Log** - Track all sync operations with timestamps
-- **Error Handling** - Detailed error messages with retry logic
-- **Progress Tracking** - Real-time sync progress indicator
-- **Export Sync Logs** - Download sync history as CSV
-- **Webhook Notifications** - Notify on sync completion/failure
+### F5.4 Sync Management
+- **F5.4.1 Manual Sync Trigger** - On-demand sync execution
+- **F5.4.2 Auto-Sync Scheduling** - Cron-based scheduled sync (hourly, daily, weekly)
+- **F5.4.3 Sync History Log** - Track all sync operations with timestamps
+- **F5.4.4 Error Handling** - Detailed error messages with retry logic
+- **F5.4.5 Progress Tracking** - Real-time sync progress indicator
+- **F5.4.6 Export Sync Logs** - Download sync history as CSV
+- **F5.4.7 Webhook Notifications** - Notify on sync completion/failure
 
----
 
-## 6. Audit & Compliance
+## F6. Audit & Compliance
 
-### Comprehensive Audit Logging
-- **Reusable Audit Logger Utility** - Helper functions for logging
-- **Middleware** - Automatic 401/403 tracking
-- **Type-Safe Actions** - TypeScript enum for audit actions
-- **Request Metadata** - IP address, user agent, timestamp
-- **Non-Blocking** - Audit failures don't break operations
-- **Audit Log UI** - Pagination, search, filters, export
+### F6.1 Comprehensive Audit Logging ✅
+- **F6.1.1 Reusable Audit Logger Utility** ✅ - Helper functions for logging
+- **F6.1.2 Middleware** ✅ - Automatic 401/403 tracking
+- **F6.1.3 Type-Safe Actions** ✅ - TypeScript enum for audit actions
+- **F6.1.4 Request Metadata** ✅ - IP address, user agent, timestamp
+- **F6.1.5 Non-Blocking** ✅ - Audit failures don't break operations
+- **F6.1.6 Audit Log UI** ✅ - Pagination, search, filters, export
 
-### Logged Events
-- **Authentication** - login, logout, login failures, password changes
-- **Employee Lifecycle** - onboarding, mutation, transfer, promotion, demotion, offboarding
-- **OAuth Operations** - token grants, token refresh, client operations
-- **Identity Operations** - create, update, delete, activate, deactivate
-- **Organization Management** - org/unit/position CRUD
-- **Access Control** - access granted/denied events
-- **SCIM API Requests** - All SCIM operations with request/response
+### F6.2 Logged Events ✅
+- **Authentication** ✅ - login, logout, login failures, password changes
+- **Employee Lifecycle** ✅ - onboarding, mutation, transfer, promotion, demotion, offboarding
+- **OAuth Operations** ✅ - token grants, token refresh, client operations
+- **Identity Operations** ✅ - create, update, delete, activate, deactivate
+- **Organization Management** ✅ - org/unit/position CRUD
+- **SCIM API Requests** ✅ - All SCIM operations with request/response
 
-### UU PDP No. 27 Tahun 2022 Compliance (Indonesia Data Protection Law)
-- **Lawful Basis Tracking** - Document legal basis for data processing
-- **Data Minimization** - Collect only necessary data
-- **Purpose Limitation** - Use data only for stated purposes
-- **Data Subject Rights**:
+### F6.3 UU PDP No. 27 Tahun 2022 Compliance (Indonesia Data Protection Law)
+- **F6.3.1 Lawful Basis Tracking** - Document legal basis for data processing
+- **F6.3.2 Data Minimization** - Collect only necessary data
+- **F6.3.3 Purpose Limitation** - Use data only for stated purposes
+- **F6.3.4 Data Subject Rights**:
   - Right to access personal data
   - Right to rectification (correction)
   - Right to erasure (deletion)
   - Right to data portability (export)
   - Right to object to processing
-- **Breach Notification** - 3x24 hours notification requirement
-- **Data Retention Policies** - Automatic deletion after retention period
-- **Consent Management** - Employee consent forms for data processing
-- **Kebijakan Privasi** - Privacy Policy in Bahasa Indonesia
-- **Data Protection Officer (DPO)** - Appointed for compliance oversight
+- **F6.3.5 Breach Notification** - 3x24 hours notification requirement
+- **F6.3.6 Data Retention Policies** - Automatic deletion after retention period
+- **F6.3.7 Consent Management** - Employee consent forms for data processing
+- **F6.3.8 Kebijakan Privasi** - Privacy Policy in Bahasa Indonesia
+- **F6.3.9 Data Protection Officer (DPO)** - Appointed for compliance oversight
 
-### GDPR-Style Features
-- **Data Export** - Download personal data in machine-readable format (JSON/CSV)
-- **Right to Be Forgotten** - Complete data erasure with anonymization option
-- **Data Anonymization** - Remove PII for analytics/reporting
-- **ROPA** - Record of Processing Activities documentation
-- **Compliance Reports** - SOC2, ISO 27001 readiness reports
+### F6.4 GDPR-Style Features
+- **F6.4.1 Data Export** - Download personal data in machine-readable format (JSON/CSV)
+- **F6.4.2 Right to Be Forgotten** - Complete data erasure with anonymization option
+- **F6.4.3 Data Anonymization** - Remove PII for analytics/reporting
+- **F6.4.4 ROPA** - Record of Processing Activities documentation
+- **F6.4.5 Compliance Reports** - SOC2, ISO 27001 readiness reports
 
-### Advanced Security Features
-- **Breach Detection System** - Automated anomaly detection
-- **Security Monitoring** - Real-time threat detection
-- **Penetration Testing** - Regular security assessments
-- **Bug Bounty Program** - Incentivize security research
-- **Field-Level Access Control** - Justification required for sensitive data access
+### F6.5 Advanced Security Features
+- **F6.5.1 Breach Detection System** - Automated anomaly detection
+- **F6.5.2 Security Monitoring** - Real-time threat detection
+- **F6.5.3 Penetration Testing** - Regular security assessments
+- **F6.5.4 Bug Bounty Program** - Incentivize security research
+- **F6.5.5 Field-Level Access Control** - Justification required for sensitive data access
 
----
+## F7. Admin UI & Navigation
 
-## 7. Admin UI & Navigation
+### F7.1 Responsive Layout ✅
+- **F7.1.1 Collapsible Drawer Navigation** ✅ - Mobile-friendly with overlay
+- **F7.1.2 Grouped Navigation** ✅ - Three categories (Identitas, Organisasi, Integrasi)
+- **F7.1.3 User Menu Dropdown** ✅ - Profile, settings, logout
+- **F7.1.4 Realm Badge** ✅ - Current organizational context indicator
+- **F7.1.5 Educational Info Boxes** - Contextual help on major pages
 
-### Responsive Layout
-- **Collapsible Drawer Navigation** - Mobile-friendly with overlay
-- **Grouped Navigation** - Three categories:
-  - **Identitas**: Unified Identities Page (Employees, Partners, External, Service Accounts), Data Sync
-  - **Organisasi**: Realm/Entitas, Unit Kerja, Struktur Organisasi, Versi Struktur, Posisi, SK Penempatan
-  - **Integrasi**: OAuth Clients, SCIM Clients, Entra ID Sync
-- **User Menu Dropdown** - Profile, settings, logout
-- **Realm Badge** - Current organizational context indicator
-- **Educational Info Boxes** - Contextual help on major pages
-
-### Reusable UI Components
-- **DataTable Component**:
+### F7.2 Reusable UI Components ✅
+- **F7.2.1 DataTable Component** ✅:
   - Server-side pagination
   - Multi-column sorting
   - Search/filtering
   - CSV export
   - Row click events for lookups
   - Configurable action buttons
-- **LookupModal Component**:
+- **F7.2.2 LookupModal Component** ✅:
   - Modal-based lookup with DataTable
   - Server-side pagination
   - Replaces long dropdown lists
   - Used for parent unit selection, manager selection
-- **Form Components**:
+- **F7.2.3 Form Components**:
   - Inline edit mode (employee detail page)
   - Multi-step wizards (onboarding)
   - Modal forms (mutation, offboarding)
 
-### Unified Identities Page
-- **Tabbed Interface** - Employees, Partners, External Users, Service Accounts
-- **DataTable Integration** - Sortable columns, search, CSV export
-- **Tab-Specific Columns**:
+### F7.3 Unified Identities Page ✅
+- **F7.3.1 Tabbed Interface** ✅ - Employees, Partners, External Users, Service Accounts
+- **F7.3.2 DataTable Integration** ✅ - Sortable columns, search, CSV export
+- **F7.3.3 Tab-Specific Columns** ✅:
   - Employees: NIK, Name, Position, Org Unit, Status
   - Partners: Name, Company, Contract Dates, Type
   - External: Name, Email, Access Level, Expiry
   - Service Accounts: Name, Linked OAuth Client, Scopes
 
-### Themes & Branding
-- **Customizable Login Pages** - Logo, colors, background images
-- **Email Templates** - Branded transactional emails
-- **Error Pages** - Consistent error page design
-- **Admin Console Themes** - Light/dark mode support
+### F7.4 Themes & Branding
+- **F7.4.1 Customizable Login Pages** - Logo, colors, background images
+- **F7.4.2 Email Templates** - Branded transactional emails
+- **F7.4.3 Error Pages** - Consistent error page design
+- **F7.4.4 Admin Console Themes** - Light/dark mode support
 
----
+## F8. OAuth 2.0 Provider
 
-## 8. OAuth 2.0 Provider
+### F8.1 OAuth 2.0 / OIDC Implementation ✅
+- **F8.1.1 Authorization Code Flow** ✅ - Standard OAuth flow for web apps
+- **F8.1.2 PKCE Support** - Enhanced security for SPAs and mobile apps
+- **F8.1.3 Token Endpoint** ✅ - `/oauth/token` for access + refresh tokens
+- **F8.1.4 Token Introspection** ✅ - `/oauth/introspect` to validate tokens
+- **F8.1.5 Token Revocation** ✅ - `/oauth/revoke` to invalidate tokens
+- **F8.1.6 OIDC UserInfo Endpoint** ✅ - `/oauth/userinfo` for user details
 
-### OAuth 2.0 / OIDC Implementation
-- **Authorization Code Flow** - Standard OAuth flow for web apps
-- **PKCE Support** - Enhanced security for SPAs and mobile apps
-- **Token Endpoint** - `/oauth/token` for access + refresh tokens
-- **Token Introspection** - `/oauth/introspect` to validate tokens
-- **Token Revocation** - `/oauth/revoke` to invalidate tokens
-- **OIDC UserInfo Endpoint** - `/oauth/userinfo` for user details
-
-### Client Management
-- **OAuth Client Management UI** - Create, configure, deactivate clients
-- **Service Account Auto-Creation** - Each OAuth client gets a linked service account identity
-- **Client Credentials Display** - Show/hide client ID and secret
-- **Authorization Endpoint Testing UI** - Test OAuth flows directly from admin console
-- **Client Scopes Configuration**:
+### F8.2 Client Management ✅
+- **F8.2.1 OAuth Client Management UI** ✅ - Create, configure, deactivate clients
+- **F8.2.2 Service Account Auto-Creation** ✅ - Each OAuth client gets a linked service account identity
+- **F8.2.3 Client Credentials Display** ✅ - Show/hide client ID and secret
+- **F8.2.4 Authorization Endpoint Testing UI** - Test OAuth flows directly from admin console
+- **F8.2.5 Client Scopes Configuration**:
   - Predefined scopes (profile, email, roles, openid)
   - Custom scopes
   - Scope mapping to claims
   - Consent screen for scope approval
 
-### Token Mappers
-- **User Attribute Mappers** - Map user attributes to token claims
-- **Role Name Mappers** - Include roles in access tokens
-- **Audience Mappers** - Control token audience (aud claim)
-- **Custom Claim Mappers** - Add custom data to tokens
+### F8.3 Token Mappers
+- **F8.3.1 User Attribute Mappers** - Map user attributes to token claims
+- **F8.3.2 Role Name Mappers** - Include roles in access tokens
+- **F8.3.3 Audience Mappers** - Control token audience (aud claim)
+- **F8.3.4 Custom Claim Mappers** - Add custom data to tokens
 
-### Multi-App SSO Integration
-- **Single Sign-On** - Login once, access all connected apps
-- **Single Sign-Out (SLO)**:
+### F8.4 Multi-App SSO Integration
+- **F8.4.1 Single Sign-On** - Login once, access all connected apps
+- **F8.4.2 Single Sign-Out (SLO)**:
   - Backchannel logout - Server-to-server logout notifications
   - Frontchannel logout - Browser-based logout propagation
   - Session monitoring - Track active sessions across apps
 
-### Social Login / Identity Provider Integration
-- **Google OAuth** - Sign in with Google
-- **Microsoft Azure AD / Entra ID** - Sign in with Microsoft (as IdP)
-- **SAML Support** - SAML 2.0 for enterprise SSO
-- **Social Login Buttons** - Branded buttons on login page
+### F8.5 Social Login / Identity Provider Integration
+- **F8.5.1 Google OAuth** - Sign in with Google
+- **F8.5.2 Microsoft Azure AD / Entra ID** - Sign in with Microsoft (as IdP)
+- **F8.5.3 SAML Support** - SAML 2.0 for enterprise SSO
+- **F8.5.4 Social Login Buttons** - Branded buttons on login page
 
----
+## F9. Database Management
 
-## 9. Database Management
+### F9.1 CSV-Based Seeding System ✅
+- **F9.1.1 Human-Readable CSV Files** ✅ - Use organization names/codes instead of ObjectIds
+- **F9.1.2 Version-Controlled Seed Data** ✅ - CSV files in `scripts/seeders/`
+- **F9.1.3 Reference Resolver** ✅ - Converts names/codes to MongoDB ObjectIds automatically
+- **F9.1.4 Dependency-Aware Import** ✅ - Sequential insertion respecting foreign key relationships
+- **F9.1.5 Safe --clean Mode** ✅ - Only drops collections with corresponding CSV files (preserves transient data)
 
-### CSV-Based Seeding System
-- **Human-Readable CSV Files** - Use organization names/codes instead of ObjectIds
-- **Version-Controlled Seed Data** - CSV files in `scripts/seeders/`
-- **Reference Resolver** - Converts names/codes to MongoDB ObjectIds automatically
-- **Dependency-Aware Import** - Sequential insertion respecting foreign key relationships
-- **Safe --clean Mode** - Only drops collections with corresponding CSV files (preserves transient data)
-
-### Database Utilities
-- **CSV Export Tool** - Export collections to human-readable CSVs
+### F9.2 Database Utilities ✅
+- **F9.2.1 CSV Export Tool** ✅ - Export collections to human-readable CSVs
   - Reference resolution (ObjectIds → names/codes)
   - Auto-detect mode (exports ALL fields, adapts to schema changes)
   - Configured mode (consistent columns for production)
-- **CSV Import Tool** - Import CSVs with automatic ObjectId reference resolution
-- **Database Cloning Tool** - Clone entire databases between environments (dev → staging → prod)
-- **Database Statistics Tool** - Compare document counts across databases
-- **Flexible Column Mapping** - Support multiple CSV column name variations
+- **F9.2.2 CSV Import Tool** ✅ - Import CSVs with automatic ObjectId reference resolution
+- **F9.2.3 Database Cloning Tool** ✅ - Clone entire databases between environments (dev → staging → prod)
+- **F9.2.4 Database Statistics Tool** ✅ - Compare document counts across databases
+- **F9.2.5 Flexible Column Mapping** ✅ - Support multiple CSV column name variations
 
-### Schema Management
-- **Zod Validation** - Type-safe schema definitions
-- **Schema Evolution** - Track changes over time
-- **Migration Scripts** - Safe schema migrations with rollback support
+### F9.3 Schema Management
+- **F9.3.1 Zod Validation** ✅ - Type-safe schema definitions
+- **F9.3.2 Schema Evolution** - Track changes over time
+- **F9.3.3 Migration Scripts** - Safe schema migrations with rollback support
 
----
+## F10. Developer Experience
 
-## 10. Developer Experience
+### F10.1 API Documentation
+- **F10.1.1 OpenAPI/Swagger Specification** - Machine-readable API docs
+- **F10.1.2 Interactive API Docs** - Try endpoints directly from browser
+- **F10.1.3 Code Examples** - curl, JavaScript, Python, Go examples
+- **F10.1.4 API Versioning** - `/api/v1`, `/api/v2` for breaking changes
+- **F10.1.5 Developer Portal** - Self-service API key management
 
-### API Documentation
-- **OpenAPI/Swagger Specification** - Machine-readable API docs
-- **Interactive API Docs** - Try endpoints directly from browser
-- **Code Examples** - curl, JavaScript, Python, Go examples
-- **API Versioning** - `/api/v1`, `/api/v2` for breaking changes
-- **Developer Portal** - Self-service API key management
+### F10.2 SDKs & Client Libraries
+- **F10.2.1 JavaScript/TypeScript SDK** - npm package for Node.js and browsers
+- **F10.2.2 Python SDK** - pip package
+- **F10.2.3 Go SDK** - go get package
+- **F10.2.4 HTTP Client Examples** - Postman collections, Insomnia workspaces
 
-### SDKs & Client Libraries
-- **JavaScript/TypeScript SDK** - npm package for Node.js and browsers
-- **Python SDK** - pip package
-- **Go SDK** - go get package
-- **HTTP Client Examples** - Postman collections, Insomnia workspaces
-
-### Webhooks & Event System
-- **Event Subscription Management** - Subscribe to specific events
-- **Webhook Endpoint Registration** - Configure callback URLs
-- **Event Payload Customization** - Choose which fields to include
-- **Retry Logic** - Exponential backoff with Dead Letter Queue
-- **HMAC Signatures** - Verify webhook authenticity
-- **Event Types**:
+### F10.3 Webhooks & Event System
+- **F10.3.1 Event Subscription Management** - Subscribe to specific events
+- **F10.3.2 Webhook Endpoint Registration** - Configure callback URLs
+- **F10.3.3 Event Payload Customization** - Choose which fields to include
+- **F10.3.4 Retry Logic** - Exponential backoff with Dead Letter Queue
+- **F10.3.5 HMAC Signatures** - Verify webhook authenticity
+- **F10.3.6 Event Types**:
   - Employee events (created, updated, deleted, onboarded, mutated, offboarded)
   - OAuth events (client created, token issued)
   - Organization events (unit created, structure changed)
   - SCIM events (user provisioned, deprovisioned)
 
-### Advanced Features
-- **GraphQL Support** - Alternative to REST API (optional)
-- **Device Authorization Flow** - For TV/IoT devices without keyboard
-- **Client Registration Service** - Dynamic client registration (RFC 7591)
-- **Internationalization** - Multi-language support (Indonesian / English)
-
----
+### F10.4 Advanced Features
+- **F10.4.1 GraphQL Support** - Alternative to REST API (optional)
+- **F10.4.2 Device Authorization Flow** - For TV/IoT devices without keyboard
+- **F10.4.3 Client Registration Service** - Dynamic client registration (RFC 7591)
+- **F10.4.4 Internationalization** - Multi-language support (Indonesian / English)
 
 # ROADMAP/TODO
 
@@ -453,7 +397,8 @@
 ### 1.1 MongoDB Field-Level Encryption ⭐⭐⭐ CRITICAL
 **Timeline**: 1 week
 **Dependency**: None
-**Source**: SECURITY_IMPLEMENTATION_GUIDE.md, SUMMARY_DATA_PRIVACY_COMPLIANCE.md
+**Source**: SECURITY_IMPLEMENTATION_GUIDE.md, DATA_PRIVACY_COMPLIANCE.md
+**Implements**: F1.2.4
 
 - [ ] Generate encryption keys (DEK and KEK)
 - [ ] Setup Azure Key Vault or AWS KMS
@@ -471,6 +416,7 @@
 **Timeline**: 3 days
 **Dependency**: None
 **Source**: SECURITY_IMPLEMENTATION_GUIDE.md
+**Implements**: F1.2.5
 
 - [ ] Create data masking utility (`src/lib/utils/data-masking.ts`)
 - [ ] Implement masking functions:
@@ -489,7 +435,8 @@
 ### 1.3 Multi-Factor Authentication (MFA/2FA) ⭐⭐⭐
 **Timeline**: 1 week
 **Dependency**: None
-**Source**: SECURITY_IMPLEMENTATION_GUIDE.md, SSO_ADMIN_GUIDE.md
+**Source**: SECURITY_IMPLEMENTATION_GUIDE.md
+**Implements**: F1.2.1
 
 - [ ] Install MFA libraries (`@otplib/preset-default`, `qrcode`)
 - [ ] Create MFA schema and collection
@@ -526,7 +473,8 @@
 ### 1.4 Account Self-Service Portal ⭐⭐⭐
 **Timeline**: 5 days
 **Dependency**: MFA implementation
-**Source**: SSO_ADMIN_GUIDE.md
+**Source**: _DEV_GUIDE.md
+**Implements**: F2.3.3
 
 - [ ] Create `/account` route for end-user portal
 - [ ] Implement profile editing page:
@@ -558,7 +506,8 @@
 ### 1.5 Password Reset Flow ⭐⭐⭐
 **Timeline**: 3 days
 **Dependency**: None
-**Source**: SSO_ADMIN_GUIDE.md
+**Source**: _DEV_GUIDE.md
+**Implements**: F2.3.4
 
 - [ ] Create "Forgot Password" link on login page
 - [ ] Implement password reset request:
@@ -578,7 +527,8 @@
 ### 1.6 Email Verification ⭐⭐
 **Timeline**: 2 days
 **Dependency**: None
-**Source**: SSO_ADMIN_GUIDE.md
+**Source**: _DEV_GUIDE.md
+**Implements**: F2.3.5
 
 - [ ] Add `emailVerified` field to identity schema
 - [ ] Generate email verification token on registration
@@ -594,7 +544,8 @@
 ### 1.7 UU PDP Compliance Features ⭐⭐⭐
 **Timeline**: 1 week
 **Dependency**: Data export, account deletion
-**Source**: SUMMARY_DATA_PRIVACY_COMPLIANCE.md, KEBIJAKAN_PRIVASI_TEMPLATE.md
+**Source**: DATA_PRIVACY_COMPLIANCE.md, KEBIJAKAN_PRIVASI_TEMPLATE.md
+**Implements**: F6.3 (UU PDP Compliance)
 
 - [ ] **Appoint Data Protection Officer (DPO)**:
   - [ ] Hire or assign DPO (can be external consultant)
@@ -1259,13 +1210,3 @@
 - [ ] Add GraphQL support (alternative to REST API)
 - [ ] Create SDK/client libraries (JavaScript, Python, Go)
 - [ ] Employee general CSV/Excel import/export functionality (beyond SK Penempatan)
-
----
-
-## 🎯 Recommended Focus Order
-
-1. **CRITICAL (Week 1-3)**: Security & Compliance (Phase 1) - Required for production deployment
-2. **HIGH (Week 4-6)**: Integration (Phase 2) - Complete Entra ID sync, fix SCIM issues
-3. **MEDIUM (Week 7-9)**: Organization Enhancement (Phase 3) - Improve org versioning system
-4. **LOW (Week 10-14)**: Advanced Features (Phase 4) - Nice-to-have features
-5. **FUTURE**: Enterprise Features (Phase 5) - Long-term roadmap
