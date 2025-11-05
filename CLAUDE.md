@@ -113,9 +113,6 @@ src/
 - **dont make Documentation if user not request it**, just very quick and important summary is enought.
 - **scope of works and the check list of implementation todo**, (`./DOCS/_DEV_GUIDE.md`) _Important: read to track, Update (mark with `[✅]`) as you complete tasks_
 - **example of organizations structure we need to implement**, (`./DOCS/example_org_structure.md`)
-- **Complete SCIM API documentation** (`DOCS/SCIM_IMPLEMENTATION.md`)
-- **OFM integration guide** (`DOCS/OFM_SCIM_INTEGRATION_GUIDE.md`)
-- **Industry comparison** (`DOCS/SCIM_INDUSTRY_COMPARISON.md`)
 
 ---
 
