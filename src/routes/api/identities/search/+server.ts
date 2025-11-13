@@ -2,9 +2,11 @@ import type { RequestHandler } from './$types';
 import { getDB } from '$lib/db/connection';
 import { json, error } from '@sveltejs/kit';
 import { ObjectId } from 'mongodb';
+import { getMaskedIdentity } from '$lib/utils/data-masking';
+import { getMaskingConfig } from '$lib/utils/masking-helper';
 
 // GET /api/identities/search?search=john&identityType=employee&page=1&pageSize=10
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, locals }) => {
 	const db = getDB();
 	const search = url.searchParams.get('search') || '';
 	const identityType = url.searchParams.get('identityType') || 'employee';
@@ -79,14 +81,21 @@ export const GET: RequestHandler = async ({ url }) => {
 					employeeId,
 					fullName: identity.fullName,
 					email: identity.email || '',
+					phone: identity.phone || '',
+					customProperties: identity.customProperties || {},
 					orgUnitName,
 					positionName
 				};
 			})
 		);
 
+		// Apply data masking based on user roles
+		const maskingConfig = await getMaskingConfig();
+		const userRoles = locals.user?.roles || [];
+		const maskedItems = items.map((item) => getMaskedIdentity(item, maskingConfig, userRoles));
+
 		return json({
-			items,
+			items: maskedItems,
 			total,
 			page,
 			pageSize,

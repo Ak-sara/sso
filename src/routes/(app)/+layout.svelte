@@ -73,8 +73,9 @@
 			icon: '⚙️',
 			items: [
 				{ name: 'Global Settings', href: '/settings', icon: '🔌' },
+				{ name: 'Data Masking', href: '/settings/data-masking', icon: '🔒' },
 				{ name: 'OAuth Clients', href: '/clients', icon: '🔑' },
-				{ name: 'SCIM Clients', href: '/clients-scim', icon: '🔐' },				
+				{ name: 'SCIM Clients', href: '/clients-scim', icon: '🔐' },
 			],
 		},
 	];

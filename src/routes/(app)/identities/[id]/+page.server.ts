@@ -5,8 +5,10 @@ import { getDB } from '$lib/db/connection';
 import { ObjectId } from 'mongodb';
 import { hash } from '@node-rs/argon2';
 import { logIdentityOperation } from '$lib/audit/logger';
+import { getMaskedIdentity } from '$lib/utils/data-masking';
+import { getMaskingConfig } from '$lib/utils/masking-helper';
 
-export const load: PageServerLoad = async ({ params, url }) => {
+export const load: PageServerLoad = async ({ params, url, locals }) => {
 	const mode = url.searchParams.get('mode') || 'view';
 	const isNew = params.id === 'new';
 
@@ -48,10 +50,10 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		return value.toString();
 	};
 
-	return {
-		mode: isNew ? 'edit' : mode,
-		isNew,
-		identity: identity ? {
+	// Normalize identity
+	let normalizedIdentity = null;
+	if (identity) {
+		normalizedIdentity = {
 			...identity,
 			_id: identity._id?.toString() || '',
 			organizationId: toStringSafe(identity.organizationId),
@@ -67,7 +69,20 @@ export const load: PageServerLoad = async ({ params, url }) => {
 			dateOfBirth: toISOStringSafe(identity.dateOfBirth),
 			contractStartDate: toISOStringSafe(identity.contractStartDate),
 			contractEndDate: toISOStringSafe(identity.contractEndDate)
-		} : null,
+		};
+
+		// Apply data masking if in view mode (not edit mode)
+		if (mode === 'view') {
+			const maskingConfig = await getMaskingConfig();
+			const userRoles = locals.user?.roles || [];
+			normalizedIdentity = getMaskedIdentity(normalizedIdentity, maskingConfig, userRoles);
+		}
+	}
+
+	return {
+		mode: isNew ? 'edit' : mode,
+		isNew,
+		identity: normalizedIdentity,
 		organizations: organizations.map(org => ({
 			_id: org._id.toString(),
 			name: org.name,

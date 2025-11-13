@@ -171,6 +171,24 @@ function getDefaultSettings() {
 			label: 'Email Verification Required',
 			description: 'Require email verification for new accounts. When enabled, also enforces per-realm email domain whitelisting.',
 			updatedAt: new Date()
+		},
+		{
+			key: 'data_masking_config',
+			value: {
+				enabled: true,
+				rules: [
+					{ field: 'email', type: 'email' },
+					{ field: 'phone', type: 'phone', showFirst: 4, showLast: 4 },
+					{ field: 'customProperties.ktp', type: 'ktp', showFirst: 4, showLast: 4 },
+					{ field: 'customProperties.dob', type: 'date' }
+				],
+				exemptRoles: ['admin', 'superadmin']
+			},
+			type: 'json',
+			category: 'privacy',
+			label: 'Data Masking Configuration',
+			description: 'Configure which fields should be masked for UU PDP compliance. Admins can see unmasked data.',
+			updatedAt: new Date()
 		}
 	];
 }
