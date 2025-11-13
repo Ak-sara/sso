@@ -3,6 +3,7 @@ import { identityRepository } from '$lib/db/identity-repository';
 import { passwordService } from '$lib/auth/password';
 import { sessionManager } from '$lib/auth/session';
 import { logAuth } from '$lib/audit/logger';
+import { getDB } from '$lib/db/connection';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -10,7 +11,16 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(302, '/');
 	}
 
-	return {};
+	const db = getDB();
+
+	// Check if self-registration is enabled
+	const registrationSetting = await db.collection('system_settings').findOne({
+		key: 'enable_registration'
+	});
+
+	return {
+		isRegistrationEnabled: registrationSetting?.value === true
+	};
 };
 
 export const actions: Actions = {

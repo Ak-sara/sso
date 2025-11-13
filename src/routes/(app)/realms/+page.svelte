@@ -8,6 +8,7 @@
 	let showCreateModal = $state(false);
 	let showEditModal = $state(false);
 	let selectedRealm: any = $state(null);
+	let newDomain = $state('');
 
 	const getTypeIcon = (type: string) => {
 		const icons: Record<string, string> = {
@@ -67,6 +68,10 @@
 			const response = await fetch(`/api/realms/${realm.code}`);
 			if (response.ok) {
 				selectedRealm = await response.json();
+				// Ensure allowedEmailDomains is an array
+				if (!selectedRealm.allowedEmailDomains) {
+					selectedRealm.allowedEmailDomains = [];
+				}
 				showEditModal = true;
 			} else {
 				alert('Failed to load realm data');
@@ -75,6 +80,33 @@
 			console.error('Error loading realm:', err);
 			alert('Failed to load realm data');
 		}
+	}
+
+	function addDomain() {
+		if (!newDomain.trim()) return;
+
+		const trimmedDomain = newDomain.trim().toLowerCase();
+
+		// Validate domain format (supports wildcards)
+		// Allow: example.com, *.com, *.co.id
+		const domainRegex = /^(\*\.)?[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+		if (!domainRegex.test(trimmedDomain)) {
+			alert('Format domain tidak valid. Gunakan format: example.com atau *.com');
+			return;
+		}
+
+		// Check for duplicates
+		if (selectedRealm.allowedEmailDomains.includes(trimmedDomain)) {
+			alert('Domain sudah ada dalam daftar');
+			return;
+		}
+
+		selectedRealm.allowedEmailDomains = [...selectedRealm.allowedEmailDomains, trimmedDomain];
+		newDomain = '';
+	}
+
+	function removeDomain(domain: string) {
+		selectedRealm.allowedEmailDomains = selectedRealm.allowedEmailDomains.filter((d: string) => d !== domain);
 	}
 
 	async function handleDelete(realm: any) {
@@ -114,7 +146,8 @@
 				legalName: selectedRealm.legalName || selectedRealm.name,
 				type: selectedRealm.type,
 				description: selectedRealm.description || '',
-				isActive: selectedRealm.isActive
+				isActive: selectedRealm.isActive,
+				allowedEmailDomains: selectedRealm.allowedEmailDomains || []
 			};
 
 			const response = await fetch(`/api/realms/${selectedRealm.code}`, {
@@ -361,6 +394,64 @@
 						/>
 						<span class="text-sm font-medium text-gray-700">Realm Active</span>
 					</label>
+				</div>
+
+				<!-- Email Domain Whitelist -->
+				<div class="border-t pt-4">
+					<label class="block text-sm font-medium text-gray-700 mb-1">Email Domain Whitelist</label>
+					<p class="text-xs text-gray-500 mb-2">
+						Domain email yang diizinkan untuk pendaftaran. Kosongkan untuk <strong>mengizinkan semua domain</strong>. Tambahkan domain untuk <strong>membatasi hanya domain tertentu</strong>.
+					</p>
+					<p class="text-xs text-blue-600 mb-3">
+						💡 Gunakan wildcard untuk izinkan semua subdomain: <code class="bg-blue-50 px-1 rounded">*.com</code>, <code class="bg-blue-50 px-1 rounded">*.co.id</code>
+					</p>
+
+					<!-- Current domains list -->
+					{#if selectedRealm.allowedEmailDomains && selectedRealm.allowedEmailDomains.length > 0}
+						<div class="space-y-2 mb-3">
+							{#each selectedRealm.allowedEmailDomains as domain}
+								<div class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-md">
+									<span class="flex-1 text-sm text-gray-700">@{domain}</span>
+									<button
+										type="button"
+										onclick={() => removeDomain(domain)}
+										class="text-red-600 hover:text-red-800 text-sm font-medium"
+									>
+										✕
+									</button>
+								</div>
+							{/each}
+						</div>
+					{:else}
+						<div class="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
+							<p class="text-sm text-blue-800">
+								ℹ️ <strong>Tidak ada domain yang dikonfigurasi.</strong> Semua domain email diizinkan untuk pendaftaran (tidak ada pembatasan).
+							</p>
+						</div>
+					{/if}
+
+					<!-- Add new domain input -->
+					<div class="flex gap-2">
+						<input
+							type="text"
+							bind:value={newDomain}
+							placeholder="contoh: ias.co.id atau *.com"
+							class="flex-1 px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 text-sm"
+							onkeydown={(e) => {
+								if (e.key === 'Enter') {
+									e.preventDefault();
+									addDomain();
+								}
+							}}
+						/>
+						<button
+							type="button"
+							onclick={addDomain}
+							class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
+						>
+							Tambah
+						</button>
+					</div>
 				</div>
 			</div>
 

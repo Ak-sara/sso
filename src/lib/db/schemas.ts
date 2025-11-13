@@ -174,6 +174,9 @@ export const OrganizationSchema = z.object({
 	isActive: z.boolean().default(true),
 	settings: z.record(z.any()).optional(),
 
+	// Email domain whitelisting for self-registration
+	allowedEmailDomains: z.array(z.string()).default([]), // e.g., ["ias.co.id", "group-ias.com"]
+
 	// Branding configuration (for white-labeling)
 	branding: z.object({
 		appName: z.string().optional(), // "IAS SSO", "Customer Portal", etc

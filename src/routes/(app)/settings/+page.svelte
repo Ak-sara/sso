@@ -107,6 +107,23 @@
 	{/if}
 
 	<form method="POST" action="?/update" use:enhance>
+		{#if isEditing}
+			<div class="flex justify-end gap-3 sticky top-0 mb-4">
+				<button
+					type="button"
+					onclick={cancelEditing}
+					class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+				>
+					Cancel
+				</button>
+				<button
+					type="submit"
+					class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+				>
+					Save Changes
+				</button>
+			</div>
+		{/if}
 		{#each Object.entries(settingsByCategory()) as [category, settings]}
 			<div class="bg-white shadow rounded-lg p-6 mb-6">
 				<h3 class="text-lg font-medium text-gray-900 mb-4 capitalize">{category} Settings</h3>
@@ -127,12 +144,13 @@
 								{#if isEditing}
 									<div class="ml-4">
 										{#if setting.type === 'boolean'}
+											<input type="hidden" name="setting_{setting.key}_type" value="boolean" />
 											<label class="flex items-center gap-2">
 												<input
 													type="checkbox"
 													name="setting_{setting.key}"
-													checked={getSettingValue(setting)}
-													onchange={(e) => (editedSettings[setting.key] = e.currentTarget.checked)}
+													bind:checked={editedSettings[setting.key]}
+													value="true"
 													class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
 												/>
 												<span class="text-sm text-gray-700">Enabled</span>
@@ -203,23 +221,7 @@
 			</div>
 		{/each}
 
-		{#if isEditing}
-			<div class="flex justify-end gap-3 sticky bottom-0 bg-white border-t pt-4">
-				<button
-					type="button"
-					onclick={cancelEditing}
-					class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-				>
-					Cancel
-				</button>
-				<button
-					type="submit"
-					class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-				>
-					Save Changes
-				</button>
-			</div>
-		{/if}
+		
 	</form>
 
 </div>

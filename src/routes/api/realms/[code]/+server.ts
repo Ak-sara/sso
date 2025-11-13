@@ -25,7 +25,8 @@ export const GET: RequestHandler = async ({ params }) => {
 		...org,
 		_id: org._id.toString(),
 		parentId: org.parentId?.toString() || null,
-		userCount
+		userCount,
+		allowedEmailDomains: org.allowedEmailDomains || []
 	});
 };
 
@@ -44,18 +45,23 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		}
 
 		// Update realm
+		const updateFields: any = {
+			name: data.name,
+			legalName: data.legalName || data.name,
+			type: data.type || 'subsidiary',
+			description: data.description || '',
+			isActive: data.isActive !== undefined ? data.isActive : true,
+			updatedAt: new Date()
+		};
+
+		// Only update allowedEmailDomains if provided
+		if (data.allowedEmailDomains !== undefined) {
+			updateFields.allowedEmailDomains = Array.isArray(data.allowedEmailDomains) ? data.allowedEmailDomains : [];
+		}
+
 		const result = await db.collection('organizations').updateOne(
 			{ code: params.code },
-			{
-				$set: {
-					name: data.name,
-					legalName: data.legalName || data.name,
-					type: data.type || 'subsidiary',
-					description: data.description || '',
-					isActive: data.isActive !== undefined ? data.isActive : true,
-					updatedAt: new Date()
-				}
-			}
+			{ $set: updateFields }
 		);
 
 		if (result.matchedCount === 0) {

@@ -16,6 +16,18 @@ export const load: PageServerLoad = async () => {
 		const defaults = getDefaultSettings();
 		await db.collection('system_settings').insertMany(defaults);
 		settings = defaults;
+	} else {
+		// Check for missing settings and add them
+		const defaults = getDefaultSettings();
+		const existingKeys = new Set(settings.map(s => s.key));
+		const missingSettings = defaults.filter(d => !existingKeys.has(d.key));
+
+		if (missingSettings.length > 0) {
+			console.log('🔧 Adding missing settings:', missingSettings.map(s => s.key));
+			await db.collection('system_settings').insertMany(missingSettings);
+			// Reload settings
+			settings = await db.collection('system_settings').find({}).toArray();
+		}
 	}
 
 	return {
@@ -37,11 +49,20 @@ export const actions: Actions = {
 		const db = getDB();
 
 		try {
+			// First, collect all boolean setting keys from the _type markers
+			const booleanSettings = new Set<string>();
+			for (const [key, value] of formData.entries()) {
+				if (key.endsWith('_type') && value === 'boolean') {
+					const settingKey = key.replace('setting_', '').replace('_type', '');
+					booleanSettings.add(settingKey);
+				}
+			}
+
 			// Parse all settings from form data
 			const updates: Array<{ key: string; value: any }> = [];
 
 			for (const [key, value] of formData.entries()) {
-				if (key.startsWith('setting_')) {
+				if (key.startsWith('setting_') && !key.endsWith('_type')) {
 					const settingKey = key.replace('setting_', '');
 
 					// Get the setting type to properly cast the value
@@ -57,6 +78,15 @@ export const actions: Actions = {
 					}
 
 					updates.push({ key: settingKey, value: parsedValue });
+				}
+			}
+
+			// Handle unchecked boolean checkboxes (they don't appear in formData)
+			for (const booleanKey of booleanSettings) {
+				const alreadyInUpdates = updates.some(u => u.key === booleanKey);
+				if (!alreadyInUpdates) {
+					// Checkbox was unchecked, set to false
+					updates.push({ key: booleanKey, value: false });
 				}
 			}
 
@@ -139,7 +169,7 @@ function getDefaultSettings() {
 			type: 'boolean',
 			category: 'security',
 			label: 'Email Verification Required',
-			description: 'Require email verification for new accounts',
+			description: 'Require email verification for new accounts. When enabled, also enforces per-realm email domain whitelisting.',
 			updatedAt: new Date()
 		}
 	];

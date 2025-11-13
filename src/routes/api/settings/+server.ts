@@ -8,11 +8,24 @@ import { getDB } from '$lib/db/connection';
  */
 export const GET: RequestHandler = async () => {
 	const db = getDB();
-	const settings = await db.collection('system_settings').find({}).toArray();
+	let settings = await db.collection('system_settings').find({}).toArray();
 
-	// If no settings exist, return defaults
+	// If no settings exist, initialize with defaults
 	if (settings.length === 0) {
-		return json(getDefaultSettings());
+		const defaults = getDefaultSettings();
+		await db.collection('system_settings').insertMany(defaults);
+		settings = defaults;
+	} else {
+		// Check for missing settings and add them
+		const defaults = getDefaultSettings();
+		const existingKeys = new Set(settings.map(s => s.key));
+		const missingSettings = defaults.filter(d => !existingKeys.has(d.key));
+
+		if (missingSettings.length > 0) {
+			await db.collection('system_settings').insertMany(missingSettings);
+			// Reload settings
+			settings = await db.collection('system_settings').find({}).toArray();
+		}
 	}
 
 	return json(
@@ -146,7 +159,7 @@ function getDefaultSettings() {
 			type: 'boolean',
 			category: 'security',
 			label: 'Email Verification Required',
-			description: 'Require email verification for new accounts',
+			description: 'Require email verification for new accounts. When enabled, also enforces per-realm email domain whitelisting.',
 			updatedAt: new Date()
 		}
 	];

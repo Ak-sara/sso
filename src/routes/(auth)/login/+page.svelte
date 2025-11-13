@@ -93,14 +93,6 @@
 							</svg>
 						</a>
 					</div>
-
-					<!-- Test Credentials (Dev Only) -->
-					<div class="mt-6 p-4 bg-black/20 backdrop-blur-sm rounded-lg text-sm">
-						<p class="font-medium mb-2">🧪 Test Login Options:</p>
-						<p class="font-mono mb-1">Email: admin@ias.co.id</p>
-						<p class="font-mono mb-1">Or NIK: (employee's NIK)</p>
-						<p class="font-mono">Password: password123</p>
-					</div>
 				</div>
 			</div>
 
@@ -202,9 +194,11 @@
 		</form>
 
 				<!-- Footer -->
-				<div class="mt-8 text-center text-sm text-gray-600">
-					<p>Need an account? <a href="/register" class="brand-text-primary font-medium hover:opacity-80 transition-opacity">Contact your administrator</a></p>
-				</div>
+				{#if data.isRegistrationEnabled}
+					<div class="mt-8 text-center text-sm text-gray-600">
+						<p>Belum punya akun? <a href="/register" class="brand-text-primary font-medium hover:opacity-80 transition-opacity">Daftar di sini</a></p>
+					</div>
+				{/if}
 			</div>
 		</div>
 	</div>
