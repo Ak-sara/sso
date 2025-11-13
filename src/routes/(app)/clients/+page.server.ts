@@ -76,4 +76,22 @@ export const actions: Actions = {
 			service_account: { username: serviceAccountUsername, id: serviceAccount._id!.toString() }
 		};
 	},
+
+	delete: async ({ request }) => {
+		const formData = await request.formData();
+		const clientId = formData.get('clientId') as string;
+
+		if (!clientId) {
+			return { error: 'Client ID is required' };
+		}
+
+		const db = getDB();
+		const result = await db.collection('oauth_clients').deleteOne({ clientId });
+
+		if (result.deletedCount === 0) {
+			return { error: 'Client not found' };
+		}
+
+		return { success: 'Client deleted successfully' };
+	}
 };

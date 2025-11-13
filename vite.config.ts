@@ -15,5 +15,17 @@ export default defineConfig({
 	},
 	optimizeDeps: {
 		exclude: ['@node-rs/argon2', 'mongodb']
+	},
+	server: {
+		host: '0.0.0.0', // Listen on all network interfaces (allows LAN access)
+		port: 5173,
+		strictPort: false, // Use alternative port if 5174 is busy
+		// Allow CORS for development
+		cors: true
+	},
+	preview: {
+		host: '0.0.0.0', // Also expose preview server
+		port: 4173,
+		strictPort: false
 	}
 });

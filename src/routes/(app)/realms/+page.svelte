@@ -1,9 +1,146 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { PageData, ActionData } from './$types';
+	import DataTable from '$lib/components/DataTable.svelte';
+	import { invalidateAll } from '$app/navigation';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
-	let showModal = $state(false);
+	let showCreateModal = $state(false);
+	let showEditModal = $state(false);
+	let selectedRealm: any = $state(null);
+
+	const getTypeIcon = (type: string) => {
+		const icons: Record<string, string> = {
+			parent: '🏛️',
+			subsidiary: '🏢',
+			branch: '📍'
+		};
+		return icons[type] || '📋';
+	};
+
+	// DataTable columns
+	const columns = [
+		{
+			key: 'name',
+			label: 'Realm Name',
+			sortable: true,
+			render: (value: string, row: any) => `
+				<div class="flex items-center gap-2">
+					<span class="text-2xl">${getTypeIcon(row.type)}</span>
+					<div>
+						<p class="font-medium text-gray-900">${value}</p>
+						<p class="text-sm text-gray-500">Code: ${row.code}</p>
+					</div>
+				</div>
+			`
+		},
+		{
+			key: 'type',
+			label: 'Type',
+			sortable: true,
+			render: (value: string) => `
+				<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 capitalize">
+					${value}
+				</span>
+			`
+		},
+		{
+			key: 'userCount',
+			label: 'Users',
+			sortable: true,
+			render: (value: number) => `<span class="font-medium text-gray-900">${value || 0}</span>`
+		},
+		{
+			key: 'isActive',
+			label: 'Status',
+			sortable: true,
+			render: (value: boolean) => {
+				const colorClass = value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+				const label = value ? 'Aktif' : 'Nonaktif';
+				return `<span class="px-2 py-1 text-xs font-semibold rounded-full ${colorClass}">${label}</span>`;
+			}
+		}
+	];
+
+	async function handleEdit(realm: any) {
+		try {
+			const response = await fetch(`/api/realms/${realm.code}`);
+			if (response.ok) {
+				selectedRealm = await response.json();
+				showEditModal = true;
+			} else {
+				alert('Failed to load realm data');
+			}
+		} catch (err) {
+			console.error('Error loading realm:', err);
+			alert('Failed to load realm data');
+		}
+	}
+
+	async function handleDelete(realm: any) {
+		if (!confirm(`Delete realm "${realm.name}"? This action cannot be undone.`)) {
+			return;
+		}
+
+		try {
+			const formData = new FormData();
+			formData.append('code', realm.code);
+
+			const response = await fetch('?/delete', {
+				method: 'POST',
+				body: formData
+			});
+
+			const result = await response.json();
+
+			if (result.type === 'failure') {
+				alert(`Failed to delete realm: ${result.data.error}`);
+			} else if (result.type === 'success') {
+				alert('Realm deleted successfully');
+				await invalidateAll();
+			}
+		} catch (err) {
+			console.error('Error deleting realm:', err);
+			alert('Failed to delete realm');
+		}
+	}
+
+	async function saveChanges() {
+		if (!selectedRealm) return;
+
+		try {
+			const updateData = {
+				name: selectedRealm.name,
+				legalName: selectedRealm.legalName || selectedRealm.name,
+				type: selectedRealm.type,
+				description: selectedRealm.description || '',
+				isActive: selectedRealm.isActive
+			};
+
+			const response = await fetch(`/api/realms/${selectedRealm.code}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(updateData)
+			});
+
+			if (response.ok) {
+				alert('Realm updated successfully');
+				closeEditModal();
+				await invalidateAll();
+			} else {
+				const error = await response.json();
+				alert(`Failed to update realm: ${error.error || 'Unknown error'}`);
+			}
+		} catch (err) {
+			console.error('Error updating realm:', err);
+			alert('Failed to update realm');
+		}
+	}
+
+	function closeEditModal() {
+		showEditModal = false;
+		selectedRealm = null;
+	}
 </script>
 
 <div class="space-y-6">
@@ -29,7 +166,7 @@
 			<p class="text-sm text-gray-500">Kelola realm/tenant untuk multi-organisasi</p>
 		</div>
 		<button
-			onclick={() => (showModal = true)}
+			onclick={() => (showCreateModal = true)}
 			class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
 		>
 			+ Buat Realm Baru
@@ -48,66 +185,22 @@
 		</div>
 	{/if}
 
-	<!-- Realms Grid -->
-	<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-		{#each data.realms as realm}
-			<div class="bg-white shadow rounded-lg p-6 hover:shadow-lg transition-shadow">
-				<div class="flex items-start justify-between">
-					<div class="flex items-center space-x-3">
-						<div class="text-4xl">
-							{realm.type === 'parent' ? '🏛️' : realm.type === 'subsidiary' ? '🏢' : '📍'}
-						</div>
-						<div>
-							<h3 class="text-lg font-medium text-gray-900">{realm.name}</h3>
-							<p class="text-sm text-gray-500">{realm.code}</p>
-						</div>
-					</div>
-				</div>
-
-				<div class="mt-4 space-y-2">
-					<div class="flex items-center justify-between text-sm">
-						<span class="text-gray-500">Type:</span>
-						<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-							{realm.type}
-						</span>
-					</div>
-
-					<div class="flex items-center justify-between text-sm">
-						<span class="text-gray-500">Status:</span>
-						<span class="px-2 py-1 text-xs font-semibold rounded-full {realm.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-							{realm.isActive ? 'Aktif' : 'Nonaktif'}
-						</span>
-					</div>
-
-					<div class="flex items-center justify-between text-sm">
-						<span class="text-gray-500">Pengguna:</span>
-						<span class="font-medium text-gray-900">{realm.userCount || 0}</span>
-					</div>
-				</div>
-
-				<div class="mt-4 pt-4 border-t border-gray-200 flex justify-between">
-					<a href="/realms/{realm._id}/branding" class="text-sm text-purple-600 hover:text-purple-900 font-medium">
-						🎨 Branding
-					</a>
-					<button class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">
-						⚙️ Konfigurasi
-					</button>
-					<button class="text-sm text-blue-600 hover:text-blue-900 font-medium">
-						📊 Detail
-					</button>
-				</div>
-			</div>
-		{/each}
-	</div>
-
-	
+	<!-- Realms DataTable -->
+	<DataTable
+		data={data.realms}
+		{columns}
+		searchPlaceholder="Cari realm (nama, kode)..."
+		onEdit={handleEdit}
+		onDelete={handleDelete}
+		emptyMessage="Belum ada realm. Tambahkan realm baru untuk memulai."
+	/>
 </div>
 
-<!-- Create Realm Modal -->
-{#if showModal}
+<!-- Create Modal -->
+{#if showCreateModal}
 	<div class="fixed inset-0 z-50 overflow-y-auto">
 		<div class="flex items-center justify-center min-h-screen px-4">
-			<button onclick={() => (showModal = false)} class="fixed inset-0 bg-black bg-opacity-50"></button>
+			<button onclick={() => (showCreateModal = false)} class="fixed inset-0 bg-black bg-opacity-50"></button>
 
 			<div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6 z-10">
 				<h3 class="text-lg font-medium text-gray-900 mb-4">Buat Realm Baru</h3>
@@ -159,7 +252,7 @@
 					<div class="flex justify-end space-x-3 pt-4">
 						<button
 							type="button"
-							onclick={() => (showModal = false)}
+							onclick={() => (showCreateModal = false)}
 							class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
 						>
 							Batal
@@ -172,6 +265,119 @@
 						</button>
 					</div>
 				</form>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- Edit Modal -->
+{#if showEditModal && selectedRealm}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+		onclick={closeEditModal}
+	>
+		<div
+			class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-auto"
+			onclick={(e) => e.stopPropagation()}
+		>
+			<!-- Header -->
+			<div class="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+				<div class="flex items-center gap-3">
+					<span class="text-4xl">{getTypeIcon(selectedRealm.type)}</span>
+					<div>
+						<h3 class="text-xl font-bold">{selectedRealm.name}</h3>
+						<p class="text-sm text-gray-500">Code: {selectedRealm.code}</p>
+					</div>
+				</div>
+				<button onclick={closeEditModal} class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+			</div>
+
+			<!-- Content -->
+			<div class="p-6 space-y-4">
+				<!-- Code (read-only) -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">Kode</label>
+					<p class="px-3 py-2 bg-gray-100 rounded-md text-gray-600">{selectedRealm.code}</p>
+					<p class="text-xs text-gray-500 mt-1">Kode tidak dapat diubah</p>
+				</div>
+
+				<!-- Name -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">Nama Realm</label>
+					<input
+						type="text"
+						bind:value={selectedRealm.name}
+						class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+					/>
+				</div>
+
+				<!-- Legal Name -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">Nama Legal</label>
+					<input
+						type="text"
+						bind:value={selectedRealm.legalName}
+						placeholder={selectedRealm.name}
+						class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+					/>
+				</div>
+
+				<!-- Type -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">Tipe</label>
+					<select
+						bind:value={selectedRealm.type}
+						class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+					>
+						<option value="subsidiary">Subsidiary</option>
+						<option value="parent">Parent</option>
+						<option value="branch">Branch</option>
+					</select>
+				</div>
+
+				<!-- Description -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+					<textarea
+						bind:value={selectedRealm.description}
+						rows="3"
+						class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+					></textarea>
+				</div>
+
+				<!-- User Count (read-only) -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Pengguna</label>
+					<p class="px-3 py-2 bg-gray-100 rounded-md text-gray-600">{selectedRealm.userCount || 0} users</p>
+				</div>
+
+				<!-- Active Status -->
+				<div>
+					<label class="flex items-center gap-2">
+						<input
+							type="checkbox"
+							bind:checked={selectedRealm.isActive}
+							class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+						/>
+						<span class="text-sm font-medium text-gray-700">Realm Active</span>
+					</label>
+				</div>
+			</div>
+
+			<!-- Footer -->
+			<div class="sticky bottom-0 bg-gray-50 border-t px-6 py-4 flex justify-end gap-3">
+				<button
+					onclick={closeEditModal}
+					class="px-4 py-2 text-gray-700 bg-white border rounded-md hover:bg-gray-50"
+				>
+					Cancel
+				</button>
+				<button
+					onclick={saveChanges}
+					class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+				>
+					Save Changes
+				</button>
 			</div>
 		</div>
 	</div>

@@ -497,6 +497,59 @@ export function resolveAuditLogReferences(
 }
 
 /**
+ * Resolve OAuth client references and transform array fields
+ */
+function resolveOAuthClientReferences(
+	row: Record<string, any>
+): { success: boolean; resolved?: Record<string, any>; errors?: string[] } {
+	const resolved: Record<string, any> = { ...row };
+
+	// Transform redirectUris from pipe-separated string to array
+	if (resolved.redirectUris && typeof resolved.redirectUris === 'string') {
+		resolved.redirectUris = resolved.redirectUris
+			.split('|')
+			.map((uri: string) => uri.trim())
+			.filter((uri: string) => uri.length > 0);
+	}
+
+	// Transform scopes/allowedScopes from space or pipe-separated string to array
+	const scopesField = resolved.scopes || resolved.allowedScopes;
+	if (scopesField && typeof scopesField === 'string') {
+		resolved.allowedScopes = scopesField
+			.split(/[\s|]+/)
+			.map((scope: string) => scope.trim())
+			.filter((scope: string) => scope.length > 0);
+		delete resolved.scopes; // Remove scopes field, use allowedScopes
+	}
+
+	// Transform grantTypes from space or pipe-separated string to array
+	if (resolved.grantTypes && typeof resolved.grantTypes === 'string') {
+		resolved.grantTypes = resolved.grantTypes
+			.split(/[\s|]+/)
+			.map((type: string) => type.trim())
+			.filter((type: string) => type.length > 0);
+	}
+
+	// Set defaults
+	if (!resolved.allowedScopes || resolved.allowedScopes.length === 0) {
+		resolved.allowedScopes = ['openid', 'profile', 'email'];
+	}
+	if (!resolved.grantTypes || resolved.grantTypes.length === 0) {
+		resolved.grantTypes = ['authorization_code', 'refresh_token'];
+	}
+	if (resolved.isActive === undefined || resolved.isActive === '') {
+		resolved.isActive = true;
+	}
+
+	// Convert boolean fields
+	if (typeof resolved.isActive === 'string') {
+		resolved.isActive = resolved.isActive.toLowerCase() === 'true';
+	}
+
+	return { success: true, resolved };
+}
+
+/**
  * Generic resolver dispatcher
  */
 export function resolveReferences(
@@ -520,7 +573,10 @@ export function resolveReferences(
 		case 'audit_log':
 			return resolveAuditLogReferences(row, cache);
 		case 'positions':
+			// No references to resolve
+			return { success: true, resolved: row };
 		case 'oauth_clients':
+			return resolveOAuthClientReferences(row);
 		case 'scim_clients':
 			// No references to resolve
 			return { success: true, resolved: row };

@@ -379,6 +379,22 @@ export const OrgStructureVersionSchema = z.object({
 
 export type OrgStructureVersion = z.infer<typeof OrgStructureVersionSchema>;
 
+// ============== System Settings Schema ==============
+export const SystemSettingsSchema = z.object({
+	_id: z.custom<ObjectId>().optional(),
+	key: z.string(), // Unique setting key (e.g., 'token_expiration')
+	value: z.union([z.string(), z.number(), z.boolean()]), // Setting value
+	type: z.enum(['string', 'number', 'boolean', 'duration']), // Value type
+	category: z.string().default('general'), // Category for grouping (e.g., 'security', 'session', 'oauth')
+	label: z.string(), // Display label
+	description: z.string().optional(), // Description for admins
+	unit: z.string().optional(), // Unit for duration/number (e.g., 'hours', 'days', 'minutes')
+	updatedAt: z.date().default(() => new Date()),
+	updatedBy: z.string().optional() // Admin who last updated
+});
+
+export type SystemSettings = z.infer<typeof SystemSettingsSchema>;
+
 // ============== Employee History Schema ==============
 // Tracks all employee assignment changes over time
 export const EmployeeHistorySchema = z.object({
