@@ -22,7 +22,7 @@
 - **F1.2.2 IP Whitelisting** - CIDR notation support for admin access and SCIM endpoints
 - **F1.2.3 Rate Limiting** - Sliding window algorithm, per-client configuration, default 100 req/min
 - **F1.2.4 Field-Level Encryption** - MongoDB Client-Side FLE for sensitive data (KTP, NPWP, DOB, phone)
-- **F1.2.5 Data Masking** - UI-level masking for KTP, NPWP, phone, email
+- **F1.2.5 Data Masking** ✅ - UI-level masking for KTP, NPWP, phone, email (configuration UI complete, API integration ready)
 - **F1.2.6 Security Headers** - CORS policies, CSRF protection, XSS prevention
 - **F1.2.7 Input Validation** - Comprehensive sanitization across all endpoints
 
@@ -283,11 +283,12 @@
   - External: Name, Email, Access Level, Expiry
   - Service Accounts: Name, Linked OAuth Client, Scopes
 
-### F7.4 Themes & Branding
-- **F7.4.1 Customizable Login Pages** - Logo, colors, background images
-- **F7.4.2 Email Templates** - Branded transactional emails
-- **F7.4.3 Error Pages** - Consistent error page design
-- **F7.4.4 Admin Console Themes** - Light/dark mode support
+### F7.4 Themes & Branding ⚠️ PARTIAL
+- **F7.4.1 Branding Infrastructure** ✅ - Schema, utilities, storage in organizations collection
+- **F7.4.2 Customizable Login Pages** - Logo, colors, background images (pending UI implementation)
+- **F7.4.3 Email Templates** - Branded transactional emails
+- **F7.4.4 Error Pages** - Consistent error page design
+- **F7.4.5 Admin Console Themes** - Light/dark mode support
 
 ## F8. OAuth 2.0 Provider
 
@@ -323,11 +324,8 @@
   - Frontchannel logout - Browser-based logout propagation
   - Session monitoring - Track active sessions across apps
 
-### F8.5 Social Login / Identity Provider Integration
-- **F8.5.1 Google OAuth** - Sign in with Google
-- **F8.5.2 Microsoft Azure AD / Entra ID** - Sign in with Microsoft (as IdP)
-- **F8.5.3 SAML Support** - SAML 2.0 for enterprise SSO
-- **F8.5.4 Social Login Buttons** - Branded buttons on login page
+### F8.5 Social Login / Identity Provider Integration (REMOVED FROM ROADMAP)
+- Social login features have been deprioritized and removed from the implementation roadmap
 
 ## F9. Database Management
 
@@ -412,63 +410,294 @@
 - [ ] Test encryption/decryption with existing data
 - [ ] Deploy to production with secure key management
 
-### 1.2 Data Masking Implementation ⭐⭐⭐ CRITICAL
+### 1.2 Data Masking Implementation ⭐⭐⭐ CRITICAL ✅ IMPLEMENTED
 **Timeline**: 3 days
 **Dependency**: None
 **Source**: SECURITY_IMPLEMENTATION_GUIDE.md
 **Implements**: F1.2.5
 
-- [ ] Create data masking utility (`src/lib/utils/data-masking.ts`)
-- [ ] Implement masking functions:
-  - [ ] `maskKTP()` - Show first 4 and last 2 digits: `3174************12`
-  - [ ] `maskNPWP()` - Show first 2 and last 3: `31.***.***.***-123`
-  - [ ] `maskPhone()` - Show first 4 and last 2: `+6281*****89`
-  - [ ] `maskEmail()` - Show first 2 chars: `jo***@example.com`
+- [✅] Create data masking utility (`src/lib/utils/data-masking.ts`)
+- [✅] Implement masking functions:
+  - [✅] `maskKTP()` - Show first 4 and last 4 digits: `3201****0123`
+  - [✅] `maskNPWP()` - Not implemented yet (can use custom masking)
+  - [✅] `maskPhone()` - Show first 4 and last 4: `0812****7890`
+  - [✅] `maskEmail()` - Show first char: `u***@e***.com`
+  - [✅] `maskDate()` - Mask year/month: `****-**-15`
+  - [✅] `maskCustom()` - Generic masking with configurable showFirst/showLast
+- [✅] Configuration UI at `/settings/data-masking/`:
+  - [✅] Enable/disable masking globally
+  - [✅] Configure masking rules per field
+  - [✅] Field discovery browser (auto-detect fields)
+  - [✅] Preview tool to test masking
+  - [✅] Role-based exemptions (admin, superadmin)
+- [✅] API integration ready via `getMaskedIdentity()` function
 - [ ] Apply masking in UI components:
   - [ ] Employee list table
   - [ ] Employee detail page (with "Show" button for authorized users)
   - [ ] Identity management page
   - [ ] Audit logs (when displaying PII)
 - [ ] Add field-level access control (require justification for unmasked view)
-- [ ] Test masking across all pages
 
 ### 1.3 Multi-Factor Authentication (MFA/2FA) ⭐⭐⭐
 **Timeline**: 1 week
-**Dependency**: None
+**Dependency**: Email service configured (see 1.3.0)
 **Source**: SECURITY_IMPLEMENTATION_GUIDE.md
 **Implements**: F1.2.1
 
-- [ ] Install MFA libraries (`@otplib/preset-default`, `qrcode`)
-- [ ] Create MFA schema and collection
-- [ ] Implement TOTP (Google Authenticator compatible):
-  - [ ] Generate TOTP secret
-  - [ ] Generate QR code
-  - [ ] Verify TOTP code
-  - [ ] Store secret securely (encrypted)
-- [ ] Implement backup codes:
-  - [ ] Generate 10 one-time-use codes
-  - [ ] Hash and store codes
-  - [ ] Validate and invalidate on use
-- [ ] Implement Email OTP:
-  - [ ] Generate 6-digit code
-  - [ ] Send via email
-  - [ ] Expire after 10 minutes
-- [ ] Create MFA setup wizard:
-  - [ ] Choose MFA method
-  - [ ] Scan QR code / enter secret
-  - [ ] Verify first code
-  - [ ] Display backup codes
-- [ ] Update login flow:
-  - [ ] Check if MFA enabled after password verification
-  - [ ] Show MFA challenge page
-  - [ ] Verify MFA code before session creation
-- [ ] Add "Trust this device" option (30-day bypass)
-- [ ] Enforce MFA per role (e.g., require for admins)
-- [ ] Add MFA management to user profile:
-  - [ ] Enable/disable MFA
-  - [ ] Reset MFA device
+#### 1.3.0 Email Service Setup (REQUIRED for Email OTP & notifications)
+Choose one approach:
+
+**Option A: Free SMTP Relay (Development/Small Scale)**
+- [ ] Gmail SMTP Relay:
+  - [ ] Create Google account or use existing
+  - [ ] Enable 2-step verification on Google account
+  - [ ] Generate App Password (Security → App passwords)
+  - [ ] Configure SMTP: `smtp.gmail.com:587` (TLS)
+  - [ ] **Limits**: 500 emails/day, 100 recipients/email
+  - [ ] **Best for**: Development, small teams (<500 users)
+- [ ] Microsoft 365 SMTP:
+  - [ ] Use Microsoft 365 business email
+  - [ ] Configure SMTP: `smtp.office365.com:587` (STARTTLS)
+  - [ ] **Limits**: Varies by plan (typically 10,000/day)
+  - [ ] **Best for**: Organizations already using M365
+
+**Option B: Transactional Email Service (Production/Scale)**
+- [ ] Resend (recommended for developers):
+  - [ ] Free tier: 3,000 emails/month, 100 emails/day
+  - [ ] Simple API, excellent DX
+  - [ ] $20/month for 50,000 emails
+- [ ] SendGrid:
+  - [ ] Free tier: 100 emails/day forever
+  - [ ] $20/month for 50,000 emails
+- [ ] AWS SES:
+  - [ ] $0.10 per 1,000 emails
+  - [ ] Requires AWS account setup
+
+**Implementation:**
+- [ ] Create `/src/lib/email/` directory
+- [ ] Create `email-service.ts` with `sendEmail()` function
+- [ ] Create email templates in `/src/lib/email/templates/`
+- [ ] Add email config to environment variables:
+  ```bash
+  SMTP_HOST=smtp.gmail.com
+  SMTP_PORT=587
+  SMTP_USER=your-email@gmail.com
+  SMTP_PASS=your-app-password
+  SMTP_FROM=SSO <noreply@yourdomain.com>
+  ```
+- [ ] Install nodemailer: `bun add nodemailer @types/nodemailer`
+- [ ] Test email sending with test account
+
+#### 1.3.1 TOTP (Time-Based OTP) Implementation ⭐⭐⭐ MOST SECURE
+
+**Install Dependencies:**
+```bash
+bun add @otplib/preset-default qrcode
+bun add -d @types/qrcode
+```
+
+**Database Schema (`mfa_settings` collection):**
+```typescript
+{
+  _id: ObjectId,
+  identityId: string,           // Reference to identity
+  mfaEnabled: boolean,           // MFA active
+  mfaMethod: 'totp' | 'email',   // Preferred method
+  totpSecret?: string,           // Encrypted TOTP secret
+  totpVerified: boolean,         // Setup completed
+  backupCodes: string[],         // Hashed backup codes
+  trustedDevices: [{             // "Remember this device"
+    deviceId: string,
+    deviceName: string,
+    trustedUntil: Date
+  }],
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+**Backend Implementation:**
+- [ ] Create `src/lib/auth/totp-service.ts`:
+  - [ ] `generateSecret()` - Create TOTP secret for user
+  - [ ] `generateQRCode(secret, email)` - Generate QR code data URL
+  - [ ] `verifyToken(secret, token)` - Validate 6-digit code
+  - [ ] `getBackupWindow()` - Allow ±1 time window for clock skew
+- [ ] Create `src/lib/auth/mfa-repository.ts`:
+  - [ ] `createMFASettings(identityId, method)` - Initialize MFA
+  - [ ] `getMFASettings(identityId)` - Get user's MFA config
+  - [ ] `updateTOTPSecret(identityId, encryptedSecret)` - Save secret
+  - [ ] `verifyTOTPSetup(identityId)` - Mark TOTP as verified
+  - [ ] `disableMFA(identityId)` - Turn off MFA
+
+**MFA Setup Flow (`/profile/mfa/setup`):**
+- [ ] Create setup wizard page:
+  - [ ] Step 1: Choose method (TOTP or Email OTP)
+  - [ ] Step 2 (TOTP): Display QR code + manual entry secret
+    ```typescript
+    const secret = generateSecret();
+    const qrCode = await generateQRCode(secret, user.email);
+    const manualEntryCode = secret.base32; // Show as backup
+    ```
+  - [ ] Step 3: Verify first code (require user to enter code from app)
+  - [ ] Step 4: Generate and display 10 backup codes (allow download)
+  - [ ] Step 5: Confirmation - MFA now active
+
+**Login Flow Update (`/login`):**
+- [ ] After successful password verification:
+  ```typescript
+  if (mfaSettings?.mfaEnabled) {
+    // Store userId in temporary session
+    cookies.set('mfa_pending', userId, { maxAge: 300 }); // 5 min
+    redirect(302, '/mfa/verify');
+  }
+  ```
+- [ ] Create `/mfa/verify` page:
+  - [ ] Input for 6-digit code
+  - [ ] "Use backup code" link
+  - [ ] "Trust this device for 30 days" checkbox
+  - [ ] Verify code with `verifyToken(secret, code)`
+  - [ ] If valid: create session, clear mfa_pending cookie
+  - [ ] If invalid: increment failed attempts, show error
+  - [ ] Lock after 5 failed attempts (10-minute cooldown)
+
+**Backup Codes:**
+- [ ] Generate 10 random codes on MFA setup:
+  ```typescript
+  const codes = Array.from({ length: 10 }, () =>
+    crypto.randomBytes(4).toString('hex').toUpperCase()
+  ); // e.g., "A3F2B8C1"
+  ```
+- [ ] Hash codes before storage (Argon2/bcrypt)
+- [ ] Store as `backupCodes: string[]` in mfa_settings
+- [ ] On use: verify against all hashes, remove used code
+- [ ] Warn when <3 codes remain
+- [ ] Allow regeneration (invalidates old codes)
+
+**Trust Device:**
+- [ ] Generate device ID: `crypto.randomUUID()`
+- [ ] Store in cookie: `trusted_device={deviceId}`
+- [ ] On login: check if deviceId in `trustedDevices` array
+- [ ] If found and not expired: skip MFA challenge
+- [ ] Trusted until: 30 days from last use
+
+#### 1.3.2 Email OTP Implementation ⭐⭐ USER-FRIENDLY ALTERNATIVE
+
+**Use Cases:**
+- Users without smartphone/authenticator app
+- Backup method when TOTP unavailable
+- Step-up authentication for sensitive actions
+- Recovery when primary MFA method fails
+
+**Database Schema (add to existing collection or create `email_otp_codes`):**
+```typescript
+{
+  _id: ObjectId,
+  identityId: string,
+  code: string,              // Hashed 6-digit code
+  purpose: 'login' | 'password_reset' | 'email_change' | 'sensitive_action',
+  expiresAt: Date,           // 10 minutes from creation
+  attempts: number,          // Failed verification attempts
+  used: boolean,
+  createdAt: Date
+}
+```
+
+**Backend Implementation:**
+- [ ] Create `src/lib/auth/email-otp-service.ts`:
+  - [ ] `generateOTP()` - Create 6-digit code (000000-999999)
+    ```typescript
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    ```
+  - [ ] `sendOTPEmail(email, code, purpose)` - Email the code
+  - [ ] `verifyOTP(identityId, code, purpose)` - Validate code
+  - [ ] `cleanupExpiredCodes()` - Delete expired codes (cron job)
+  - [ ] Rate limiting: Max 3 OTP requests per 10 minutes per user
+
+**Email Template (`/src/lib/email/templates/otp-code.html`):**
+```html
+<h2>Your Verification Code</h2>
+<p>Your one-time password is:</p>
+<h1 style="font-size: 32px; letter-spacing: 8px; font-family: monospace;">
+  {CODE}
+</h1>
+<p>This code expires in 10 minutes.</p>
+<p>If you didn't request this code, please ignore this email.</p>
+```
+
+**MFA Setup for Email OTP (`/profile/mfa/setup`):**
+- [ ] User selects "Email OTP" as MFA method
+- [ ] Send test OTP to user's email
+- [ ] User enters code to verify email works
+- [ ] Generate and show backup codes
+- [ ] Enable MFA with method='email'
+
+**Login Flow with Email OTP:**
+- [ ] After password verification, if MFA method is 'email':
+  ```typescript
+  const code = generateOTP();
+  await saveOTP(userId, code, 'login');
+  await sendOTPEmail(user.email, code, 'login');
+  cookies.set('mfa_pending', userId);
+  redirect(302, '/mfa/verify?method=email');
+  ```
+- [ ] Verification page:
+  - [ ] Show message: "Code sent to jo***@example.com"
+  - [ ] Input for 6-digit code
+  - [ ] "Resend code" button (rate limited: 1/minute)
+  - [ ] Verify code, create session if valid
+  - [ ] Max 5 attempts before lockout
+
+**Step-Up Authentication (Sensitive Actions):**
+- [ ] Require Email OTP for:
+  - [ ] Change email address
+  - [ ] Delete account
+  - [ ] Add new MFA device
+  - [ ] Export personal data
+- [ ] Example middleware:
+  ```typescript
+  async function requireOTP(action: string) {
+    if (!session.otpVerified || session.otpVerifiedAt < Date.now() - 300000) {
+      // OTP not verified or >5 min old
+      await sendOTP(user.email, action);
+      redirect(302, `/verify-otp?action=${action}`);
+    }
+  }
+  ```
+
+**Security Considerations:**
+- [ ] Hash codes before storage (even though short-lived)
+- [ ] Limit attempts: 5 tries then 10-minute lockout
+- [ ] Rate limit email sending: 3 codes per 10 minutes
+- [ ] Log all OTP requests for audit
+- [ ] Auto-cleanup expired codes (background job)
+
+#### 1.3.3 General MFA Implementation Tasks
+
+- [ ] Create MFA management UI at `/profile/mfa`:
+  - [ ] Enable/disable MFA toggle
+  - [ ] Choose MFA method (TOTP or Email)
+  - [ ] Reset MFA device (requires password confirmation)
   - [ ] Regenerate backup codes
-- [ ] Test MFA with TOTP apps (Google Authenticator, Authy)
+  - [ ] View trusted devices, revoke trust
+- [ ] Enforce MFA by role:
+  - [ ] Add `requireMFA: boolean` to role schema
+  - [ ] Check on login: if role requires MFA but not enabled, force setup
+  - [ ] Require for: 'admin', 'superadmin', 'hr' roles
+- [ ] Add MFA status indicators:
+  - [ ] Badge on user profile: "🔒 MFA Enabled (TOTP)"
+  - [ ] Admin view: filter users by MFA status
+  - [ ] Audit log: track MFA setup/disable events
+- [ ] Account recovery:
+  - [ ] "Lost MFA device?" link on MFA verify page
+  - [ ] Require admin approval to reset MFA
+  - [ ] Create admin tool to reset user's MFA
+- [ ] Testing:
+  - [ ] Test TOTP with Google Authenticator, Authy, 1Password
+  - [ ] Test Email OTP delivery across different email providers
+  - [ ] Test backup codes (single-use, regeneration)
+  - [ ] Test device trust (remember device, expiry)
+  - [ ] Test rate limiting, lockouts
+  - [ ] Test recovery flows
 
 ### 1.4 Account Self-Service Portal ⭐⭐⭐
 **Timeline**: 5 days
@@ -676,31 +905,6 @@
 - [ ] Add webhook signature verification example to docs
 - [ ] Test webhook delivery with external service
 
-### 2.4 Social Login / Identity Provider Integration ⭐⭐
-**Timeline**: 1 week
-**Dependency**: None
-**Source**: SSO_CLIENT_GUIDE.md
-
-- [ ] **Google OAuth**:
-  - [ ] Register OAuth app in Google Cloud Console
-  - [ ] Implement OAuth 2.0 Authorization Code flow
-  - [ ] Add "Sign in with Google" button on login page
-  - [ ] Link Google account to existing identity or create new
-  - [ ] Test sign-in flow
-- [ ] **Microsoft Azure AD / Entra ID (as IdP)**:
-  - [ ] Register app in Azure AD
-  - [ ] Implement OAuth 2.0 Authorization Code flow
-  - [ ] Add "Sign in with Microsoft" button on login page
-  - [ ] Map Entra ID user to Aksara identity
-  - [ ] Test sign-in flow
-- [ ] **SAML Support**:
-  - [ ] Install SAML library (`samlify`)
-  - [ ] Implement SAML 2.0 Service Provider
-  - [ ] Create SAML metadata endpoint
-  - [ ] Create SAML ACS (Assertion Consumer Service) endpoint
-  - [ ] Test with Okta/Auth0 as SAML IdP
-- [ ] Add IdP configuration UI in admin console
-- [ ] Test all IdP integrations
 
 ---
 
@@ -972,23 +1176,47 @@
 - [ ] Add API key generation and management UI
 - [ ] Test API docs with external developers
 
-### 4.5 Themes & Branding ⭐
+### 4.5 Themes & Branding ⭐ ⚠️ PARTIAL
 **Timeline**: 1 week
 **Dependency**: None
 **Source**: _DEV_GUIDE.md
 
-- [ ] Create theme configuration schema:
-  ```typescript
-  {
-    primaryColor: string,
-    secondaryColor: string,
-    logo: string (URL or base64),
-    favicon: string,
-    loginBackground: string,
-    loginPageText: string,
-    companyName: string
-  }
-  ```
+- [✅] Create branding interface schema (`src/lib/branding.ts`):
+  - [✅] appName, primaryColor, secondaryColor, accentColor
+  - [✅] backgroundColor, textColor
+  - [✅] logoBase64, faviconBase64, loginBackgroundBase64
+  - [✅] emailFromName, emailFromAddress, supportEmail, supportUrl
+- [✅] Branding storage in organizations collection
+- [✅] Branding utility functions (`src/lib/branding-utils.ts`):
+  - [✅] `getBrandingCSS()` - Generate CSS custom properties
+  - [✅] `getBranding()` - Load branding from organization
+  - [✅] `getBrandingByCode()` - Get branding by org code
+- [✅] **Branding Configuration UI** (dedicated modal at `/realms`):
+  - [✅] Separate "Branding" action button in DataTable
+  - [✅] Dedicated branding modal with purple gradient header
+  - [✅] Logo upload (base64 encoded) with preview and remove - also used as favicon
+  - [✅] Color pickers (primary, secondary, accent, text color) - dual input (visual + hex)
+  - [✅] Login background image upload with preview
+  - [✅] Email configuration (from name, from address, support email, support URL)
+  - [✅] Color preview swatches with live updates
+  - [✅] File size validation (logo 2MB, background 5MB)
+  - [✅] File type validation (images only)
+  - [✅] Separate save endpoint for branding updates
+- [✅] **Branding Applied to UI**:
+  - [✅] Login page (`/login`) - uses MASTER organization branding or default
+  - [✅] OAuth authorize page (`/oauth/authorize`) - uses client's organization branding
+  - [✅] Admin console layout (`(app)/+layout.svelte`) - uses MASTER organization branding
+    - [✅] Sidebar with dynamic brand colors (background, hover states)
+    - [✅] Navigation items with brand-aware hover/active states
+    - [✅] Logo displayed in sidebar
+    - [✅] App name in title and badge
+    - [✅] User avatar with brand color background
+    - [✅] Favicon from logo
+  - [✅] Dynamic color scheme (CSS custom properties via `getBrandingCSS()`)
+  - [✅] Dynamic logo and favicon (logo serves as both)
+  - [✅] App name customization
+  - [✅] Favicon fallback when branding not configured
+  - [✅] Diagnostic script: `bun run branding:check` to verify configuration
 - [ ] Create theme management UI (`/settings/theme`):
   - [ ] Upload logo
   - [ ] Choose colors (color picker)

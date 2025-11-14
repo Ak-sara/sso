@@ -59,6 +59,11 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			updateFields.allowedEmailDomains = Array.isArray(data.allowedEmailDomains) ? data.allowedEmailDomains : [];
 		}
 
+		// Only update branding if provided
+		if (data.branding !== undefined) {
+			updateFields.branding = data.branding;
+		}
+
 		const result = await db.collection('organizations').updateOne(
 			{ code: params.code },
 			{ $set: updateFields }

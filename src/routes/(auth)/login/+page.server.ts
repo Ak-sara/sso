@@ -4,6 +4,7 @@ import { passwordService } from '$lib/auth/password';
 import { sessionManager } from '$lib/auth/session';
 import { logAuth } from '$lib/audit/logger';
 import { getDB } from '$lib/db/connection';
+import { getBranding } from '$lib/branding';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -18,8 +19,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 		key: 'enable_registration'
 	});
 
+	// Load branding (from MASTER organization or default)
+	const branding = await getBranding();
+
 	return {
-		isRegistrationEnabled: registrationSetting?.value === true
+		isRegistrationEnabled: registrationSetting?.value === true,
+		branding
 	};
 };
 

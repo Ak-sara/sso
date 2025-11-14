@@ -139,8 +139,10 @@
 	{#if brandingCSS}
 		{@html `<style>${brandingCSS}</style>`}
 	{/if}
-	{#if branding?.faviconBase64}
-		<link rel="icon" href={branding.faviconBase64} />
+	{#if branding?.logoBase64}
+		<link rel="icon" type="image/png" href={branding.logoBase64} />
+	{:else}
+		<link rel="icon" type="image/png" href="/ias-logo.png" />
 	{/if}
 	<title>{appName}</title>
 </svelte:head>
@@ -153,7 +155,7 @@
 	>
 		<div class="flex flex-col h-full">
 			<!-- Logo -->
-			<div class="flex items-center justify-between h-16 px-4 border-b border-indigo-800">
+			<div class="flex items-center justify-between h-16 px-4" style="border-bottom: 1px solid rgba(var(--brand-primary-rgb), 0.3);">
 				{#if isSidebarOpen}
 					<div class="flex items-center space-x-2">
 						<img src={logoSrc} alt="{appName} logo" style="height:32px"/>
@@ -175,9 +177,12 @@
 									onclick={() => toggleGroup(item.name.toLowerCase())}
 									onmouseenter={(e) => handleGroupHover(item.name.toLowerCase(), e)}
 									onmouseleave={handleGroupLeave}
-									class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors {isGroupActive(item)
-										? 'bg-indigo-800 text-white'
-										: 'text-indigo-100 hover:bg-indigo-800 hover:text-white'}"
+									class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors"
+									style="{isGroupActive(item)
+										? 'background-color: rgba(255,255,255,0.2); color: white;'
+										: 'color: rgba(255,255,255,0.8);'}"
+									onmouseover={(e) => { if (!isGroupActive(item)) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; }}
+									onmouseout={(e) => { if (!isGroupActive(item)) e.currentTarget.style.backgroundColor = 'transparent'; }}
 									title={item.name}
 								>
 									<div class="flex items-center">
@@ -207,9 +212,10 @@
 										{#each item.items as subItem}
 											<a
 												href={subItem.href}
-												class="flex items-center px-4 py-2 text-sm transition-colors {isActive(subItem.href)
-													? 'bg-indigo-50 text-indigo-700 font-medium'
-													: 'text-gray-700 hover:bg-gray-50'}"
+												class="flex items-center px-4 py-2 text-sm transition-colors font-medium"
+												style="{isActive(subItem.href)
+													? `background-color: rgba(var(--brand-primary-rgb), 0.1); color: var(--brand-primary);`
+													: 'color: #374151;'}"
 											>
 												<span class="text-base mr-2">{subItem.icon}</span>
 												{subItem.name}
@@ -225,9 +231,12 @@
 									{#each item.items as subItem}
 										<a
 											href={subItem.href}
-											class="flex items-center px-4 py-2 text-sm rounded-lg transition-colors {isActive(subItem.href)
-												? 'bg-indigo-700 text-white'
-												: 'text-indigo-200 hover:bg-indigo-800 hover:text-white'}"
+											class="flex items-center px-4 py-2 text-sm rounded-lg transition-colors"
+											style="{isActive(subItem.href)
+												? 'background-color: rgba(255,255,255,0.25); color: white;'
+												: 'color: rgba(255,255,255,0.7);'}"
+											onmouseover={(e) => { if (!isActive(subItem.href)) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'white'; }}
+											onmouseout={(e) => { if (!isActive(subItem.href)) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; } }}
 										>
 											<span class="text-base mr-2">{subItem.icon}</span>
 											{subItem.name}
@@ -240,9 +249,12 @@
 						<!-- Single item -->
 						<a
 							href={item.href}
-							class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors {isActive(item.href)
-								? 'bg-indigo-800 text-white'
-								: 'text-indigo-100 hover:bg-indigo-800 hover:text-white'}"
+							class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors"
+							style="{isActive(item.href)
+								? 'background-color: rgba(255,255,255,0.2); color: white;'
+								: 'color: rgba(255,255,255,0.8);'}"
+							onmouseover={(e) => { if (!isActive(item.href)) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; }}
+							onmouseout={(e) => { if (!isActive(item.href)) e.currentTarget.style.backgroundColor = 'transparent'; }}
 							title={item.name}
 						>
 							<span class="text-xl {isSidebarOpen ? 'mr-3' : ''}">{item.icon}</span>

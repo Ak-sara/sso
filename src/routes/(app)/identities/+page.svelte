@@ -255,6 +255,7 @@
 			{columns}
 			pageSize={50}
 			searchable={true}
+			searchKeys={['fullName', 'email', 'username', 'employeeId', 'phone', 'companyName', 'partnerType']}
 			onEdit={handleEdit}
 			onDelete={handleDelete}
 			emptyMessage={`Tidak ada ${tabs.find(t => t.id === currentTab)?.name || 'identitas'}`}

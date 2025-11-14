@@ -4,8 +4,7 @@ import type { Organization } from '$lib/db/schemas';
 
 export interface Branding {
 	appName: string;
-	logoBase64?: string;
-	faviconBase64?: string;
+	logoBase64?: string; // Also used as favicon
 	primaryColor: string;
 	secondaryColor: string;
 	accentColor?: string;

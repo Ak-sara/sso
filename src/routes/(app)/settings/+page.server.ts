@@ -74,6 +74,12 @@ export const actions: Actions = {
 							parsedValue = parseInt(value as string);
 						} else if (setting.type === 'boolean') {
 							parsedValue = value === 'true' || value === 'on';
+						} else if (setting.type === 'json') {
+							try {
+								parsedValue = JSON.parse(value as string);
+							} catch {
+								parsedValue = value;
+							}
 						}
 					}
 
@@ -188,6 +194,53 @@ function getDefaultSettings() {
 			category: 'privacy',
 			label: 'Data Masking Configuration',
 			description: 'Configure which fields should be masked for UU PDP compliance. Admins can see unmasked data.',
+			updatedAt: new Date()
+		},
+		{
+			key: 'email_service_provider',
+			value: 'nodemailer',
+			type: 'string',
+			category: 'email',
+			label: 'Email Service Provider',
+			description: 'Choose email provider: gmail, microsoft365, sendgrid, or nodemailer (generic SMTP)',
+			updatedAt: new Date()
+		},
+		{
+			key: 'email_service_config',
+			value: {
+				// Gmail fields
+				gmail: {
+					user: '',
+					appPassword: '',
+					fromName: ''
+				},
+				// Microsoft365 fields
+				microsoft365: {
+					user: '',
+					appPassword: '',
+					fromName: ''
+				},
+				// SendGrid fields
+				sendgrid: {
+					apiKey: '',
+					fromEmail: '',
+					fromName: ''
+				},
+				// Generic SMTP (like PHPMailer)
+				nodemailer: {
+					host: '',
+					port: 587,
+					secure: false,
+					user: '',
+					password: '',
+					fromEmail: '',
+					fromName: ''
+				}
+			},
+			type: 'json',
+			category: 'email',
+			label: 'Email Service Configuration',
+			description: 'Configuration for selected email provider',
 			updatedAt: new Date()
 		}
 	];
