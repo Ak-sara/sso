@@ -18,13 +18,32 @@
 - **F1.1.7 Role-Based Access Control (RBAC)** ✅ - Flexible role assignment per identity
 
 ### F1.2 Advanced Security
-- **F1.2.1 Multi-Factor Authentication (MFA/2FA)** - TOTP (Google Authenticator), SMS OTP, Email OTP, backup codes
+- **F1.2.1 Multi-Factor Authentication (MFA/2FA)** ✅ - Email OTP-based 2FA with backup codes
+  - Enable/disable 2FA from user profile (`/profile/two-factor`)
+  - 10 backup codes generated on activation
+  - OTP codes sent via email (10-minute expiry, 5 wrong attempt limit)
+  - Backup code verification for account recovery
+  - Audit logging for all 2FA events
 - **F1.2.2 IP Whitelisting** - CIDR notation support for admin access and SCIM endpoints
-- **F1.2.3 Rate Limiting** - Sliding window algorithm, per-client configuration, default 100 req/min
+- **F1.2.3 Rate Limiting** ✅ - Implemented for email operations (2-5 minute cooldowns)
 - **F1.2.4 Field-Level Encryption** - MongoDB Client-Side FLE for sensitive data (KTP, NPWP, DOB, phone)
 - **F1.2.5 Data Masking** ✅ - UI-level masking for KTP, NPWP, phone, email (configuration UI complete, API integration ready)
 - **F1.2.6 Security Headers** - CORS policies, CSRF protection, XSS prevention
 - **F1.2.7 Input Validation** - Comprehensive sanitization across all endpoints
+- **F1.2.8 Session Management** ✅ - Enhanced session tracking with:
+  - User agent and IP address tracking
+  - Session invalidation on security events (password reset)
+  - View all active sessions per user
+  - Remote session termination
+  - Automatic cleanup of expired sessions
+- **F1.2.9 Audit Logging** ✅ - Comprehensive authentication event tracking:
+  - Login attempts (success/failure)
+  - Password changes/resets
+  - 2FA events
+  - Email changes
+  - Session creation/invalidation
+  - Suspicious activity detection
+  - 90-day retention policy
 
 ---
 
@@ -63,15 +82,31 @@
 ### F2.3 User Profile & Self-Service
 - **F2.3.1 Employee Detail Page** ✅ - 4 tabs (Overview, Penempatan, SSO Access, History)
 - **F2.3.2 Inline Edit Mode** - Edit employee details directly on detail page
-- **F2.3.3 Account Self-Service Portal**:
+- **F2.3.3 Account Self-Service Portal** ✅:
   - Profile editing (personal information)
-  - Password change
-  - MFA setup and management
+  - Password change ✅
+  - MFA setup and management ✅ (`/profile/two-factor`)
+  - Email change with OTP verification ✅ (`/profile/change-email`)
+  - View active sessions ✅
   - View SSO-connected applications
   - Download personal data (GDPR/PDP compliance)
   - Account deletion request (GDPR/PDP right to be forgotten)
-- **F2.3.4 Password Reset Flow** - Email-based password recovery
-- **F2.3.5 Email Verification** - Verify email addresses on registration
+- **F2.3.4 Password Reset Flow** ✅ - Email-based password recovery with token expiry
+  - Forgot password (`/auth/forgot-password`)
+  - Reset password with secure token (`/auth/reset-password`)
+  - 1-hour token expiry
+  - Session invalidation on password reset
+- **F2.3.5 Email Verification** ✅ - Verify email addresses on registration:
+  - Automatic verification email on registration
+  - 24-hour token expiry
+  - Resend verification (`/auth/resend-verification`)
+  - Email verification endpoint (`/auth/verify-email`)
+  - Welcome email after successful verification
+- **F2.3.6 Passwordless Login** ✅ - OTP-based login without password:
+  - Email OTP login (`/login-otp`)
+  - 10-minute OTP expiry
+  - Alternative to password authentication
+  - Audit logging for OTP login attempts
 
 ### F2.4 Secondary Assignments
 - **F2.4.1 Multi-Company Placement** - Employees can be assigned to multiple entities simultaneously
@@ -198,18 +233,82 @@
 - **F5.4.6 Export Sync Logs** - Download sync history as CSV
 - **F5.4.7 Webhook Notifications** - Notify on sync completion/failure
 
+## F6. Email Infrastructure & Communication
 
-## F6. Audit & Compliance
+### F6.1 Email Service Configuration ✅
+- **F6.1.1 Multi-Provider Support** ✅ - Configured via `/settings`
+  - Gmail SMTP (500 emails/day free)
+  - Microsoft 365 SMTP (10,000 emails/day)
+  - SendGrid API (100 emails/day free tier)
+  - Generic SMTP (custom mail servers)
+- **F6.1.2 Dynamic Configuration** ✅ - Stored in database, no code changes needed
+- **F6.1.3 Test Email Function** ✅ - Verify configuration before saving
+- **F6.1.4 Connection Pooling** ✅ - Reusable SMTP connections via nodemailer
 
-### F6.1 Comprehensive Audit Logging ✅
-- **F6.1.1 Reusable Audit Logger Utility** ✅ - Helper functions for logging
-- **F6.1.2 Middleware** ✅ - Automatic 401/403 tracking
-- **F6.1.3 Type-Safe Actions** ✅ - TypeScript enum for audit actions
-- **F6.1.4 Request Metadata** ✅ - IP address, user agent, timestamp
-- **F6.1.5 Non-Blocking** ✅ - Audit failures don't break operations
-- **F6.1.6 Audit Log UI** ✅ - Pagination, search, filters, export
+### F6.2 Email Templates ✅
+- **F6.2.1 Email Verification** ✅ - Welcome email with verification link (24-hour expiry)
+- **F6.2.2 OTP Codes** ✅ - 6-digit codes for login, 2FA, verification (10-minute expiry)
+- **F6.2.3 Password Reset** ✅ - Secure reset link (1-hour expiry)
+- **F6.2.4 Welcome Email** ✅ - Sent after successful email verification
+- **F6.2.5 HTML & Plain Text** ✅ - All templates include both formats
+- **F6.2.6 Responsive Design** ✅ - Mobile-friendly email templates
 
-### F6.2 Logged Events ✅
+### F6.3 OTP System ✅
+- **F6.3.1 OTP Generation** ✅ - Cryptographically secure random codes
+- **F6.3.2 Multiple Purposes** ✅:
+  - Login (passwordless authentication)
+  - 2FA verification
+  - Email change verification
+  - Password reset
+  - Account recovery
+- **F6.3.3 Security Features** ✅:
+  - 10-minute expiry (configurable)
+  - 5 wrong attempt limit
+  - Rate limiting (2 minutes between requests)
+  - One-time use enforcement
+  - Automatic cleanup of expired codes
+- **F6.3.4 Database Storage** ✅ - `otp_codes` collection with expiry tracking
+
+### F6.4 Token Management ✅
+- **F6.4.1 Verification Tokens** ✅ - URL-safe base64 tokens for email/password flows
+- **F6.4.2 Secure Hashing** ✅ - SHA-256 hashing before database storage
+- **F6.4.3 Expiry Management** ✅:
+  - Email verification: 24 hours
+  - Password reset: 1 hour
+- **F6.4.4 Token Invalidation** ✅ - Automatic invalidation after use or expiry
+- **F6.4.5 Database Storage** ✅ - `verification_tokens` collection
+
+## F7. Audit & Compliance
+
+### F7.1 Comprehensive Audit Logging ✅
+- **F7.1.1 Authentication Event Logging** ✅ - Specialized auth event tracker (`src/lib/audit/auth-logger.ts`)
+- **F7.1.2 Event Types Tracked** ✅:
+  - Login attempts (success/failure)
+  - Logout events
+  - Registration
+  - Email verification
+  - Email changes
+  - Password changes/resets
+  - 2FA enable/disable/verification
+  - Session creation/invalidation
+  - Account lockout events
+  - Suspicious activity detection
+- **F7.1.3 Metadata Capture** ✅ - IP address, user agent, session ID, timestamps
+- **F7.1.4 Non-Blocking** ✅ - Audit failures don't break operations
+- **F7.1.5 Query Helpers** ✅:
+  - Get identity audit logs
+  - Get recent failed login attempts (for rate limiting)
+  - Automatic cleanup (90-day retention)
+- **F7.1.6 Database Storage** ✅ - `audit_logs` collection
+
+### F7.2 General Audit Logging ✅
+- **F7.2.1 Reusable Audit Logger Utility** ✅ - Helper functions for logging
+- **F7.2.2 Middleware** ✅ - Automatic 401/403 tracking
+- **F7.2.3 Type-Safe Actions** ✅ - TypeScript enum for audit actions
+- **F7.2.4 Request Metadata** ✅ - IP address, user agent, timestamp
+- **F7.2.5 Audit Log UI** ✅ - Pagination, search, filters, export
+
+### F7.3 Logged Events ✅
 - **Authentication** ✅ - login, logout, login failures, password changes
 - **Employee Lifecycle** ✅ - onboarding, mutation, transfer, promotion, demotion, offboarding
 - **OAuth Operations** ✅ - token grants, token refresh, client operations

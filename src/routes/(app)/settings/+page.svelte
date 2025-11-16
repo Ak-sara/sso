@@ -168,7 +168,9 @@
 			</div>
 		{/if}
 		{#each Object.entries(settingsByCategory()) as [category, settings]}
-			{#if category === 'email'}
+			{#if category === 'privacy'}
+				<!-- Skip privacy category - it has a dedicated page at /settings/data-masking -->
+			{:else if category === 'email'}
 				<!-- Special Email Configuration Section -->
 				<div class="bg-white shadow rounded-lg p-6 mb-6">
 					<h3 class="text-lg font-medium text-gray-900 mb-4">📧 Email Service Configuration</h3>

@@ -153,13 +153,43 @@ export const actions: Actions = {
 			updatedAt: new Date()
 		});
 
-		// TODO: Send verification email if required
-
+		// Send verification email if required
 		if (requiresEmailVerification) {
-			return {
-				success: true,
-				message: 'Registrasi berhasil! Silakan cek email Anda untuk verifikasi akun.'
-			};
+			try {
+				const { generateVerificationToken, hashToken } = await import('$lib/crypto');
+				const { sendEmailWithSystemConfig } = await import('$lib/email/email-service');
+				const { getVerificationEmail } = await import('$lib/email/templates');
+
+				// Generate verification token
+				const token = generateVerificationToken();
+				const tokenHash = hashToken(token);
+
+				// Store token in database (expires in 24 hours)
+				await db.collection('verification_tokens').insertOne({
+					email,
+					tokenHash,
+					type: 'email_verification',
+					used: false,
+					createdAt: new Date(),
+					expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+				});
+
+				// Send verification email
+				const emailTemplate = getVerificationEmail(token, firstName);
+				await sendEmailWithSystemConfig(email, emailTemplate.subject, emailTemplate.html, emailTemplate.text);
+
+				return {
+					success: true,
+					message: 'Registrasi berhasil! Silakan cek email Anda untuk verifikasi akun.'
+				};
+			} catch (emailError: any) {
+				console.error('Error sending verification email:', emailError);
+				// Registration was successful, but email failed - still return success
+				return {
+					success: true,
+					message: 'Registrasi berhasil! Email verifikasi akan segera dikirim.'
+				};
+			}
 		} else {
 			return {
 				success: true,

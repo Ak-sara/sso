@@ -14,6 +14,11 @@ export interface Session {
 	createdAt: Date;
 	expiresAt: Date;
 	lastActivity: Date;
+	userAgent?: string;
+	ipAddress?: string;
+	isActive?: boolean;
+	invalidatedAt?: Date;
+	invalidationReason?: string;
 }
 
 const SESSION_COOKIE_NAME = 'aksara_session';
@@ -32,7 +37,8 @@ export class SessionManager {
 		roles: string[],
 		firstName?: string,
 		lastName?: string,
-		organizationId?: string
+		organizationId?: string,
+		metadata?: { userAgent?: string; ipAddress?: string }
 	): Promise<Session> {
 		const sessionId = randomBytes(32).toString('hex');
 		const now = new Date();
@@ -50,6 +56,9 @@ export class SessionManager {
 			createdAt: now,
 			expiresAt,
 			lastActivity: now,
+			userAgent: metadata?.userAgent,
+			ipAddress: metadata?.ipAddress,
+			isActive: true
 		};
 
 		await this.collection.insertOne(session);
@@ -103,6 +112,57 @@ export class SessionManager {
 				{ lastActivity: { $lt: new Date(now.getTime() - IDLE_TIMEOUT) } }
 			]
 		});
+	}
+
+	/**
+	 * Invalidate all sessions for a user (e.g., on password reset)
+	 */
+	async invalidateAllUserSessions(
+		userId: string,
+		reason: string = 'password_reset'
+	): Promise<number> {
+		const result = await this.collection.updateMany(
+			{ userId, isActive: { $ne: false } },
+			{
+				$set: {
+					isActive: false,
+					invalidatedAt: new Date(),
+					invalidationReason: reason
+				}
+			}
+		);
+		return result.modifiedCount;
+	}
+
+	/**
+	 * Get all active sessions for a user
+	 */
+	async getUserSessions(userId: string): Promise<Session[]> {
+		return await this.collection
+			.find({
+				userId,
+				isActive: { $ne: false },
+				expiresAt: { $gt: new Date() }
+			})
+			.sort({ lastActivity: -1 })
+			.toArray();
+	}
+
+	/**
+	 * Invalidate a specific session
+	 */
+	async invalidateSession(sessionId: string, reason: string = 'user_logout'): Promise<boolean> {
+		const result = await this.collection.updateOne(
+			{ sessionId },
+			{
+				$set: {
+					isActive: false,
+					invalidatedAt: new Date(),
+					invalidationReason: reason
+				}
+			}
+		);
+		return result.modifiedCount > 0;
 	}
 
 	setSessionCookie(cookies: Cookies, sessionId: string): void {
