@@ -5,7 +5,7 @@
 		paragraph: string;
 	}
     let {
-        visible=false,
+        visible= $bindable(),
 		title= "",
 		paragraph= ""
     }:PH = $props();

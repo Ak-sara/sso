@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import PageHints from '$lib/components/PageHints.svelte';
 	import CSVSyncTab from '$lib/components/CSVSyncTab.svelte';
 	import EntraIDSyncTab from '$lib/components/EntraIDSyncTab.svelte';
 	import type { PageData, ActionData } from './$types';
@@ -20,6 +21,7 @@
 	];
 
 	let currentTab = $derived(data.currentTab || 'csv');
+	let showPH = $state(false);
 	let isUploading = $state(false);
 	let isApplying = $state(false);
 	let isTesting = $state(false);
@@ -158,28 +160,12 @@
 					</select>
 				</div>
 			{/if}
+			<button onclick={(showPH=true)}
+			class='text-2xl inline-block transition-transform duration-200 hover:-rotate-12 cursor-pointer'>ℹ️</button>
 		</div>
 	</div>
 
-	<!-- Info Box -->
-	<div class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
-		<div class="flex">
-			<div class="flex-shrink-0">
-				<span class="text-2xl">ℹ️</span>
-			</div>
-			<div class="ml-3">
-				<h3 class="text-sm font-medium text-blue-800">Smart Import with Status Preservation</h3>
-				<div class="mt-2 text-sm text-blue-700">
-					<ul class="list-disc list-inside space-y-1">
-						<li><strong>New employees</strong>: Created with isActive: true (can login immediately)</li>
-						<li><strong>Existing employees</strong>: Only updated fields from source, status/passwords preserved</li>
-						<li><strong>NIK is unique identifier</strong>: Can be used as username if no email</li>
-						<li><strong>Inactive employees</strong>: Simply exclude from import source (don't sync)</li>
-					</ul>
-				</div>
-			</div>
-		</div>
-	</div>
+
 
 	<!-- Tabs -->
 	<div class="bg-white shadow rounded-lg">
@@ -235,3 +221,13 @@
 		</div>
 	</div>
 </div>
+<PageHints
+bind:visible={showPH}
+title='Smart Import with Status Preservation'
+paragraph="<ul class='list-disc list-inside space-y-1'>
+			<li><strong>New employees</strong>: Created with isActive: true (can login immediately)</li>
+			<li><strong>Existing employees</strong>: Only updated fields from source, status/passwords preserved</li>
+			<li><strong>NIK is unique identifier</strong>: Can be used as username if no email</li>
+			<li><strong>Inactive employees</strong>: Simply exclude from import source (don't sync)</li>
+		</ul>"
+/>

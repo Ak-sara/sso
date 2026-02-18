@@ -246,7 +246,7 @@
 </div>
 
 <PageHints
-	visible={showPageHints}
+	bind:visible={showPageHints}
 	title='Unified Identity Model'
 	paragraph='<p>
 		All users (employees, partners, external) are managed in one place.

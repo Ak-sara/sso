@@ -352,7 +352,7 @@
 
 
 <PageHints
-	visible={showPageHints}
+	bind:visible={showPageHints}
 	title='Tentang Realm'
 	paragraph='<p class="mt-1 text-sm text-blue-700">
 					Realm adalah konsep yang mirip dengan tenant atau workspace. Setiap realm memiliki pengguna,
