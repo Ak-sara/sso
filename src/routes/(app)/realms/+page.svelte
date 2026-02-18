@@ -3,8 +3,10 @@
 	import type { PageData, ActionData } from './$types';
 	import DataTable from '$lib/components/DataTable.svelte';
 	import { invalidateAll } from '$app/navigation';
+	import PageHints from '$lib/components/PageHints.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let showPageHints = $state(false);
 	let showCreateModal = $state(false);
 	let showEditModal = $state(false);
 	let showBrandingModal = $state(false);
@@ -294,35 +296,6 @@
 </script>
 
 <div class="space-y-6">
-	<!-- Info Box -->
-	<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-		<div class="flex">
-			<div class="flex-shrink-0">
-				<span class="text-2xl">ℹ️</span>
-			</div>
-			<div class="ml-3">
-				<h3 class="text-sm font-medium text-blue-800">Tentang Realm</h3>
-				<p class="mt-1 text-sm text-blue-700">
-					Realm adalah konsep yang mirip dengan tenant atau workspace. Setiap realm memiliki pengguna,
-					organisasi, dan konfigurasi OAuth yang terisolasi. Realm di Aksara SSO menggunakan
-					<strong>Organizations</strong> sebagai basis, sehingga setiap organisasi dapat dianggap sebagai realm terpisah.
-				</p>
-			</div>
-		</div>
-	</div>
-
-	<div class="flex justify-between items-center">
-		<div>
-			<p class="text-sm text-gray-500">Kelola realm/tenant untuk multi-organisasi</p>
-		</div>
-		<button
-			onclick={() => (showCreateModal = true)}
-			class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-		>
-			+ Buat Realm Baru
-		</button>
-	</div>
-
 	{#if form?.success}
 		<div class="p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
 			{form.success}
@@ -339,6 +312,19 @@
 	<DataTable
 		data={data.realms}
 		{columns}
+		header_before="<p class='text-sm text-gray-500'>Kelola realm/tenant untuk multi-organisasi</p>"
+		header_actions={()=>[
+			{
+				text:'ℹ️',
+				class:'px-2 py-0 text-2xl inline-block transition-transform duration-200 hover:-rotate-12 cursor-pointer',
+				action:() => (showPageHints=true)
+			},{
+				text:'+ Add new Realm',
+				class:'px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors',
+				action:() => (showCreateModal = true)
+			},
+			
+		]}
 		searchPlaceholder="Cari realm (nama, kode)..."
 		actions={(row) => [
 			{
@@ -364,11 +350,21 @@
 	/>
 </div>
 
+
+<PageHints
+	visible={showPageHints}
+	title='Tentang Realm'
+	paragraph='<p class="mt-1 text-sm text-blue-700">
+					Realm adalah konsep yang mirip dengan tenant atau workspace. Setiap realm memiliki pengguna,
+					organisasi, dan konfigurasi OAuth yang terisolasi. Realm di Aksara SSO menggunakan
+					<strong>Organizations</strong> sebagai basis, sehingga setiap organisasi dapat dianggap sebagai realm terpisah.
+				</p>'
+/>
 <!-- Create Modal -->
 {#if showCreateModal}
 	<div class="fixed inset-0 z-50 overflow-y-auto">
 		<div class="flex items-center justify-center min-h-screen px-4">
-			<button onclick={() => (showCreateModal = false)} class="fixed inset-0 bg-black bg-opacity-50"></button>
+			<button onclick={() => (showCreateModal = false)} class="fixed inset-0 bg-[rgba(0,0,0,0.5)]"></button>
 
 			<div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6 z-10">
 				<h3 class="text-lg font-medium text-gray-900 mb-4">Buat Realm Baru</h3>

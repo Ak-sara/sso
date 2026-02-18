@@ -15,6 +15,11 @@
 		class?: string;
 		icon?: string;
 	}
+	interface HeaderActions{
+		text:string;
+		class?:string;
+		action: () => void;
+	}
 
 	interface Props {
 		data: T[];
@@ -24,6 +29,8 @@
 		pageSize?: number;
 		totalItems?: number;
 		pageSizeOptions?: number[];
+		header_before?: boolean|string,
+		header_actions?: () => HeaderActions[],
 		// Search
 		searchable?: boolean;
 		searchPlaceholder?: string;
@@ -61,8 +68,10 @@
 		pageSize = 10,
 		totalItems = 0,
 		pageSizeOptions = [10, 25, 50, 100],
+		header_before=false,
+		header_actions,
 		searchable = true,
-		searchPlaceholder = 'Cari...',
+		searchPlaceholder = 'Find...',
 		searchKeys = [],
 		sortKey = $bindable(''),
 		sortDirection = $bindable('asc'),
@@ -75,7 +84,7 @@
 		actions,
 		exportable = false,
 		loading = false,
-		emptyMessage = 'Tidak ada data',
+		emptyMessage = 'no data',
 		onPageChange,
 		onPageSizeChange,
 		onSort,
@@ -203,45 +212,44 @@
 </script>
 
 <div class="datatable-container">
-	<!-- Search Bar -->
-	{#if searchable}
-		<div class="mb-4 flex gap-4 items-center">
-			<div class="flex-1 relative">
-				<input
-					type="text"
-					bind:value={searchQuery}
-					oninput={handleSearchInput}
-					placeholder={searchPlaceholder}
-					class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-				/>
-				<svg
-					class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+	<div class="flex justify-between items-center mb-4 gap-4">
+		<div class="flex flex-1 items-center gap-4">
+			<!-- pre-Header -->
+			{#if header_before} {@html header_before} {/if}
+			<!-- Search Bar -->
+			{#if searchable}				
+				<div class="relative flex-1">
+					<input
+						type="text"
+						bind:value={searchQuery}
+						oninput={handleSearchInput}
+						placeholder={searchPlaceholder}
+						class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
 					/>
-				</svg>
-			</div>
-			<div class="flex items-center gap-2 text-sm text-gray-600">
-				<span>Tampilkan:</span>
-				<select
-					bind:value={currentPageSize}
-					onchange={() => changePageSize(currentPageSize)}
-					class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-				>
-					{#each pageSizeOptions as size}
-						<option value={size}>{size}</option>
-					{/each}
-				</select>
-			</div>
+					<svg
+						class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+						/>
+					</svg>
+				</div>
+			{/if}
 		</div>
-	{/if}
+		<!-- after-Header -->
+		{#if header_actions}
+		
+			{#each header_actions() as item}
+			<button onclick={item.action}  class="{item.class}" >{item.text} </button>
+			{/each}
+		{/if}
+	</div>
 
 	<!-- Table -->
 	<div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
@@ -280,7 +288,7 @@
 						</th>
 					{/each}
 					{#if hasActions}
-						<th class="px-4 py-3 font-semibold text-gray-700 text-right">Aksi</th>
+						<th class="px-4 py-3 font-semibold text-gray-700 text-right">Actions</th>
 					{/if}
 				</tr>
 			</thead>
@@ -402,10 +410,23 @@
 	<!-- Pagination -->
 	{#if !loading && paginatedData().length > 0}
 		<div class="mt-4 flex items-center justify-between text-sm">
-			<div class="text-gray-600">
-				Menampilkan <span class="font-semibold">{startItem}</span> -
-				<span class="font-semibold">{endItem}</span> dari
-				<span class="font-semibold">{totalFilteredItems}</span> data
+			
+			<div class="flex items-center gap-2 text-sm text-gray-600">
+				<span>Tampilkan:</span>
+				<select
+					bind:value={currentPageSize}
+					onchange={() => changePageSize(currentPageSize)}
+					class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+				>
+					{#each pageSizeOptions as size}
+						<option value={size}>{size}</option>
+					{/each}
+				</select>
+				<div class="text-gray-600">
+					Menampilkan <span class="font-semibold">{startItem}</span> -
+					<span class="font-semibold">{endItem}</span> dari
+					<span class="font-semibold">{totalFilteredItems}</span> data
+				</div>
 			</div>
 
 			<div class="flex items-center gap-2">

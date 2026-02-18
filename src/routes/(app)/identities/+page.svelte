@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import DataTable from '$lib/components/DataTable.svelte';
+	import PageHints from '$lib/components/PageHints.svelte';
 	import type { PageData } from './$types';
 	import type { Identity } from '$lib/db/schemas';
 
@@ -9,6 +10,7 @@
 	}
 
 	let { data }: Props = $props();
+	let showPageHints = $state(false);
 
 	const tabs = [
 		{ id: 'employee', name: 'Karyawan', icon: '👨‍💼', description: 'Employee identities' },
@@ -193,41 +195,9 @@
 <div class="max-w-7xl mx-auto">
 	<!-- Header -->
 	<div class="md:flex md:items-center md:justify-between mb-6">
-		<div class="flex-1 min-w-0">
-			<h1 class="text-2xl font-bold text-gray-900">Identitas (SSO Accounts)</h1>
-			<p class="mt-1 text-sm text-gray-500">
-				Manage all identity types: employees, partners, external users, and service accounts
-			</p>
-		</div>
-		<div class="mt-4 flex md:mt-0 md:ml-4">
-			<button
-				type="button"
-				onclick={handleCreate}
-				class="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-			>
-				<span class="mr-2">➕</span>
-				Tambah Identitas
-			</button>
-		</div>
-	</div>
-
-	<!-- Info Box -->
-	<div class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
-		<div class="flex">
-			<div class="flex-shrink-0">
-				<span class="text-2xl">ℹ️</span>
-			</div>
-			<div class="ml-3">
-				<h3 class="text-sm font-medium text-blue-800">Unified Identity Model</h3>
-				<div class="mt-2 text-sm text-blue-700">
-					<p>
-						All users (employees, partners, external) are managed in one place.
-						<strong>Employees can login with email OR NIK</strong>.
-						New identities are created with <strong>isActive: true</strong> by default.
-					</p>
-				</div>
-			</div>
-		</div>
+		<p class="mt-1 text-sm text-gray-500">
+			Manage all identity types: employees, partners, external users, and service accounts
+		</p>
 	</div>
 
 	<!-- Tabs -->
@@ -254,6 +224,18 @@
 			data={filteredIdentities}
 			{columns}
 			pageSize={50}
+			header_actions={()=>[
+				{
+					text:'ℹ️',
+					class:'px-2 py-0 text-2xl inline-block transition-transform duration-200 hover:-rotate-12 cursor-pointer',
+					action:() => (showPageHints=true)
+				},{
+					text:'+ Add Identity',
+					class:'px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors',
+					action:() => {handleCreate()}
+				},
+				
+			]}
 			searchable={true}
 			searchKeys={['fullName', 'email', 'username', 'employeeId', 'phone', 'companyName', 'partnerType']}
 			onEdit={handleEdit}
@@ -262,3 +244,13 @@
 		/>
 	</div>
 </div>
+
+<PageHints
+	visible={showPageHints}
+	title='Unified Identity Model'
+	paragraph='<p>
+		All users (employees, partners, external) are managed in one place.
+		<strong>Employees can login with email OR NIK</strong>.
+		New identities are created with <strong>isActive: true</strong> by default.
+	</p>'
+/>
