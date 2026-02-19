@@ -3,24 +3,13 @@
 A Keycloak-like SSO system with advanced employee lifecycle management, organization structure versioning, and Microsoft Entra ID sync.
 
 ## 🔑 Test Credentials
-
 - Email: admin@ias.co.id
 - Password: password123
 - OAuth Client ID: test-client
 - OAuth Client Secret: test-secret
 
-## Technology Stack
-
-- **Runtime**: Bun
-- **Framework**: SvelteKit 5 with Runes
-- **Language**: TypeScript (strict mode)
-- **Database**: MongoDB Atlas
-- **CSS**: TailwindCSS
-- **Authentication**: OAuth 2.0 / OIDC, Argon2 password hashing
-- **Testing**: Vitest with happy-dom, playwright => ./e2e
-
-## Project Objectives
-
+## Development
+### Project Objectives
 1. Create a **Keycloak-like SSO system** with Realm/Organization management
 2. **SCIM 2.0 module** for automated employee provisioning to connected apps
 3. **Organization structure versioning** with Mermaid diagram rendering
@@ -29,6 +18,92 @@ A Keycloak-like SSO system with advanced employee lifecycle management, organiza
 6. **Multi-company support** - employees can be assigned to multiple entities
 7. **Custom employee properties** (PKWT, OS/Outsource employment types)
 8. **Partner/external user management** (non-employees)
+
+### Technology Stack
+- **Runtime**: Bun
+- **Framework**: SvelteKit 5 with Runes
+- **Language**: TypeScript (strict mode)
+- **Database**: MongoDB Atlas
+- **CSS**: TailwindCSS
+- **Authentication**: OAuth 2.0 / OIDC, Argon2 password hashing
+- **Testing**: Vitest with happy-dom, playwright => ./e2e
+
+### 📚 Documentation
+See `DOCS/` folder:
+- `_DEV_GUIDE.md` - Feature roadmap and implementation plan
+- `DATA_ARCHITECTURE.md` - Database schema reference
+- `AUTHENTICATION_GUIDE.md` - Auth flows and security
+- `EMPLOYEE_MANAGEMENT.md` - Employee lifecycle workflows
+- `SCIM_COMPLETE_GUIDE.md` - SCIM 2.0 API documentation
+
+See `DOCS/backlog/` folder:
+- `main.md`: 
+- `target.csv`: 
+
+### 💡 Development Tips
+
+#### Running the Application
+```bash
+bun install     # Install dependencies
+bun run dev     # Start development server
+bun run build   # Build for production
+```
+
+#### Working with MongoDB
+```typescript
+import { getDB } from '$lib/db/connection';
+
+const db = getDB();
+const employees = await db.collection('identities').find({
+  identityType: 'employee'
+}).toArray();
+```
+
+### Preparation
+### CSV Seeding
+
+Seed data stored in `scripts/seeders/*.csv` (human-readable, version-controlled).
+
+**Commands**:
+
+```bash
+bun run db:seed                     # Seed database (first time only)
+bun run db:seed --clean             # Seed database with clean (drop collections with CSV files)
+
+# Export collections to CSV
+bun run db:export                    # All collections to scripts/output/
+bun run db:export identities         # Single collection
+
+bun run db:import identities ./data.csv     # Import from CSV
+bun run db:import --dir ./scripts/seeders/  # Import all CSVs
+
+bun run scripts/db-clone.ts source_db target_db         # Clone database between environments
+bun run scripts/db-stats.ts aksara_sso                  # View database statistics
+bun run scripts/db-stats.ts compare aksara_sso dev_sso  # Compare two databases
+```
+
+**Format**: Use codes/names for references (auto-resolved to ObjectIds). See existing CSV files in `scripts/seeders/`.
+
+### Testing
+```bash
+# Run tests
+bun test
+
+scripts/test/custom.sh   # run custom test script   
+```
+PDF test result:  
+
+|Mark|Case|Info|Result|
+|--|--|--|--|
+|1|Login Api|{message:'success'}| Success|
+|1.1|Reset password|{error:'xxx'}| Failed|
+
+## Testing OAuth Flow
+1. Navigate to `/clients` in admin console
+2. Note the client ID and secret
+3. Use the authorization URL generator on the client detail page
+4. Complete the OAuth flow in browser
+5. Exchange authorization code for tokens at `/oauth/token`
 
 ---
 
@@ -105,7 +180,6 @@ src/
     ├── oauth-flow.test.ts         # OAuth integration tests
     └── lib/db/repositories.test.ts # Repository unit tests
 ```
-
 ---
 
 ## Important Reminders
@@ -117,91 +191,4 @@ src/
 
 ---
 
-# 💡 Development Tips
-
-## Running the Application
-```bash
-# Install dependencies
-bun install
-
-# Seed database (first time only)
-bun run db:seed
-
-# Seed database with clean (drop collections with CSV files)
-bun run db:seed --clean
-
-# Export collections to CSV
-bun run db:export                    # All collections to scripts/output/
-bun run db:export identities         # Single collection
-
-# Import from CSV
-bun run db:import identities ./data.csv
-bun run db:import --dir ./scripts/seeders/  # Import all CSVs
-
-# Start development server
-bun run dev
-
-# Run tests
-bun test
-
-# Build for production
-bun run build
-```
-
-## Database Management
-```bash
-# Clone database between environments
-bun run scripts/db-clone.ts source_db target_db
-
-# View database statistics
-bun run scripts/db-stats.ts aksara_sso
-
-# Compare two databases
-bun run scripts/db-stats.ts compare aksara_sso dev_sso
-```
-
-## Testing OAuth Flow
-1. Navigate to `/clients` in admin console
-2. Note the client ID and secret
-3. Use the authorization URL generator on the client detail page
-4. Complete the OAuth flow in browser
-5. Exchange authorization code for tokens at `/oauth/token`
-
-## Working with MongoDB
-```typescript
-import { getDB } from '$lib/db/connection';
-
-const db = getDB();
-const employees = await db.collection('identities').find({
-  identityType: 'employee'
-}).toArray();
-```
-
-## CSV Seeding
-
-Seed data stored in `scripts/seeders/*.csv` (human-readable, version-controlled).
-
-**Commands**:
-```bash
-bun run db:seed              # Import all CSVs
-bun run db:seed --clean      # Drop + re-import
-bun run db:export            # Export to CSV
-```
-
-**Format**: Use codes/names for references (auto-resolved to ObjectIds). See existing CSV files in `scripts/seeders/`.
-
----
-
-# 📚 Documentation
-
-See `DOCS/` folder:
-- `_DEV_GUIDE.md` - Feature roadmap and implementation plan
-- `DATA_ARCHITECTURE.md` - Database schema reference
-- `AUTHENTICATION_GUIDE.md` - Auth flows and security
-- `EMPLOYEE_MANAGEMENT.md` - Employee lifecycle workflows
-- `SCIM_COMPLETE_GUIDE.md` - SCIM 2.0 API documentation
-
----
-
 **Last Updated**: November 2025
-
