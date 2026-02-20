@@ -1,4 +1,4 @@
-# Aksara SSO - Claude Development Guide
+# Aksara SSO - Development Guide
 
 A Keycloak-like SSO system with advanced employee lifecycle management, organization structure versioning, and Microsoft Entra ID sync.
 
