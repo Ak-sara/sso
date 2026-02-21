@@ -3,8 +3,12 @@ import type { RequestHandler } from './$types';
 import { tokenSchema } from '$lib/validation.js';
 import { oauthStore } from '$lib/store.js';
 import { generateAccessToken, generateRefreshToken, createJWT, verifyCodeChallenge } from '$lib/crypto.js';
+import { logOAuth } from '$lib/audit/logger';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, getClientAddress }) => {
+	const ipAddress = getClientAddress();
+	const userAgent = request.headers.get('user-agent') || undefined;
+
 	try {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData.entries());
@@ -130,6 +134,20 @@ export const POST: RequestHandler = async ({ request }) => {
 				response.id_token = idToken;
 			}
 
+			// Log OAuth token grant
+			await logOAuth(
+				'oauth_token_grant',
+				authCode.identity_id,
+				{
+					clientId: validatedData.client_id,
+					clientName: client.client_name,
+					scope: authCode.scope,
+					grantType: 'authorization_code',
+					ipAddress,
+					userAgent
+				}
+			);
+
 			return json(response);
 
 		} else if (validatedData.grant_type === 'refresh_token') {
@@ -167,6 +185,19 @@ export const POST: RequestHandler = async ({ request }) => {
 				scope: 'openid', // Default scope for refresh
 				expires_at: accessTokenExpiresAt
 			});
+
+			// Log OAuth token refresh
+			await logOAuth(
+				'oauth_token_refresh',
+				storedRefreshToken.identity_id,
+				{
+					clientId: validatedData.client_id,
+					clientName: client.client_name,
+					grantType: 'refresh_token',
+					ipAddress,
+					userAgent
+				}
+			);
 
 			return json({
 				access_token: accessToken,

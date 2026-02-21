@@ -1,0 +1,8 @@
+identityType,email,username,firstName,lastName,employeeId,organization,orgUnit,position,manager,employmentType,employmentStatus,joinDate,endDate,probationEndDate,dateOfBirth,isActive,partnerType,companyName,contractStartDate,contractEndDate
+employee,john.doe@ias.co.id,NIK001,John,Doe,NIK001,IAS,IT-DIV,MGR,,permanent,active,2024-01-15,,,1990-05-20,true,,,
+employee,jane.smith@ias.co.id,NIK002,Jane,Smith,NIK002,IAS,IT-DIV,DEV,NIK001,permanent,active,2024-02-01,,,1992-08-15,true,,,
+employee,bob.wilson@ias.co.id,NIK003,Bob,Wilson,NIK003,IAS,HR-DIV,MGR,,permanent,active,2023-06-01,,,1988-03-10,true,,,
+employee,alice.brown@ias.co.id,NIK004,Alice,Brown,NIK004,IAS,FINANCE-DIV,MGR,,permanent,active,2023-09-15,,,1991-11-25,true,,,
+employee,charlie.davis@ias.co.id,NIK005,Charlie,Davis,NIK005,IAS,IT-DIV,DEV,NIK001,pkwt,probation,2025-01-10,,2025-04-10,1995-07-30,true,,,
+partner,vendor@company.com,vendor1,Vendor,Representative,,,,,,,,,,,true,vendor,Acme Corp,2024-01-01,2025-12-31
+external,consultant@example.com,ext001,External,Consultant,,,,,,,,,,,true,,,,

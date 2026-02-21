@@ -32,6 +32,6 @@
 	{/if}
 </svelte:head>
 
-<div class="min-h-screen flex items-center justify-center p-4" style={backgroundStyle()}>
+<div class="min-h-screen flex items-center justify-center p-4 bg-zinc-500" >
 	<slot />
 </div>

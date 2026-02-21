@@ -9,6 +9,18 @@
 		class?: string;
 	}
 
+	interface ActionButton {
+		label: string;
+		onClick: () => void;
+		class?: string;
+		icon?: string;
+	}
+	interface HeaderActions{
+		text:string;
+		class?:string;
+		action: () => void;
+	}
+
 	interface Props {
 		data: T[];
 		columns: Column<T>[];
@@ -17,6 +29,8 @@
 		pageSize?: number;
 		totalItems?: number;
 		pageSizeOptions?: number[];
+		header_before?: boolean|string,
+		header_actions?: () => HeaderActions[],
 		// Search
 		searchable?: boolean;
 		searchPlaceholder?: string;
@@ -32,6 +46,8 @@
 		// Actions
 		showActions?: boolean;
 		actionColumn?: Snippet<[{ row: T }]>;
+		actions?: (row: T) => ActionButton[];
+		exportable?: boolean;
 		// Loading & Empty
 		loading?: boolean;
 		emptyMessage?: string;
@@ -40,6 +56,9 @@
 		onPageSizeChange?: (pageSize: number) => void;
 		onSort?: (event: { key: keyof T | string; direction: 'asc' | 'desc' }) => void;
 		onSearch?: (query: string) => void;
+		onEdit?: (row: T) => void;
+		onDelete?: (row: T) => void;
+		onRowClick?: (row: T) => void; // NEW: Make entire row clickable
 	}
 
 	let {
@@ -49,8 +68,10 @@
 		pageSize = 10,
 		totalItems = 0,
 		pageSizeOptions = [10, 25, 50, 100],
+		header_before=false,
+		header_actions,
 		searchable = true,
-		searchPlaceholder = 'Cari...',
+		searchPlaceholder = 'Find...',
 		searchKeys = [],
 		sortKey = $bindable(''),
 		sortDirection = $bindable('asc'),
@@ -60,13 +81,23 @@
 		compact = false,
 		showActions = false,
 		actionColumn,
+		actions,
+		exportable = false,
 		loading = false,
-		emptyMessage = 'Tidak ada data',
+		emptyMessage = 'no data',
 		onPageChange,
 		onPageSizeChange,
 		onSort,
-		onSearch
+		onSearch,
+		onEdit,
+		onDelete,
+		onRowClick
 	}: Props = $props();
+
+	// Determine if we should show actions column (not if only onRowClick is provided)
+	const hasActions = $derived(
+		(showActions || !!actionColumn || !!actions || !!onEdit || !!onDelete) && !onRowClick
+	);
 
 	let searchQuery = $state('');
 	let currentPage = $state(page);
@@ -181,45 +212,44 @@
 </script>
 
 <div class="datatable-container">
-	<!-- Search Bar -->
-	{#if searchable}
-		<div class="mb-4 flex gap-4 items-center">
-			<div class="flex-1 relative">
-				<input
-					type="text"
-					bind:value={searchQuery}
-					oninput={handleSearchInput}
-					placeholder={searchPlaceholder}
-					class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-				/>
-				<svg
-					class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+	<div class="flex justify-between items-center mb-4 gap-4">
+		<div class="flex flex-1 items-center gap-4">
+			<!-- pre-Header -->
+			{#if header_before} {@html header_before} {/if}
+			<!-- Search Bar -->
+			{#if searchable}				
+				<div class="relative flex-1">
+					<input
+						type="text"
+						bind:value={searchQuery}
+						oninput={handleSearchInput}
+						placeholder={searchPlaceholder}
+						class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
 					/>
-				</svg>
-			</div>
-			<div class="flex items-center gap-2 text-sm text-gray-600">
-				<span>Tampilkan:</span>
-				<select
-					bind:value={currentPageSize}
-					onchange={() => changePageSize(currentPageSize)}
-					class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-				>
-					{#each pageSizeOptions as size}
-						<option value={size}>{size}</option>
-					{/each}
-				</select>
-			</div>
+					<svg
+						class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+						/>
+					</svg>
+				</div>
+			{/if}
 		</div>
-	{/if}
+		<!-- after-Header -->
+		{#if header_actions}
+		
+			{#each header_actions() as item}
+			<button onclick={item.action}  class="{item.class}" >{item.text} </button>
+			{/each}
+		{/if}
+	</div>
 
 	<!-- Table -->
 	<div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
@@ -257,15 +287,15 @@
 							</div>
 						</th>
 					{/each}
-					{#if showActions}
-						<th class="px-4 py-3 font-semibold text-gray-700 text-right">Aksi</th>
+					{#if hasActions}
+						<th class="px-4 py-3 font-semibold text-gray-700 text-right">Actions</th>
 					{/if}
 				</tr>
 			</thead>
 			<tbody>
 				{#if loading}
 					<tr>
-						<td colspan={columns.length + (showActions ? 1 : 0)} class="px-4 py-8 text-center">
+						<td colspan={columns.length + (hasActions ? 1 : 0)} class="px-4 py-8 text-center">
 							<div class="flex items-center justify-center gap-2 text-gray-500">
 								<svg
 									class="animate-spin h-5 w-5"
@@ -292,7 +322,7 @@
 					</tr>
 				{:else if paginatedData().length === 0}
 					<tr>
-						<td colspan={columns.length + (showActions ? 1 : 0)} class="px-4 py-8 text-center">
+						<td colspan={columns.length + (hasActions ? 1 : 0)} class="px-4 py-8 text-center">
 							<div class="text-gray-500">
 								<svg
 									class="mx-auto h-12 w-12 text-gray-400 mb-2"
@@ -313,15 +343,61 @@
 					</tr>
 				{:else}
 					{#each paginatedData() as row, i (i)}
-						<tr>
+						<tr
+							class:cursor-pointer={!!onRowClick}
+							class:hover:bg-gray-100={!!onRowClick}
+							onclick={() => onRowClick?.(row)}
+						>
 							{#each columns as column}
 								<td class="px-4 py-3 {column.class || ''}">
 									{@html getCellValue(row, column)}
 								</td>
 							{/each}
-							{#if showActions && actionColumn}
+							{#if hasActions}
 								<td class="px-4 py-3 text-right">
-									{@render actionColumn({ row })}
+									<div class="flex justify-end gap-2">
+										{#if actionColumn}
+											{@render actionColumn({ row })}
+										{:else if actions}
+											{#each actions(row) as action}
+												<button
+													type="button"
+													onclick={action.onClick}
+													class="text-sm font-medium {action.class || 'text-indigo-600 hover:text-indigo-900'}"
+												>
+													{#if action.icon}
+														<span class="mr-1">{action.icon}</span>
+													{/if}
+													{action.label}
+												</button>
+											{/each}
+										{:else}
+											{#if onEdit}
+												<button
+													type="button"
+													onclick={() => onEdit?.(row)}
+													class="text-indigo-600 hover:text-indigo-900"
+													title="Edit"
+												>
+													<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+													</svg>
+												</button>
+											{/if}
+											{#if onDelete}
+												<button
+													type="button"
+													onclick={() => onDelete?.(row)}
+													class="text-red-600 hover:text-red-900"
+													title="Delete"
+												>
+													<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+													</svg>
+												</button>
+											{/if}
+										{/if}
+									</div>
 								</td>
 							{/if}
 						</tr>
@@ -334,10 +410,23 @@
 	<!-- Pagination -->
 	{#if !loading && paginatedData().length > 0}
 		<div class="mt-4 flex items-center justify-between text-sm">
-			<div class="text-gray-600">
-				Menampilkan <span class="font-semibold">{startItem}</span> -
-				<span class="font-semibold">{endItem}</span> dari
-				<span class="font-semibold">{totalFilteredItems}</span> data
+			
+			<div class="flex items-center gap-2 text-sm text-gray-600">
+				<span>Tampilkan:</span>
+				<select
+					bind:value={currentPageSize}
+					onchange={() => changePageSize(currentPageSize)}
+					class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+				>
+					{#each pageSizeOptions as size}
+						<option value={size}>{size}</option>
+					{/each}
+				</select>
+				<div class="text-gray-600">
+					Menampilkan <span class="font-semibold">{startItem}</span> -
+					<span class="font-semibold">{endItem}</span> dari
+					<span class="font-semibold">{totalFilteredItems}</span> data
+				</div>
 			</div>
 
 			<div class="flex items-center gap-2">

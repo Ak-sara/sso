@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import DataTable from '$lib/components/DataTable.svelte';
+	import PageHints from '$lib/components/PageHints.svelte';
 	import type { PageData } from './$types';
 	import type { Identity } from '$lib/db/schemas';
 
@@ -9,6 +10,7 @@
 	}
 
 	let { data }: Props = $props();
+	let showPageHints = $state(false);
 
 	const tabs = [
 		{ id: 'employee', name: 'Karyawan', icon: '👨‍💼', description: 'Employee identities' },
@@ -33,26 +35,12 @@
 		goto(`/identities/${identity._id}`);
 	}
 
-	async function handleToggleActive(identity: Identity) {
-		const form = document.createElement('form');
-		form.method = 'POST';
-		form.action = '?/toggleActive';
-
-		const input = document.createElement('input');
-		input.type = 'hidden';
-		input.name = 'identityId';
-		input.value = identity._id as string;
-		form.appendChild(input);
-
-		document.body.appendChild(form);
-		form.requestSubmit();
-		document.body.removeChild(form);
-
-		await invalidateAll();
+	function handleCreate() {
+		goto('/identities/new');
 	}
 
 	async function handleDelete(identity: Identity) {
-		if (!confirm(`Are you sure you want to delete ${identity.fullName}? This action cannot be undone.`)) {
+		if (!confirm(`Apakah Anda yakin ingin menghapus ${identity.fullName}? Tindakan ini tidak dapat dibatalkan.`)) {
 			return;
 		}
 
@@ -150,8 +138,15 @@
 					key: 'contractEndDate',
 					label: 'Contract End',
 					sortable: true,
-					render: (value: string | undefined) =>
-						value ? new Date(value).toLocaleDateString('id-ID') : '-'
+					render: (value: string | undefined) => {
+						if (!value || value.trim() === '') return '-';
+						try {
+							const date = new Date(value);
+							return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('id-ID');
+						} catch {
+							return '-';
+						}
+					}
 				},
 				{
 					key: 'isActive',
@@ -200,41 +195,9 @@
 <div class="max-w-7xl mx-auto">
 	<!-- Header -->
 	<div class="md:flex md:items-center md:justify-between mb-6">
-		<div class="flex-1 min-w-0">
-			<h1 class="text-2xl font-bold text-gray-900">Identitas (SSO Accounts)</h1>
-			<p class="mt-1 text-sm text-gray-500">
-				Manage all identity types: employees, partners, external users, and service accounts
-			</p>
-		</div>
-		<div class="mt-4 flex md:mt-0 md:ml-4">
-			<button
-				type="button"
-				onclick={() => (showCreateModal = true)}
-				class="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-			>
-				<span class="mr-2">➕</span>
-				Create Identity
-			</button>
-		</div>
-	</div>
-
-	<!-- Info Box -->
-	<div class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
-		<div class="flex">
-			<div class="flex-shrink-0">
-				<span class="text-2xl">ℹ️</span>
-			</div>
-			<div class="ml-3">
-				<h3 class="text-sm font-medium text-blue-800">Unified Identity Model</h3>
-				<div class="mt-2 text-sm text-blue-700">
-					<p>
-						All users (employees, partners, external) are managed in one place.
-						<strong>Employees can login with email OR NIK</strong>.
-						New identities are created with <strong>isActive: true</strong> by default.
-					</p>
-				</div>
-			</div>
-		</div>
+		<p class="mt-1 text-sm text-gray-500">
+			Manage all identity types: employees, partners, external users, and service accounts
+		</p>
 	</div>
 
 	<!-- Tabs -->
@@ -261,50 +224,33 @@
 			data={filteredIdentities}
 			{columns}
 			pageSize={50}
-			searchable={true}
-			exportable={true}
-			actions={(row) => [
+			header_actions={()=>[
 				{
-					label: 'Edit',
-					onClick: () => handleEdit(row),
-					class: 'text-indigo-600 hover:text-indigo-900'
+					text:'ℹ️',
+					class:'px-2 py-0 text-2xl inline-block transition-transform duration-200 hover:-rotate-12 cursor-pointer',
+					action:() => (showPageHints=true)
+				},{
+					text:'+ Add Identity',
+					class:'px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors',
+					action:() => {handleCreate()}
 				},
-				{
-					label: row.isActive ? 'Deactivate' : 'Activate',
-					onClick: () => handleToggleActive(row),
-					class: 'text-blue-600 hover:text-blue-900'
-				},
-				{
-					label: 'Delete',
-					onClick: () => handleDelete(row),
-					class: 'text-red-600 hover:text-red-900'
-				}
+				
 			]}
-			emptyMessage={`No ${tabs.find(t => t.id === currentTab)?.name || 'identities'} found`}
+			searchable={true}
+			searchKeys={['fullName', 'email', 'username', 'employeeId', 'phone', 'companyName', 'partnerType']}
+			onEdit={handleEdit}
+			onDelete={handleDelete}
+			emptyMessage={`Tidak ada ${tabs.find(t => t.id === currentTab)?.name || 'identitas'}`}
 		/>
 	</div>
 </div>
 
-<!-- TODO: Create Identity Modal (to be implemented) -->
-{#if showCreateModal}
-	<div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-		<div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-			<div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick={() => (showCreateModal = false)}></div>
-			<div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-				<div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-					<h3 class="text-lg font-medium text-gray-900">Create New Identity</h3>
-					<p class="mt-2 text-sm text-gray-500">Feature coming soon...</p>
-				</div>
-				<div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-					<button
-						type="button"
-						onclick={() => (showCreateModal = false)}
-						class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
-					>
-						Close
-					</button>
-				</div>
-			</div>
-		</div>
-	</div>
-{/if}
+<PageHints
+	bind:visible={showPageHints}
+	title='Unified Identity Model'
+	paragraph='<p>
+		All users (employees, partners, external) are managed in one place.
+		<strong>Employees can login with email OR NIK</strong>.
+		New identities are created with <strong>isActive: true</strong> by default.
+	</p>'
+/>

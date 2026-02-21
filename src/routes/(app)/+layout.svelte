@@ -10,6 +10,9 @@
 	let { data }: Props = $props();
 	let isSidebarOpen = $state(true);
 	let showUserMenu = $state(false);
+	let hoveredGroup = $state<string | null>(null);
+	let hoveredGroupTop = $state<number>(0);
+	let hoverTimeout: number | null = null;
 	let expandedGroups = $state<Record<string, boolean>>({
 		users_access: true,
 		organization: true,
@@ -46,21 +49,15 @@
 	const navigation: (NavItem | NavGroup)[] = [
 		{ name: 'Dashboard', href: '/', icon: '📊' },
 		{
-			name: 'Users & Access',
-			icon: '👥',
-			items: [
-				{ name: 'Identitas', href: '/identities', icon: '🔐' },
-			],
-		},
-		{
 			name: 'Organisasi',
 			icon: '🏢',
 			items: [
+				{ name: 'Identitas', href: '/identities', icon: '👥' },
+				{ name: 'SK Penempatan', href: '/sk-penempatan', icon: '📋' },
 				{ name: 'Realm/Entitas', href: '/realms', icon: '🌐' },
 				{ name: 'Unit Kerja/Divisi', href: '/org-units', icon: '🏛️' },
-				{ name: 'Struktur Organisasi', href: '/org-structure', icon: '🌳' },
-				{ name: 'Versi Struktur', href: '/org-structure/versions', icon: '📋' },
 				{ name: 'Posisi/Jabatan', href: '/positions', icon: '💼' },
+				{ name: 'Struktur Organisasi', href: '/org-structure', icon: '🌳' }
 			],
 		},
 		{
@@ -68,15 +65,17 @@
 			icon: '📊',
 			items: [
 				{ name: 'Sync & Import', href: '/sync', icon: '🔄' },
+				{ name: 'Audit Log', href: '/audit', icon: '📋' },
 			],
 		},
 		{
-			name: 'Integrasi',
-			icon: '🔌',
+			name: 'Configurations',
+			icon: '⚙️',
 			items: [
+				{ name: 'Global Settings', href: '/settings', icon: '🔌' },
+				{ name: 'Data Masking', href: '/settings/data-masking', icon: '🔒' },
 				{ name: 'OAuth Clients', href: '/clients', icon: '🔑' },
-				{ name: 'SCIM Clients', href: '/scim-clients', icon: '🔐' },
-				{ name: 'Audit Log', href: '/audit', icon: '📋' },
+				{ name: 'SCIM Clients', href: '/clients-scim', icon: '🔐' },
 			],
 		},
 	];
@@ -91,6 +90,36 @@
 
 	function toggleGroup(groupName: string) {
 		expandedGroups[groupName] = !expandedGroups[groupName];
+	}
+
+	function handleGroupHover(groupName: string, event: MouseEvent) {
+		if (!isSidebarOpen) {
+			if (hoverTimeout) {
+				clearTimeout(hoverTimeout);
+				hoverTimeout = null;
+			}
+			hoveredGroup = groupName;
+			const target = event.currentTarget as HTMLElement;
+			const rect = target.getBoundingClientRect();
+			hoveredGroupTop = rect.top;
+		}
+	}
+
+	function handleGroupLeave() {
+		if (hoverTimeout) {
+			clearTimeout(hoverTimeout);
+		}
+		hoverTimeout = window.setTimeout(() => {
+			hoveredGroup = null;
+			hoverTimeout = null;
+		}, 200);
+	}
+
+	function cancelClose() {
+		if (hoverTimeout) {
+			clearTimeout(hoverTimeout);
+			hoverTimeout = null;
+		}
 	}
 
 	function isGroup(item: NavItem | NavGroup): item is NavGroup {
@@ -110,8 +139,10 @@
 	{#if brandingCSS}
 		{@html `<style>${brandingCSS}</style>`}
 	{/if}
-	{#if branding?.faviconBase64}
-		<link rel="icon" href={branding.faviconBase64} />
+	{#if branding?.logoBase64}
+		<link rel="icon" type="image/png" href={branding.logoBase64} />
+	{:else}
+		<link rel="icon" type="image/png" href="/ias-logo.png" />
 	{/if}
 	<title>{appName}</title>
 </svelte:head>
@@ -124,7 +155,7 @@
 	>
 		<div class="flex flex-col h-full">
 			<!-- Logo -->
-			<div class="flex items-center justify-between h-16 px-4 border-b border-indigo-800">
+			<div class="flex items-center justify-between h-16 px-4" style="border-bottom: 1px solid rgba(var(--brand-primary-rgb), 0.3);">
 				{#if isSidebarOpen}
 					<div class="flex items-center space-x-2">
 						<img src={logoSrc} alt="{appName} logo" style="height:32px"/>
@@ -136,40 +167,76 @@
 			</div>
 
 			<!-- Navigation -->
-			<nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+			<nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto overflow-x-visible">
 				{#each navigation as item}
 					{#if isGroup(item)}
 						<!-- Group with collapsible submenu -->
 						<div class="space-y-1">
-							<button
-								onclick={() => toggleGroup(item.name.toLowerCase())}
-								class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors {isGroupActive(item)
-									? 'bg-indigo-800 text-white'
-									: 'text-indigo-100 hover:bg-indigo-800 hover:text-white'}"
-								title={item.name}
-							>
-								<div class="flex items-center">
-									<span class="text-xl {isSidebarOpen ? 'mr-3' : ''}">{item.icon}</span>
+							<div class="relative">
+								<button
+									onclick={() => toggleGroup(item.name.toLowerCase())}
+									onmouseenter={(e) => handleGroupHover(item.name.toLowerCase(), e)}
+									onmouseleave={handleGroupLeave}
+									class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors"
+									style="{isGroupActive(item)
+										? 'background-color: rgba(255,255,255,0.2); color: white;'
+										: 'color: rgba(255,255,255,0.8);'}"
+									onmouseover={(e) => { if (!isGroupActive(item)) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; }}
+									onmouseout={(e) => { if (!isGroupActive(item)) e.currentTarget.style.backgroundColor = 'transparent'; }}
+									title={item.name}
+								>
+									<div class="flex items-center">
+										<span class="text-xl {isSidebarOpen ? 'mr-3' : ''}">{item.icon}</span>
+										{#if isSidebarOpen}
+											{item.name}
+										{/if}
+									</div>
 									{#if isSidebarOpen}
-										{item.name}
+										<span class="text-xs transition-transform {expandedGroups[item.name.toLowerCase()] ? 'rotate-180' : ''}">
+											▼
+										</span>
 									{/if}
-								</div>
-								{#if isSidebarOpen}
-									<span class="text-xs transition-transform {expandedGroups[item.name.toLowerCase()] ? 'rotate-180' : ''}">
-										▼
-									</span>
-								{/if}
-							</button>
+								</button>
 
-							<!-- Submenu -->
+								<!-- Floating submenu (when sidebar is collapsed and hovered) -->
+								{#if !isSidebarOpen && hoveredGroup === item.name.toLowerCase()}
+									<div
+										class="fixed w-56 bg-white rounded-lg shadow-2xl py-2 border border-gray-200"
+										style="left: 4rem; top: {hoveredGroupTop}px; z-index: 9999;"
+										onmouseenter={cancelClose}
+										onmouseleave={handleGroupLeave}
+									>
+										<div class="px-3 py-2 border-b border-gray-100">
+											<p class="text-sm font-semibold text-gray-700">{item.name}</p>
+										</div>
+										{#each item.items as subItem}
+											<a
+												href={subItem.href}
+												class="flex items-center px-4 py-2 text-sm transition-colors font-medium"
+												style="{isActive(subItem.href)
+													? `background-color: rgba(var(--brand-primary-rgb), 0.1); color: var(--brand-primary);`
+													: 'color: #374151;'}"
+											>
+												<span class="text-base mr-2">{subItem.icon}</span>
+												{subItem.name}
+											</a>
+										{/each}
+									</div>
+								{/if}
+							</div>
+
+							<!-- Submenu (inline when open) -->
 							{#if isSidebarOpen && expandedGroups[item.name.toLowerCase()]}
 								<div class="ml-4 space-y-1">
 									{#each item.items as subItem}
 										<a
 											href={subItem.href}
-											class="flex items-center px-4 py-2 text-sm rounded-lg transition-colors {isActive(subItem.href)
-												? 'bg-indigo-700 text-white'
-												: 'text-indigo-200 hover:bg-indigo-800 hover:text-white'}"
+											class="flex items-center px-4 py-2 text-sm rounded-lg transition-colors"
+											style="{isActive(subItem.href)
+												? 'background-color: rgba(255,255,255,0.25); color: white;'
+												: 'color: rgba(255,255,255,0.7);'}"
+											onmouseover={(e) => { if (!isActive(subItem.href)) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'white'; }}
+											onmouseout={(e) => { if (!isActive(subItem.href)) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; } }}
 										>
 											<span class="text-base mr-2">{subItem.icon}</span>
 											{subItem.name}
@@ -182,9 +249,12 @@
 						<!-- Single item -->
 						<a
 							href={item.href}
-							class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors {isActive(item.href)
-								? 'bg-indigo-800 text-white'
-								: 'text-indigo-100 hover:bg-indigo-800 hover:text-white'}"
+							class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors"
+							style="{isActive(item.href)
+								? 'background-color: rgba(255,255,255,0.2); color: white;'
+								: 'color: rgba(255,255,255,0.8);'}"
+							onmouseover={(e) => { if (!isActive(item.href)) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; }}
+							onmouseout={(e) => { if (!isActive(item.href)) e.currentTarget.style.backgroundColor = 'transparent'; }}
 							title={item.name}
 						>
 							<span class="text-xl {isSidebarOpen ? 'mr-3' : ''}">{item.icon}</span>
@@ -239,7 +309,7 @@
 							Posisi/Jabatan
 						{:else if $page.url.pathname === '/clients'}
 							OAuth Clients
-						{:else if $page.url.pathname === '/scim-clients' || $page.url.pathname.startsWith('/scim-clients')}
+						{:else if $page.url.pathname === '/clients-scim' || $page.url.pathname.startsWith('/clients-scim')}
 							SCIM Clients
 						{:else if $page.url.pathname === '/audit'}
 							Audit Log
@@ -280,6 +350,9 @@
 								</a>
 								<a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
 									⚙️ Pengaturan
+								</a>
+								<a href="/docs" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+									📒 Documentation
 								</a>
 								<hr class="my-1" />
 								<form method="POST" action="/logout">

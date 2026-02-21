@@ -76,18 +76,36 @@
 			`
 		},
 		{
-			key: 'userId',
+			key: 'identityInfo',
 			label: 'Pengguna',
-			sortable: true,
-			render: (value: string) => value || '-'
+			sortable: false,
+			render: (value: any) => {
+				if (!value) return '<span class="text-gray-400">-</span>';
+				const name = value.name || 'Unknown';
+				const email = value.email ? `<div class="text-xs text-gray-500">${value.email}</div>` : '';
+				const employeeId = value.employeeId ? `<div class="text-xs text-gray-400">NIK: ${value.employeeId}</div>` : '';
+				return `
+					<div>
+						<div class="text-sm font-medium text-gray-900">${name}</div>
+						${email}
+						${employeeId}
+					</div>
+				`;
+			}
 		},
 		{
-			key: 'targetType',
+			key: 'resource',
 			label: 'Target',
 			sortable: true,
 			render: (value: string, row: any) => {
-				if (!value) return '-';
-				return `<span class="text-xs bg-gray-100 px-2 py-1 rounded">${value}${row.targetId ? `: ${row.targetId}` : ''}</span>`;
+				if (!value) return '<span class="text-gray-400">-</span>';
+				const resourceId = row.resourceId ? `<div class="text-xs text-gray-400 truncate max-w-[150px]" title="${row.resourceId}">${row.resourceId}</div>` : '';
+				return `
+					<div>
+						<span class="text-xs bg-gray-100 px-2 py-1 rounded">${value}</span>
+						${resourceId}
+					</div>
+				`;
 			}
 		},
 		{
@@ -144,12 +162,12 @@
 		page={data.pagination.page}
 		pageSize={data.pagination.pageSize}
 		totalItems={data.pagination.total}
-		showActions={false}
-		searchPlaceholder="Cari log (aksi, user, target)..."
+		searchPlaceholder="Cari log (aksi, resource, ID)..."
 		onPageChange={handlePageChange}
 		onPageSizeChange={handlePageSizeChange}
 		onSort={handleSort}
 		onSearch={handleSearch}
+		onEdit={(row) => goto(`/audit/${row._id}`)}
 		emptyMessage="Belum ada log aktivitas sistem."
 	/>
 </div>

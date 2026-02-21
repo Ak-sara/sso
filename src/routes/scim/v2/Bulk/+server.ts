@@ -355,11 +355,11 @@ async function processGroupOperation(
 ): Promise<BulkOperationResponse> {
 	switch (operation.method) {
 		case 'POST': {
-			// Create group
+			// Create group (using canonical field names)
 			const newOrgUnit = await orgUnitRepository.create({
 				code: operation.data.externalId || `OU-${Date.now()}`,
 				name: operation.data.displayName,
-				type: operation.data['x-orgUnit']?.unitType || 'department',
+				type: operation.data['x-orgUnit']?.type || 'department', // CANONICAL: use 'type' not 'unitType'
 				level: operation.data['x-orgUnit']?.level || 1,
 				isActive: true,
 				createdAt: new Date(),

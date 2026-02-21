@@ -2,8 +2,10 @@ import { identityRepository } from '$lib/db/identity-repository';
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { hash } from '@node-rs/argon2';
+import { getMaskedIdentities } from '$lib/utils/data-masking';
+import { getMaskingConfig } from '$lib/utils/masking-helper';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
 	// Fetch ALL identities - filtering will be done client-side
 	const allIdentities = await identityRepository.findAll();
 
@@ -14,20 +16,57 @@ export const load: PageServerLoad = async () => {
 		};
 	}
 
-	return {
-		identities: allIdentities.map(identity => ({
-			...identity,
-			_id: identity._id?.toString() || '',
-			createdAt: identity.createdAt?.toISOString() || new Date().toISOString(),
-			updatedAt: identity.updatedAt?.toISOString() || new Date().toISOString(),
-			lastLogin: identity.lastLogin?.toISOString(),
-			joinDate: identity.joinDate?.toISOString(),
-			endDate: identity.endDate?.toISOString(),
-			probationEndDate: identity.probationEndDate?.toISOString(),
-			dateOfBirth: identity.dateOfBirth?.toISOString(),
-			contractStartDate: identity.contractStartDate?.toISOString(),
-			contractEndDate: identity.contractEndDate?.toISOString()
+	// Helper to convert date to ISO string (handles both Date objects and strings)
+	const toISOStringSafe = (date: any): string | undefined => {
+		if (!date) return undefined;
+		if (typeof date === 'string') return date;
+		if (date instanceof Date) return date.toISOString();
+		try {
+			return new Date(date).toISOString();
+		} catch {
+			return undefined;
+		}
+	};
+
+	// Helper to convert ObjectId to string
+	const toStringSafe = (value: any): string | undefined => {
+		if (!value) return undefined;
+		if (typeof value === 'string') return value;
+		return value.toString();
+	};
+
+	// Normalize identities
+	const normalizedIdentities = allIdentities.map(identity => ({
+		...identity,
+		_id: identity._id?.toString() || '',
+		organizationId: toStringSafe(identity.organizationId),
+		orgUnitId: toStringSafe(identity.orgUnitId),
+		positionId: toStringSafe(identity.positionId),
+		managerId: toStringSafe(identity.managerId),
+		createdAt: toISOStringSafe(identity.createdAt) || new Date().toISOString(),
+		updatedAt: toISOStringSafe(identity.updatedAt) || new Date().toISOString(),
+		lastLogin: toISOStringSafe(identity.lastLogin),
+		joinDate: toISOStringSafe(identity.joinDate),
+		endDate: toISOStringSafe(identity.endDate),
+		probationEndDate: toISOStringSafe(identity.probationEndDate),
+		dateOfBirth: toISOStringSafe(identity.dateOfBirth),
+		contractStartDate: toISOStringSafe(identity.contractStartDate),
+		contractEndDate: toISOStringSafe(identity.contractEndDate),
+		// Convert arrays of ObjectIds if they exist
+		secondaryAssignments: identity.secondaryAssignments?.map((assignment: any) => ({
+			...assignment,
+			orgUnitId: toStringSafe(assignment.orgUnitId),
+			positionId: toStringSafe(assignment.positionId)
 		}))
+	}));
+
+	// Apply data masking based on user roles
+	const maskingConfig = await getMaskingConfig();
+	const userRoles = locals.user?.roles || [];
+	const maskedIdentities = getMaskedIdentities(normalizedIdentities, maskingConfig, userRoles);
+
+	return {
+		identities: maskedIdentities
 	};
 };
 

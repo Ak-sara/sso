@@ -16,7 +16,7 @@
 	const categoryLabels = {
 		integration: 'Integration Guides',
 		admin: 'Administrator Guides',
-		api: 'API Reference',
+		compliance: 'Compliance',
 		reference: 'Reference & Comparison'
 	};
 
@@ -101,11 +101,11 @@
 
 		<!-- Footer -->
 		<div class="mt-16 text-center">
-			<a href="/login" class="inline-flex items-center gap-2 text-white hover:text-white/80 font-medium bg-white/10 backdrop-blur-sm px-6 py-3 rounded-lg transition-all">
+			<a href="/" class="inline-flex items-center gap-2 text-white hover:text-white/80 font-medium bg-white/10 backdrop-blur-sm px-6 py-3 rounded-lg transition-all">
 				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
 				</svg>
-				Back to Login
+				Back
 			</a>
 			<p class="mt-4 text-white/80 text-sm">Need help? Contact your system administrator</p>
 		</div>

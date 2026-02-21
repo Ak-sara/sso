@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import SyncStatsCard from './SyncStatsCard.svelte';
 
 	interface Props {
@@ -16,9 +17,7 @@
 			updated: number;
 			errors: number;
 		}>;
-		onTestConnection?: () => Promise<void>;
-		onSync?: () => Promise<void>;
-		onSaveConfig?: (config: any) => Promise<void>;
+		organizationId?: string | null;
 		isTesting?: boolean;
 		isSyncing?: boolean;
 	}
@@ -26,17 +25,63 @@
 	let {
 		config = null,
 		syncHistory = [],
-		onTestConnection,
-		onSync,
-		onSaveConfig,
 		isTesting = false,
-		isSyncing = false
+		isSyncing = false,
+		organizationId
 	}: Props = $props();
 
-	let tenantId = $state(config?.tenantId || '');
-	let clientId = $state(config?.clientId || '');
+	let tenantId = $state('');
+	let clientId = $state('');
 	let clientSecret = $state('');
-	let autoSync = $state(config?.autoSync || false);
+	let autoSync = $state(false);
+	let sampleUsers = $state<any[]>([]);
+	let availableEntraFields = $state<string[]>([]);
+	let availableIdentityFields = $state<string[]>([
+		'email', 'username', 'firstName', 'lastName', 'fullName', 'phone',
+		'employeeId', 'organizationId', 'orgUnitId', 'positionId', 'managerId',
+		'employmentType', 'employmentStatus', 'workLocation', 'region',
+		'dateOfBirth', 'gender', 'idNumber', 'taxId', 'personalEmail'
+	]);
+	let fieldMappings = $state<Array<{
+		identityField: string;
+		entraField: string;
+		enabled: boolean;
+		transformation?: string; // Optional transformation function
+	}>>([
+		{ identityField: 'email', entraField: 'userPrincipalName', enabled: true },
+		{ identityField: 'firstName', entraField: 'givenName', enabled: true },
+		{ identityField: 'lastName', entraField: 'surname', enabled: true },
+		{ identityField: 'phone', entraField: 'mobilePhone', enabled: false },
+	]);
+	let filterQuery = $state('');
+	let showFieldMapping = $state(false);
+	let isExporting = $state(false);
+
+	// Update form fields when config changes
+	$effect(() => {
+		if (config) {
+			tenantId = config.tenantId || '';
+			clientId = config.clientId || '';
+			autoSync = config.autoSync || false;
+			// Don't populate clientSecret from config (it's masked)
+		}
+	});
+
+	function addFieldMapping() {
+		fieldMappings = [...fieldMappings, { identityField: '', entraField: '', enabled: true, transformation: '' }];
+	}
+
+	function removeFieldMapping(index: number) {
+		fieldMappings = fieldMappings.filter((_, i) => i !== index);
+	}
+
+	function extractAllFields(users: any[]): string[] {
+		const fieldSet = new Set<string>();
+		users.forEach(user => {
+			Object.keys(user).forEach(key => fieldSet.add(key));
+		});
+		return Array.from(fieldSet).sort();
+	}
 </script>
 
 <div class="space-y-6">
@@ -108,23 +153,43 @@
 
 			<!-- Action Buttons -->
 			<div class="flex space-x-4">
-				<button
-					type="button"
-					onclick={onTestConnection}
-					disabled={isTesting || !tenantId || !clientId || !clientSecret}
-					class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-				>
-					{isTesting ? '🔄 Testing...' : '🔌 Test Connection'}
-				</button>
+				<form method="POST" action="?/testEntraConnection" use:enhance={() => {
+					return async ({ result, update }) => {
+						await update();
+						// Reload page if test was successful to update connection status
+						if (result.type === 'success') {
+							window.location.reload();
+						}
+					};
+				}}>
+					<input type="hidden" name="tenantId" value={tenantId} />
+					<input type="hidden" name="clientId" value={clientId} />
+					<input type="hidden" name="clientSecret" value={clientSecret} />
+					<input type="hidden" name="organizationId" value={organizationId || ''} />
+					<input type="hidden" name="useExistingSecret" value={!clientSecret && config ? 'true' : 'false'} />
+					<button
+						type="submit"
+						disabled={isTesting || !tenantId || !clientId || (!clientSecret && !config)}
+						class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+					>
+						{isTesting ? '🔄 Testing...' : '🔌 Test Connection'}
+					</button>
+				</form>
 
-				<button
-					type="button"
-					onclick={() => onSaveConfig?.({ tenantId, clientId, clientSecret, autoSync })}
-					disabled={!tenantId || !clientId}
-					class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-				>
-					💾 Save Configuration
-				</button>
+				<form method="POST" action="?/saveEntraConfig" use:enhance>
+					<input type="hidden" name="tenantId" value={tenantId} />
+					<input type="hidden" name="clientId" value={clientId} />
+					<input type="hidden" name="clientSecret" value={clientSecret} />
+					<input type="hidden" name="organizationId" value={organizationId || ''} />
+					<input type="hidden" name="autoSync" value={autoSync ? 'true' : 'false'} />
+					<button
+						type="submit"
+						disabled={!tenantId || !clientId || (!clientSecret && !config)}
+						class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+					>
+						💾 Save Configuration
+					</button>
+				</form>
 			</div>
 		</div>
 
@@ -148,27 +213,266 @@
 		{/if}
 	</div>
 
-	<!-- Sync Section -->
+	<!-- Step 1: Fetch Preview Users -->
 	{#if config?.isConnected}
 		<div class="bg-white shadow rounded-lg p-6">
-			<h3 class="text-lg font-medium text-gray-900 mb-4">Sync Employee Data</h3>
+			<h3 class="text-lg font-medium text-gray-900 mb-4">Step 1: Preview EntraID Users</h3>
 
 			<div class="space-y-4">
 				<p class="text-sm text-gray-600">
-					Sync employee data from Microsoft Entra ID to Aksara SSO. New employees will be created with <strong>isActive: true</strong>, existing employees will be updated while preserving their status and passwords.
+					Fetch a preview of 3 users from Microsoft Entra ID to configure field mapping.
 				</p>
 
-				<button
-					type="button"
-					onclick={onSync}
-					disabled={isSyncing}
-					class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-				>
-					<span class="mr-2">🔄</span>
-					{isSyncing ? 'Syncing...' : 'Sync Now'}
-				</button>
+				<!-- ODATA Filter -->
+				<div>
+					<label for="filterQuery" class="block text-sm font-medium text-gray-700 mb-1">
+						ODATA Filter (Optional)
+					</label>
+					<input
+						type="text"
+						id="filterQuery"
+						bind:value={filterQuery}
+						placeholder="e.g., department eq 'IT' or startsWith(displayName,'John')"
+						class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+					/>
+					<div class="mt-1 text-xs text-gray-500 space-y-1">
+						<p><strong>Filterable properties:</strong> <code class="bg-gray-100 px-1">accountEnabled</code>, <code class="bg-gray-100 px-1">displayName</code>, <code class="bg-gray-100 px-1">mail</code>, <code class="bg-gray-100 px-1">userPrincipalName</code>, <code class="bg-gray-100 px-1">userType</code></p>
+						<p><strong>Examples:</strong></p>
+						<ul class="list-disc list-inside ml-2">
+							<li><code class="bg-gray-100 px-1">accountEnabled eq true</code> - Active users only</li>
+							<li><code class="bg-gray-100 px-1">startsWith(displayName,'John')</code> - Names starting with "John"</li>
+							<li><code class="bg-gray-100 px-1">endsWith(mail,'@ias.co.id')</code> - IAS email domain</li>
+							<li><code class="bg-gray-100 px-1">userType eq 'Member'</code> - Exclude guests</li>
+						</ul>
+						<p class="text-amber-600"><strong>Note:</strong> Properties like <code>officeLocation</code>, <code>department</code>, <code>jobTitle</code> are NOT filterable but will be included in export!</p>
+					</div>
+				</div>
+
+				<div class="flex space-x-3">
+					<form method="POST" action="?/fetchEntraUsers" use:enhance={() => {
+						return async ({ result, update }) => {
+							if (result.type === 'success' && result.data?.sampleUsers) {
+								sampleUsers = result.data.sampleUsers;
+								availableEntraFields = extractAllFields(result.data.sampleUsers);
+								showFieldMapping = true;
+							}
+							await update();
+						};
+					}}>
+						<input type="hidden" name="organizationId" value={organizationId || ''} />
+						<input type="hidden" name="filterQuery" value={filterQuery} />
+						<button
+							type="submit"
+							class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+						>
+							<span class="mr-2">👥</span>
+							Fetch Sample Users
+						</button>
+					</form>
+
+					<form method="POST" action="?/fetchEntraUsers" use:enhance={() => {
+						isExporting = true;
+						return async ({ result, update }) => {
+							if (result.type === 'success' && result.data?.csvContent) {
+								const blob = new Blob([result.data.csvContent], { type: 'text/csv' });
+								const url = URL.createObjectURL(blob);
+								const a = document.createElement('a');
+								a.href = url;
+								a.download = `entraid-users-export-${new Date().toISOString().split('T')[0]}.csv`;
+								a.click();
+								URL.revokeObjectURL(url);
+								alert(`✅ Exported ${result.data.userCount} users to CSV`);
+							}
+							isExporting = false;
+							await update();
+						};
+					}}>
+						<input type="hidden" name="organizationId" value={organizationId || ''} />
+						<input type="hidden" name="filterQuery" value={filterQuery} />
+						<input type="hidden" name="exportToCsv" value="true" />
+						<button
+							type="submit"
+							disabled={isExporting}
+							class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							<span class="mr-2">{isExporting ? '⏳' : '📥'}</span>
+							{isExporting ? 'Exporting...' : 'Export to CSV'}
+						</button>
+					</form>
+				</div>
+
+				{#if sampleUsers.length > 0}
+					<div class="mt-4">
+						<h4 class="text-sm font-medium text-gray-700 mb-2">Sample Users (3) - Found {availableEntraFields.length} fields:</h4>
+						<div class="overflow-x-auto">
+							<table class="min-w-full divide-y divide-gray-200 border border-gray-200">
+								<thead class="bg-gray-50">
+									<tr>
+										{#each availableEntraFields as field}
+											<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">{field}</th>
+										{/each}
+									</tr>
+								</thead>
+								<tbody class="bg-white divide-y divide-gray-200">
+									{#each sampleUsers as user}
+										<tr>
+											{#each availableEntraFields as field}
+												<td class="px-4 py-2 text-sm text-gray-900 whitespace-nowrap">
+													{user[field] !== null && user[field] !== undefined ? String(user[field]) : '-'}
+												</td>
+											{/each}
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				{/if}
 			</div>
 		</div>
+
+		<!-- Step 2: Configure Field Mapping -->
+		{#if showFieldMapping}
+			<div class="bg-white shadow rounded-lg p-6">
+				<h3 class="text-lg font-medium text-gray-900 mb-4">Step 2: Configure Field Mapping</h3>
+
+				<div class="space-y-4">
+					<p class="text-sm text-gray-600">
+						Map EntraID fields to Identity fields. Add, remove, or enable/disable mappings as needed.
+					</p>
+
+					<div class="overflow-x-auto">
+						<table class="min-w-full divide-y divide-gray-200 border border-gray-200">
+							<thead class="bg-gray-50">
+								<tr>
+									<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Identity Field</th>
+									<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">EntraID Field</th>
+									<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Transformation</th>
+									<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Enabled</th>
+									<th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+								</tr>
+							</thead>
+							<tbody class="bg-white divide-y divide-gray-200">
+								{#each fieldMappings as mapping, index}
+									<tr>
+										<td class="px-4 py-2 text-sm">
+											<select
+												bind:value={mapping.identityField}
+												class="block w-full border border-gray-300 rounded-md shadow-sm py-1 px-2 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+											>
+												<option value="">Select field...</option>
+												{#each availableIdentityFields as field}
+													<option value={field}>{field}</option>
+												{/each}
+											</select>
+										</td>
+										<td class="px-4 py-2 text-sm">
+											<select
+												bind:value={mapping.entraField}
+												class="block w-full border border-gray-300 rounded-md shadow-sm py-1 px-2 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+											>
+												<option value="">Select field...</option>
+												{#each availableEntraFields as field}
+													<option value={field}>{field}</option>
+												{/each}
+											</select>
+										</td>
+										<td class="px-4 py-2 text-sm">
+											<select
+												bind:value={mapping.transformation}
+												class="block w-full border border-gray-300 rounded-md shadow-sm py-1 px-2 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+											>
+												<option value="">None (Direct Copy)</option>
+												<option value="orgCodeToId">Org Code → Org ID</option>
+												<option value="orgUnitNameToId">Org Unit Name → Org Unit ID</option>
+												<option value="positionNameToId">Position Name → Position ID</option>
+												<option value="lowercase">Lowercase</option>
+												<option value="uppercase">Uppercase</option>
+												<option value="trim">Trim Whitespace</option>
+												<option value="toCustomProperty">→ Custom Property</option>
+											</select>
+										</td>
+										<td class="px-4 py-2 text-sm text-center">
+											<input
+												type="checkbox"
+												bind:checked={mapping.enabled}
+												class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+											/>
+										</td>
+										<td class="px-4 py-2 text-sm text-center">
+											<button
+												type="button"
+												onclick={() => removeFieldMapping(index)}
+												class="text-red-600 hover:text-red-800"
+												title="Remove mapping"
+											>
+												🗑️
+											</button>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+
+					<button
+						type="button"
+						onclick={addFieldMapping}
+						class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+					>
+						<span class="mr-2">➕</span>
+						Add Field Mapping
+					</button>
+
+					<form method="POST" action="?/updateFieldMapping" use:enhance>
+						<input type="hidden" name="organizationId" value={organizationId || ''} />
+						<input type="hidden" name="fieldMapping" value={JSON.stringify(
+							fieldMappings.reduce((acc, m) => {
+								if (m.identityField && m.entraField) {
+									acc[m.identityField] = {
+										entraField: m.entraField,
+										enabled: m.enabled,
+										direction: 'from_entra',
+										transformation: m.transformation || ''
+									};
+								}
+								return acc;
+							}, {} as Record<string, any>)
+						)} />
+						<button
+							type="submit"
+							class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+						>
+							<span class="mr-2">💾</span>
+							Save Field Mapping
+						</button>
+					</form>
+				</div>
+			</div>
+
+			<!-- Step 3: Sync Users -->
+			<div class="bg-white shadow rounded-lg p-6">
+				<h3 class="text-lg font-medium text-gray-900 mb-4">Step 3: Sync All Users</h3>
+
+				<div class="space-y-4">
+					<p class="text-sm text-gray-600">
+						Sync all users from Microsoft Entra ID to Aksara SSO. New users will be created with <strong>isActive: true</strong>, existing users will be updated while preserving their status and passwords.
+					</p>
+
+					<form method="POST" action="?/syncEntraUsers" use:enhance>
+						<input type="hidden" name="organizationId" value={organizationId || ''} />
+						<button
+							type="submit"
+							disabled={isSyncing}
+							class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							<span class="mr-2">🔄</span>
+							{isSyncing ? 'Syncing...' : 'Sync All Users Now'}
+						</button>
+					</form>
+				</div>
+			</div>
+		{/if}
 
 		<!-- Sync History -->
 		{#if syncHistory && syncHistory.length > 0}

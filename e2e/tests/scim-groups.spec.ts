@@ -121,15 +121,15 @@ test.describe('SCIM Groups API', () => {
 
 		const sampleGroup = groupsWithParent[0];
 
-		// Verify custom extension
+		// Verify custom extension (using canonical field names)
 		expect(sampleGroup).toHaveProperty('x-orgUnit');
-		expect(sampleGroup['x-orgUnit']).toHaveProperty('unitType');
+		expect(sampleGroup['x-orgUnit']).toHaveProperty('type'); // CANONICAL: use 'type' not 'unitType'
 		expect(sampleGroup['x-orgUnit']).toHaveProperty('level');
 		expect(sampleGroup['x-orgUnit']).toHaveProperty('parentUnitId');
 
 		console.log(`🌳 Sample Hierarchical Group:`);
 		console.log(`   Name: ${sampleGroup.displayName}`);
-		console.log(`   Type: ${sampleGroup['x-orgUnit'].unitType}`);
+		console.log(`   Type: ${sampleGroup['x-orgUnit'].type}`); // CANONICAL
 		console.log(`   Level: ${sampleGroup['x-orgUnit'].level}`);
 		console.log(`   Parent: ${sampleGroup['x-orgUnit'].parentUnitId}`);
 	});
@@ -247,7 +247,7 @@ test.describe('SCIM Groups API', () => {
 			displayName: `Test Department ${Date.now()}`,
 			externalId: `TEST-${Date.now()}`,
 			'x-orgUnit': {
-				unitType: 'department',
+				type: 'department', // CANONICAL: use 'type' not 'unitType'
 				level: 4,
 				parentUnitId: null
 			}
@@ -268,7 +268,7 @@ test.describe('SCIM Groups API', () => {
 
 		expect(createdGroup.displayName).toBe(newGroup.displayName);
 		expect(createdGroup).toHaveProperty('id');
-		expect(createdGroup['x-orgUnit'].unitType).toBe('department');
+		expect(createdGroup['x-orgUnit'].type).toBe('department'); // CANONICAL
 
 		console.log(`✅ Created Group: ${createdGroup.displayName}`);
 		console.log(`   ID: ${createdGroup.id}`);

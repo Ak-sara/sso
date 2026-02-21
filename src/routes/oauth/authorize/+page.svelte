@@ -22,8 +22,10 @@
 
 <svelte:head>
 	<title>{branding.appName} - Sign In</title>
-	{#if branding.faviconBase64}
-		<link rel="icon" type="image/png" href={branding.faviconBase64} />
+	{#if branding.logoBase64}
+		<link rel="icon" type="image/png" href={branding.logoBase64} />
+	{:else}
+		<link rel="icon" type="image/png" href="/ias-logo.png" />
 	{/if}
 	{@html `<style>${brandingCSS}</style>`}
 </svelte:head>

@@ -212,26 +212,9 @@ fieldMapping: {
 3. Check if Entra ID field name is correct
 4. Some fields require specific permissions
 
-## 🎯 Next Steps (TODOs)
+## 🎯 Implementation Roadmap
 
-### High Priority:
-- [ ] Implement actual sync logic in `syncNow` action
-- [ ] Add encryption for client secrets
-- [ ] Implement background job for auto-sync
-- [ ] Add detailed error handling and retry logic
-
-### Medium Priority:
-- [ ] Add "Add Field" modal for custom mappings
-- [ ] Implement bidirectional sync logic
-- [ ] Add conflict resolution UI
-- [ ] Create sync preview (show what will change)
-- [ ] Add filtering/searching in sync history
-
-### Low Priority:
-- [ ] Add group sync implementation
-- [ ] Create sync scheduling UI (custom intervals)
-- [ ] Add export sync logs to CSV
-- [ ] Implement webhook notifications on sync completion
+> **Note**: For detailed implementation plan and timeline, see `_DEV_GUIDE.md` → Phase 2: Integration → Microsoft Entra ID Sync Backend
 
 ## 📚 API Reference
 

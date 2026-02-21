@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import PageHints from '$lib/components/PageHints.svelte';
 	import CSVSyncTab from '$lib/components/CSVSyncTab.svelte';
 	import EntraIDSyncTab from '$lib/components/EntraIDSyncTab.svelte';
 	import type { PageData, ActionData } from './$types';
@@ -20,8 +21,11 @@
 	];
 
 	let currentTab = $derived(data.currentTab || 'csv');
+	let showPH = $state(false);
 	let isUploading = $state(false);
 	let isApplying = $state(false);
+	let isTesting = $state(false);
+	let isSaving = $state(false);
 	let preview = $state<any>(null);
 
 	// Handle form result
@@ -35,11 +39,30 @@
 			isApplying = false;
 			alert(form.message);
 		}
+		if (form?.success && form?.message) {
+			isTesting = false;
+			isSaving = false;
+			alert(form.message);
+		}
+		if (form?.error) {
+			isTesting = false;
+			isSaving = false;
+			alert('Error: ' + form.error);
+		}
 	});
 
 	function switchTab(tabId: string) {
-		goto(`?tab=${tabId}`);
+		const currentOrg = new URLSearchParams($page.url.search).get('org');
+		const url = currentOrg ? `?tab=${tabId}&org=${currentOrg}` : `?tab=${tabId}`;
+		goto(url);
 		preview = null; // Clear preview when switching tabs
+	}
+
+	function handleOrgChange(event: Event) {
+		const select = event.target as HTMLSelectElement;
+		const orgId = select.value;
+		const currentTab = new URLSearchParams($page.url.search).get('tab') || 'csv';
+		goto(`?tab=${currentTab}&org=${orgId}`);
 	}
 
 	async function handleUpload(file: File) {
@@ -109,31 +132,40 @@
 <div class="max-w-7xl mx-auto">
 	<!-- Header -->
 	<div class="mb-6">
-		<h1 class="text-2xl font-bold text-gray-900">Sync & Import</h1>
-		<p class="mt-1 text-sm text-gray-500">
-			Import employee data from CSV or sync with external systems like Microsoft Entra ID
-		</p>
-	</div>
+		<div class="flex items-center justify-between">
+			<div>
+				<h1 class="text-2xl font-bold text-gray-900">Sync & Import</h1>
+				<p class="mt-1 text-sm text-gray-500">
+					Import employee data from CSV or sync with external systems like Microsoft Entra ID
+				</p>
+			</div>
 
-	<!-- Info Box -->
-	<div class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
-		<div class="flex">
-			<div class="flex-shrink-0">
-				<span class="text-2xl">ℹ️</span>
-			</div>
-			<div class="ml-3">
-				<h3 class="text-sm font-medium text-blue-800">Smart Import with Status Preservation</h3>
-				<div class="mt-2 text-sm text-blue-700">
-					<ul class="list-disc list-inside space-y-1">
-						<li><strong>New employees</strong>: Created with isActive: true (can login immediately)</li>
-						<li><strong>Existing employees</strong>: Only updated fields from source, status/passwords preserved</li>
-						<li><strong>NIK is unique identifier</strong>: Can be used as username if no email</li>
-						<li><strong>Inactive employees</strong>: Simply exclude from import source (don't sync)</li>
-					</ul>
+			<!-- Organization Selector (only show on entra tab) -->
+			{#if currentTab === 'entra' && data.organizations && data.organizations.length > 1}
+				<div class="min-w-[250px]">
+					<label for="organization" class="block text-sm font-medium text-gray-700 mb-1">
+						Organization
+					</label>
+					<select
+						id="organization"
+						onchange={handleOrgChange}
+						value={data.selectedOrganization?._id || ''}
+						class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+					>
+						{#each data.organizations as org}
+							<option value={org._id}>
+								{org.name} ({org.code})
+							</option>
+						{/each}
+					</select>
 				</div>
-			</div>
+			{/if}
+			<button onclick={(showPH=true)}
+			class='text-2xl inline-block transition-transform duration-200 hover:-rotate-12 cursor-pointer'>ℹ️</button>
 		</div>
 	</div>
+
+
 
 	<!-- Tabs -->
 	<div class="bg-white shadow rounded-lg">
@@ -171,19 +203,11 @@
 				/>
 			{:else if currentTab === 'entra'}
 				<EntraIDSyncTab
-					config={null}
-					syncHistory={[]}
-					isTesting={false}
+					config={data.entraConfig}
+					syncHistory={data.syncHistory || []}
+					organizationId={data.organizationId}
+					{isTesting}
 					isSyncing={false}
-					onTestConnection={async () => {
-						alert('Entra ID connection test - Feature coming soon!');
-					}}
-					onSync={async () => {
-						alert('Entra ID sync - Feature coming soon!');
-					}}
-					onSaveConfig={async (config) => {
-						alert('Save Entra ID config - Feature coming soon!');
-					}}
 				/>
 			{:else if currentTab === 'api'}
 				<div class="text-center py-12">
@@ -197,3 +221,13 @@
 		</div>
 	</div>
 </div>
+<PageHints
+bind:visible={showPH}
+title='Smart Import with Status Preservation'
+paragraph="<ul class='list-disc list-inside space-y-1'>
+			<li><strong>New employees</strong>: Created with isActive: true (can login immediately)</li>
+			<li><strong>Existing employees</strong>: Only updated fields from source, status/passwords preserved</li>
+			<li><strong>NIK is unique identifier</strong>: Can be used as username if no email</li>
+			<li><strong>Inactive employees</strong>: Simply exclude from import source (don't sync)</li>
+		</ul>"
+/>

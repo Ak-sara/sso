@@ -44,7 +44,7 @@ After implementing SCIM integration, OFM will:
 │                                              │
 │  Local Collections:                          │
 │  - users (with managerId, departmentId)      │
-│  - organizationalUnits (with parentId)       │
+│  - org_units (with parentId)       │
 │                                              │
 │  Approval Logic:                             │
 │  - Query LOCAL database                      │
@@ -111,7 +111,7 @@ interface ScimGroup {
 		type: 'User';
 	}>;
 	'x-orgUnit'?: {
-		unitType?: string;
+		type?: string;
 		level?: number;
 		parentUnitId?: string;
 		managerId?: string;
@@ -229,7 +229,7 @@ async function syncUsers(users: ScimUser[]) {
  */
 async function syncOrgUnits(groups: ScimGroup[]) {
 	const db = getDB();
-	const orgUnitsCollection = db.collection('organizationalUnits');
+	const orgUnitsCollection = db.collection('org_units');
 
 	let created = 0;
 	let updated = 0;
@@ -240,7 +240,7 @@ async function syncOrgUnits(groups: ScimGroup[]) {
 		const unitData = {
 			unitId: scimGroup.externalId || scimGroup.id.substring(0, 8),
 			unitName: scimGroup.displayName,
-			unitType: orgUnitData?.unitType || 'department',
+			type: orgUnitData?.type || 'department',
 			level: orgUnitData?.level || 1,
 
 			// IMPORTANT: Parent-child relationship
@@ -345,14 +345,14 @@ interface User {
 }
 ```
 
-**organizationalUnits collection:**
+**org_units collection:**
 
 ```typescript
 interface OrganizationalUnit {
 	_id: ObjectId;
 	unitId: string; // "OU-015"
 	unitName: string; // "IAS - Finance Division"
-	unitType: 'directorate' | 'division' | 'department' | 'section';
+	type: 'directorate' | 'division' | 'department' | 'section';
 	level: number; // 1, 2, 3, 4
 
 	// CRITICAL: Hierarchy fields
@@ -432,7 +432,7 @@ export async function getApproverForRequest(requestId: string) {
 	}
 
 	// Get the org unit
-	const orgUnit = await db.collection('organizationalUnits').findOne({
+	const orgUnit = await db.collection('org_units').findOne({
 		_id: new ObjectId(employee.departmentId)
 	});
 
@@ -497,7 +497,7 @@ export async function getEscalationApprover(requestId: string) {
 	}
 
 	// Get employee's org unit
-	const orgUnit = await db.collection('organizationalUnits').findOne({
+	const orgUnit = await db.collection('org_units').findOne({
 		_id: new ObjectId(employee.departmentId)
 	});
 
@@ -506,7 +506,7 @@ export async function getEscalationApprover(requestId: string) {
 	}
 
 	// Get parent org unit (LOCAL QUERY)
-	const parentUnit = await db.collection('organizationalUnits').findOne({
+	const parentUnit = await db.collection('org_units').findOne({
 		_id: new ObjectId(orgUnit.parentUnitId)
 	});
 
@@ -532,7 +532,7 @@ export async function isUserManager(userId: string, unitId?: string): Promise<bo
 		? { _id: new ObjectId(unitId), managerId: userId }
 		: { managerId: userId };
 
-	const unit = await db.collection('organizationalUnits').findOne(query);
+	const unit = await db.collection('org_units').findOne(query);
 
 	return !!unit;
 }
@@ -544,7 +544,7 @@ export async function getUnitsUnderManagement(userId: string) {
 	const db = getDB();
 
 	const units = await db
-		.collection('organizationalUnits')
+		.collection('org_units')
 		.find({ managerId: userId })
 		.toArray();
 

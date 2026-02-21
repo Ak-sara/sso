@@ -19,8 +19,8 @@ This ensures HR admins always understand WHERE an employee is placed and WHAT ac
 
 ## 1. Employee Detail Page
 
-**Route:** `/employees/[id]`
-**File:** `src/routes/(app)/employees/[id]/+page.svelte`
+**Route:** `/identities/[id]`
+**File:** `src/routes/(app)/identities/[id]/+page.svelte`
 
 ### Four-Tab Interface
 
@@ -77,8 +77,8 @@ This ensures HR admins always understand WHERE an employee is placed and WHAT ac
 
 ## 2. Employee Onboarding Wizard
 
-**Route:** `/employees/onboard`
-**File:** `src/routes/(app)/employees/onboard/+page.svelte`
+**Route:** `/identities/onboard`
+**File:** `src/routes/(app)/identities/onboard/+page.svelte`
 
 ### Progressive 5-Step Wizard
 
@@ -152,7 +152,7 @@ Checklist Onboarding:
 
 ### Server-Side Implementation
 
-**File:** `src/routes/(app)/employees/onboard/+page.server.ts`
+**File:** `src/routes/(app)/identities/onboard/+page.server.ts`
 
 **Validation:**
 - Required fields check (firstName, lastName, email, employeeId, employmentType, joinDate)
@@ -185,7 +185,7 @@ Checklist Onboarding:
    - Details include ssoAccountCreated flag
 
 5. **Redirect:**
-   - On success: redirect to `/employees/[id]`
+   - On success: redirect to `/identities/[id]`
    - On error: return validation error message
 
 ---
@@ -193,7 +193,7 @@ Checklist Onboarding:
 ## 3. Employee Mutation/Transfer
 
 **Implementation:** Form action in employee detail page
-**File:** `src/routes/(app)/employees/[id]/+page.server.ts` (actions.mutation)
+**File:** `src/routes/(app)/identities/[id]/+page.server.ts` (actions.mutation)
 
 ### Mutation Modal
 
@@ -259,7 +259,7 @@ Pindahkan [Employee Name] ke unit kerja atau entitas lain
 ## 4. Employee Offboarding
 
 **Implementation:** Form action in employee detail page
-**File:** `src/routes/(app)/employees/[id]/+page.server.ts` (actions.offboard)
+**File:** `src/routes/(app)/identities/[id]/+page.server.ts` (actions.offboard)
 
 ### Offboarding Modal
 
@@ -287,9 +287,9 @@ Checklist Otomatis:
 ☐ Revoke akses SSO (jika dicentang)
 ☐ Catat riwayat offboarding
 ☐ Log audit trail
-☐ [TODO] Kembalikan aset perusahaan
-☐ [TODO] Proses payroll terakhir
-☐ [TODO] Hapus akses aplikasi eksternal
+☐ Return company assets
+☐ Process final payroll
+☐ Remove access to external apps
 ```
 
 ### Server-Side Processing
@@ -323,9 +323,6 @@ Checklist Otomatis:
    - action: 'employee.offboarding'
    - Full offboarding data in details
 
-**Future Enhancements (TODO):**
-- Trigger SCIM deprovision to external apps
-- Send offboarding checklist email to HR
 - Asset return tracking
 - Final payroll processing integration
 - Exit interview scheduling
@@ -334,10 +331,10 @@ Checklist Otomatis:
 
 ## 5. Data Sync Comparison
 
-**Route:** `/employees/sync`
+**Route:** `/identities/sync`
 **Files:**
-- `src/routes/(app)/employees/sync/+page.svelte`
-- `src/routes/(app)/employees/sync/+page.server.ts`
+- `src/routes/(app)/identities/sync/+page.svelte`
+- `src/routes/(app)/identities/sync/+page.server.ts`
 
 ### Purpose
 
@@ -439,26 +436,9 @@ Table showing past sync operations:
 
 ### Server Actions
 
-**Action: compareEntraID**
-```typescript
-// TODO: Implement
-// 1. Get access token from Microsoft Graph API
-// 2. Fetch users from Entra ID
-// 3. Map Entra ID fields to employee schema
-// 4. Compare with local database
-// 5. Return differences array
-```
-
-**Action: compareCSV**
-```typescript
-// TODO: Implement
-// 1. Parse CSV file (validate headers)
-// 2. Map CSV columns to employee schema
-// 3. Compare with local database
-// 4. Return differences array
-```
-
-**Action: applyChanges**
+- **compareEntraID** - Fetch users from Microsoft Graph API and compare
+- **compareCSV** - Parse CSV and compare with local database
+- **applyChanges** - Apply selected sync changes
 ```typescript
 // Receives: array of changes with action for each
 // For each change:
@@ -474,7 +454,7 @@ Table showing past sync operations:
 
 ## Database Collections Used
 
-### employees
+### identities
 ```typescript
 {
   _id: ObjectId,
@@ -601,7 +581,7 @@ Every action creates:
 - Each entity can be a separate realm
 
 ### 5. Integration-Friendly
-- SCIM provisioning hooks (TODO)
+- SCIM provisioning hooks
 - Entra ID sync for cloud directory
 - CSV import for bulk operations
 - Clear data comparison UI for conflict resolution
@@ -610,29 +590,7 @@ Every action creates:
 
 ## Future Enhancements
 
-### Phase 2: SSO Integration
-- Auto-provision SSO accounts to connected apps via SCIM
-- Auto-deprovision on offboarding
-- Role mapping per application
-
-### Phase 3: Advanced Sync
-- Real-time Entra ID sync with webhooks
-- Scheduled automatic sync (daily/weekly)
-- Conflict resolution rules (e.g., "always prefer Entra ID for email")
-- Sync to multiple sources simultaneously
-
-### Phase 4: Reporting
-- Organization chart export
-- Employee directory PDF
-- Headcount reports by entity/unit/position
-- Turnover analysis
-- Assignment history reports
-
-### Phase 5: Self-Service
-- Employee portal to view own data
-- Update contact info (pending HR approval)
-- View assignment history
-- Access SSO-connected apps
+> **Note**: For detailed feature roadmap and implementation plan, see `_DEV_GUIDE.md`
 
 ---
 

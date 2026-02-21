@@ -8,17 +8,17 @@ export interface DocConfig {
 	file: string;
 	title: string;
 	description: string;
-	category: 'integration' | 'admin' | 'api' | 'reference';
+	category: 'integration' | 'admin' | 'compliance' | 'reference';
 	public: boolean; // Whether this doc should be publicly accessible
 }
 
 export const DOCS_CONFIG: DocConfig[] = [
 	// Integration Guides
 	{
-		slug: 'client-guide',
-		file: 'SSO_CLIENT_GUIDE.md',
-		title: 'SSO Client Integration Guide',
-		description: 'Complete guide for integrating OAuth 2.0/OIDC with your application',
+		slug: 'authentication',
+		file: 'AUTHENTICATION_GUIDE.md',
+		title: 'Authentication Guide',
+		description: 'OAuth 2.0/OIDC integration and authentication flows',
 		category: 'integration',
 		public: true
 	},
@@ -39,52 +39,32 @@ export const DOCS_CONFIG: DocConfig[] = [
 		public: true
 	},
 
-	// Administrator Guides
+	// Compliance (Public)
 	{
-		slug: 'admin-guide',
-		file: 'SSO_ADMIN_GUIDE.md',
-		title: 'Administrator Guide',
-		description: 'System administration, client management, and monitoring',
-		category: 'admin',
+		slug: 'privacy-policy',
+		file: 'KEBIJAKAN_PRIVASI_TEMPLATE.md',
+		title: 'Privacy Policy Template',
+		description: 'Data privacy policy template compliant with UU PDP No. 27/2022',
+		category: 'compliance',
+		public: true
+	},
+	{
+		slug: 'data-compliance',
+		file: 'DATA_PRIVACY_COMPLIANCE.md',
+		title: 'Data Privacy & Compliance',
+		description: 'UU PDP compliance guide and implementation roadmap',
+		category: 'compliance',
 		public: true
 	},
 
-	// API Reference
-	{
-		slug: 'scim-api',
-		file: 'SCIM_IMPLEMENTATION.md',
-		title: 'SCIM API Reference',
-		description: 'Technical reference for SCIM endpoints and specifications',
-		category: 'api',
-		public: true
-	},
-
-	// Reference & Comparison
-	{
-		slug: 'scim-comparison',
-		file: 'SCIM_INDUSTRY_COMPARISON.md',
-		title: 'SCIM Industry Comparison',
-		description: 'Feature comparison with Okta, Azure AD, and Google Workspace',
-		category: 'reference',
-		public: true
-	},
-
-	// Internal Documentation (set public: false for restricted access)
+	// Internal Documentation (restricted access)
 	{
 		slug: 'security-guide',
 		file: 'SECURITY_IMPLEMENTATION_GUIDE.md',
 		title: 'Security Implementation Guide',
 		description: 'Field-level encryption and compliance details (Internal only)',
 		category: 'admin',
-		public: false // Keep internal
-	},
-	{
-		slug: 'data-privacy',
-		file: 'SUMMARY_DATA_PRIVACY_COMPLIANCE.md',
-		title: 'Data Privacy & Compliance',
-		description: 'Indonesian data protection compliance (Internal only)',
-		category: 'admin',
-		public: false // Keep internal
+		public: false
 	}
 ];
 
@@ -109,7 +89,7 @@ export function getDocsByCategory(): Record<string, DocConfig[]> {
 	const grouped: Record<string, DocConfig[]> = {
 		integration: [],
 		admin: [],
-		api: [],
+		compliance: [],
 		reference: []
 	};
 
