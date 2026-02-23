@@ -13,6 +13,8 @@ node_modules
 Thumbs.db
 
 # Env
+deployment.yaml
+Dockerfile
 .env
 .env.*
 !.env.example
