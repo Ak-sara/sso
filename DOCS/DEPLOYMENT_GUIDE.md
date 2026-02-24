@@ -68,6 +68,7 @@ kubectl get pods -l app=ofm
 kubectl get svc ofm-service
 kubectl get hpa ofm-hpa
 
+kubectl rollout restart deployment ofm -n development
 # View logs
 kubectl logs -l app=ofm --tail=100 -f
 ```
