@@ -1,0 +1,19 @@
+{
+	"name": "aksara-sso-e2e-tests",
+	"version": "1.0.0",
+	"private": true,
+	"description": "E2E tests for Aksara SSO SCIM API",
+	"type": "module",
+	"scripts": {
+		"test": "bunx playwright test",
+		"test:ui": "bunx playwright test --ui",
+		"test:headed": "bunx playwright test --headed",
+		"test:debug": "bunx playwright test --debug",
+		"report": "bunx playwright show-report",
+		"install:browsers": "bunx playwright install"
+	},
+	"devDependencies": {
+		"@playwright/test": "^1.40.0",
+		"dotenv": "^17.2.3"
+	}
+}

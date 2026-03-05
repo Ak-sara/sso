@@ -1,0 +1,7 @@
+code,name,level,description
+DIR,Direktur,executive,
+GM,General Manager,senior,
+MGR,Manager,middle,
+SPV,Supervisor,middle,
+STA,Staff,staff,
+SSTA,Senior Staff,junior,

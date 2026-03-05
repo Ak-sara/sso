@@ -1,0 +1,58 @@
+code,name,organization,parentCode,type,level,sortOrder,description
+BOD,Board of Directors,IAS,,board,1,1,Board of Directors
+DU,Direktur Utama,IAS,BOD,directorate,2,1,President Director
+DC,Direktur Komersial,IAS,DU,directorate,3,1,Commercial Director
+DO,Direktur Operasi,IAS,DU,directorate,3,2,Operations Director
+DR,Direktur Resiko,IAS,DU,directorate,3,3,Risk Director
+DK,Direktur Keuangan,IAS,DU,directorate,3,4,Finance Director
+DH,Direktur SDM,IAS,DU,directorate,3,5,Human Capital Director
+DDB,Direktorat Dukungan Bisnis,IAS,DU,directorate,3,6,Business Support Directorate
+SBUCL,SBU Cargo & Logistics,IAS,BOD,sbu,2,2,Strategic Business Unit Cargo & Logistics
+CD,Commercial Development,IAS,DC,division,4,1,
+SSM,Strategic Sales Marketing,IAS,DC,division,4,2,Strategic Sales & Marketing
+BPS,Business Performance and Strategy,IAS,DC,division,4,3,
+OPS,Operation Excellence & Standarization,IAS,DO,division,4,1,Operation Excellence & Standardization
+CX,Customer Experience,IAS,DO,division,4,2,
+BP,Business Portfolio,IAS,DO,division,4,3,
+SAS,SDU: Aviation Service,IAS,DO,division,4,4,Strategic Delivery Unit: Aviation Service
+SFM,SDU: Facility Management & Manpower Service,IAS,DO,division,4,5,
+SHO,SDU: Hospitality,IAS,DO,division,4,6,
+RM,Risk Management Governance and Compliance,IAS,DR,division,4,1,"Risk Management, Governance and Compliance"
+LG,Legal,IAS,DR,division,4,2,
+PC,Procurement,IAS,DR,division,4,3,
+CF,Corporate Finance,IAS,DK,division,4,1,
+SPM,Strategic Performance Management,IAS,DK,division,4,2,
+ACC,Accounting,IAS,DK,division,4,3,
+SAM,SDU: Assets Management,IAS,DK,division,4,4,
+SERP,SDU: ERP,IAS,DK,division,4,5,
+HS,HC Strategy and Planning,IAS,DH,division,4,1,
+HB,HC BP and Talent,IAS,DH,division,4,2,
+HG,HC Service and GA,IAS,DH,division,4,3,
+IT,Information Technology,IAS,DH,division,4,4,
+SACA,SDU: IAS Academy,IAS,DH,division,4,5,
+IA,Internal Audit,IAS,DDB,division,4,1,
+CS,Corporate Secretary,IAS,DDB,division,4,2,
+CST,Corporate Strategy,IAS,DDB,division,4,3,
+SCS,Cargo Service,IAS,SBUCL,division,3,1,
+LOG,Logistics,IAS,SBUCL,division,3,2,
+CBE,Commercial & Business Excellence,IAS,SBUCL,division,3,3,
+CLS,Cargo & Logistics Supports,IAS,SBUCL,division,3,4,
+CGSL,Sales,IAS,SCS,department,4,1,
+CI,Cargo Improvement,IAS,SCS,department,4,2,
+RA,Regulated Agent,IAS,SCS,department,4,3,
+GMCO,Cargo Operation,IAS,SCS,department,4,4,
+KNO,Regional Station KNO,IAS,GMCO,section,5,1,
+CGK,Regional Station CGK,IAS,GMCO,section,5,2,
+DPS,Regional Station DPS,IAS,GMCO,section,5,3,
+UPG,Regional Station UPG,IAS,GMCO,section,5,4,
+AE,Air Express,IAS,LOG,department,4,1,
+FF,Freight Forwarder,IAS,LOG,department,4,2,
+BSS,Baggage Service Solutions,IAS,LOG,department,4,3,
+CL,Contract Logistics,IAS,LOG,department,4,4,
+PQ,Policy and QHSE,IAS,CBE,department,4,1,
+KS,Key Account and Solutions,IAS,CBE,department,4,2,
+BIP,Business Intelligence and Performance,IAS,CBE,department,4,3,
+PO,Procurement Outbound,IAS,CBE,department,4,4,
+SAF,Accounting & Finance,IAS,CLS,department,4,1,
+SHL,HC and Legal,IAS,CLS,department,4,2,
+SFS,Facility and System,IAS,CLS,department,4,3,

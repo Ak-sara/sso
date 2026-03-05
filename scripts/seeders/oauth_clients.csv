@@ -1,0 +1,4 @@
+clientId,name,redirectUris,scopes,isActive
+test-client,,http://localhost:3000/callback|http://localhost:3000/auth/callback,,true
+ofm-client,,http://localhost:5174/auth/callback|http://localhost:5174/auth/silent-refresh|https://ofm.ias.id/auth/callback|https://ofm.ias.co.id/auth/callback,,true
+aksaraIS,,http://localhost:3000/auth/callback|http://localhost:3000/auth/silent-refresh,,true
