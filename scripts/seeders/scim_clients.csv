@@ -1,0 +1,2 @@
+clientId,name,scopes,isActive,ipWhitelist
+scim-ba4ab5a03b58ff56,,read:users write:users read:groups write:groups,true,

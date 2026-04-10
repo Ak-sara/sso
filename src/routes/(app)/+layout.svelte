@@ -1,0 +1,416 @@
+<script lang="ts">
+	import { page } from '$app/stores';
+	import { invalidateAll } from '$app/navigation';
+	import type { LayoutData } from './$types';
+	import { getBrandingCSS } from '$lib/branding-utils';
+
+	import type { Snippet } from 'svelte';
+
+	interface Props {
+		data: LayoutData;
+		children: Snippet;
+	}
+
+	let { data, children }: Props = $props();
+	let isSidebarOpen = $state(true);
+	let showUserMenu = $state(false);
+	let hoveredGroup = $state<string | null>(null);
+	let hoveredGroupTop = $state<number>(0);
+	let hoverTimeout: number | null = null;
+	let expandedGroups = $state<Record<string, boolean>>({
+		users_access: true,
+		organization: true,
+		data_management: true,
+		integration: true,
+	});
+
+	const user = $derived(data.user);
+	const branding = $derived(data.branding);
+	const brandingCSS = $derived(branding ? getBrandingCSS(branding) : '');
+	const appName = $derived(branding?.appName || 'Aksara SSO');
+	const logoSrc = $derived(branding?.logoBase64 || '/ias-logo.png');
+	const primaryColor = $derived(branding?.primaryColor || '#4f46e5');
+	const realms = $derived(data.realms || []);
+	const activeRealm = $derived(data.activeRealm);
+
+	async function switchRealm(realmId: string) {
+		await fetch('/api/realm/switch', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ realmId }),
+		});
+		await invalidateAll();
+	}
+
+	const userInitial = $derived(user?.firstName?.[0] || user?.email?.[0].toUpperCase() || 'U');
+	const userName = $derived(
+		user?.firstName && user?.lastName
+			? `${user.firstName} ${user.lastName}`
+			: user?.firstName || user?.username || 'User'
+	);
+
+	interface NavItem {
+		name: string;
+		href: string;
+		icon: string;
+	}
+
+	interface NavGroup {
+		name: string;
+		icon: string;
+		items: NavItem[];
+	}
+
+	const navigation: (NavItem | NavGroup)[] = [
+		{ name: 'Dashboard', href: '/', icon: '📊' },
+		{
+			name: 'Organisasi',
+			icon: '🏢',
+			items: [
+				{ name: 'Identitas', href: '/organization/identities', icon: '👥' },
+				{ name: 'SK Penempatan', href: '/organization/sk-penempatan', icon: '📋' },
+				{ name: 'Realm/Entitas', href: '/organization/realms', icon: '🌐' },
+				{ name: 'Unit Kerja/Divisi', href: '/organization/org-units', icon: '🏛️' },
+				{ name: 'Posisi/Jabatan', href: '/organization/positions', icon: '💼' },
+				{ name: 'Struktur Organisasi', href: '/organization/org-structure', icon: '🌳' }
+			],
+		},
+		{
+			name: 'Data Management',
+			icon: '📊',
+			items: [
+				{ name: 'Sync & Import', href: '/management/sync', icon: '🔄' },
+				{ name: 'Audit Log', href: '/management/audit', icon: '📋' },
+			],
+		},
+		{
+			name: 'Configurations',
+			icon: '⚙️',
+			items: [
+				{ name: 'Global Settings', href: '/settings', icon: '🔌' },
+				{ name: 'Data Masking', href: '/settings/data-masking', icon: '🔒' },
+				{ name: 'OAuth Clients', href: '/settings/clients', icon: '🔑' },
+				{ name: 'SCIM Clients', href: '/settings/clients-scim', icon: '🔐' },
+			],
+		},
+	];
+
+	function toggleSidebar() {
+		isSidebarOpen = !isSidebarOpen;
+	}
+
+	function toggleUserMenu() {
+		showUserMenu = !showUserMenu;
+	}
+
+	function toggleGroup(groupName: string) {
+		expandedGroups[groupName] = !expandedGroups[groupName];
+	}
+
+	function handleGroupHover(groupName: string, event: MouseEvent) {
+		if (!isSidebarOpen) {
+			if (hoverTimeout) {
+				clearTimeout(hoverTimeout);
+				hoverTimeout = null;
+			}
+			hoveredGroup = groupName;
+			const target = event.currentTarget as HTMLElement;
+			const rect = target.getBoundingClientRect();
+			hoveredGroupTop = rect.top;
+		}
+	}
+
+	function handleGroupLeave() {
+		if (hoverTimeout) {
+			clearTimeout(hoverTimeout);
+		}
+		hoverTimeout = window.setTimeout(() => {
+			hoveredGroup = null;
+			hoverTimeout = null;
+		}, 200);
+	}
+
+	function cancelClose() {
+		if (hoverTimeout) {
+			clearTimeout(hoverTimeout);
+			hoverTimeout = null;
+		}
+	}
+
+	function isGroup(item: NavItem | NavGroup): item is NavGroup {
+		return 'items' in item;
+	}
+
+	function isActive(href: string): boolean {
+		return $page.url.pathname === href;
+	}
+
+	function isGroupActive(group: NavGroup): boolean {
+		return group.items.some(item => $page.url.pathname === item.href);
+	}
+</script>
+
+<svelte:head>
+	{#if brandingCSS}
+		{@html `<style>${brandingCSS}</style>`}
+	{/if}
+	{#if branding?.logoBase64}
+		<link rel="icon" type="image/png" href={branding.logoBase64} />
+	{:else}
+		<link rel="icon" type="image/png" href="/ias-logo.png" />
+	{/if}
+	<title>{appName}</title>
+</svelte:head>
+
+<div class="min-h-screen bg-gray-100">
+	<!-- Sidebar -->
+	<aside
+		class="fixed inset-y-0 left-0 z-50 text-white transform transition-all duration-200 ease-in-out {isSidebarOpen ? 'w-64 translate-x-0' : 'w-16 -translate-x-full md:translate-x-0'}"
+		style="background-color: var(--brand-primary, #4f46e5)"
+	>
+		<div class="flex flex-col h-full">
+			<!-- Logo -->
+			<div class="flex items-center justify-between h-16 px-4" style="border-bottom: 1px solid rgba(var(--brand-primary-rgb), 0.3);">
+				{#if isSidebarOpen}
+					<div class="flex items-center space-x-2">
+						<img src={logoSrc} alt="{appName} logo" style="height:32px"/>
+						<span class="text-xl font-bold">{appName}</span>
+					</div>
+				{:else}
+					<img src={logoSrc} alt="{appName} logo" style="height:32px"/>
+				{/if}
+			</div>
+
+			<!-- Navigation -->
+			<nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto overflow-x-visible">
+				{#each navigation as item}
+					{#if isGroup(item)}
+						<!-- Group with collapsible submenu -->
+						<div class="space-y-1">
+							<div class="relative">
+								<button
+									onclick={() => toggleGroup(item.name.toLowerCase())}
+									onmouseenter={(e) => handleGroupHover(item.name.toLowerCase(), e)}
+									onmouseleave={handleGroupLeave}
+									class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors"
+									style="{isGroupActive(item)
+										? 'background-color: rgba(255,255,255,0.2); color: white;'
+										: 'color: rgba(255,255,255,0.8);'}"
+									onmouseover={(e) => { if (!isGroupActive(item)) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; }}
+									onmouseout={(e) => { if (!isGroupActive(item)) e.currentTarget.style.backgroundColor = 'transparent'; }}
+									title={item.name}
+								>
+									<div class="flex items-center">
+										<span class="text-xl {isSidebarOpen ? 'mr-3' : ''}">{item.icon}</span>
+										{#if isSidebarOpen}
+											{item.name}
+										{/if}
+									</div>
+									{#if isSidebarOpen}
+										<span class="text-xs transition-transform {expandedGroups[item.name.toLowerCase()] ? 'rotate-180' : ''}">
+											▼
+										</span>
+									{/if}
+								</button>
+
+								<!-- Floating submenu (when sidebar is collapsed and hovered) -->
+								{#if !isSidebarOpen && hoveredGroup === item.name.toLowerCase()}
+									<div
+										class="fixed w-56 bg-white rounded-lg shadow-2xl py-2 border border-gray-200"
+										style="left: 4rem; top: {hoveredGroupTop}px; z-index: 9999;"
+										onmouseenter={cancelClose}
+										onmouseleave={handleGroupLeave}
+									>
+										<div class="px-3 py-2 border-b border-gray-100">
+											<p class="text-sm font-semibold text-gray-700">{item.name}</p>
+										</div>
+										{#each item.items as subItem}
+											<a
+												href={subItem.href}
+												class="flex items-center px-4 py-2 text-sm transition-colors font-medium"
+												style="{isActive(subItem.href)
+													? `background-color: rgba(var(--brand-primary-rgb), 0.1); color: var(--brand-primary);`
+													: 'color: #374151;'}"
+											>
+												<span class="text-base mr-2">{subItem.icon}</span>
+												{subItem.name}
+											</a>
+										{/each}
+									</div>
+								{/if}
+							</div>
+
+							<!-- Submenu (inline when open) -->
+							{#if isSidebarOpen && expandedGroups[item.name.toLowerCase()]}
+								<div class="ml-4 space-y-1">
+									{#each item.items as subItem}
+										<a
+											href={subItem.href}
+											class="flex items-center px-4 py-2 text-sm rounded-lg transition-colors"
+											style="{isActive(subItem.href)
+												? 'background-color: rgba(255,255,255,0.25); color: white;'
+												: 'color: rgba(255,255,255,0.7);'}"
+											onmouseover={(e) => { if (!isActive(subItem.href)) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'white'; }}
+											onmouseout={(e) => { if (!isActive(subItem.href)) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; } }}
+										>
+											<span class="text-base mr-2">{subItem.icon}</span>
+											{subItem.name}
+										</a>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					{:else}
+						<!-- Single item -->
+						<a
+							href={item.href}
+							class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors"
+							style="{isActive(item.href)
+								? 'background-color: rgba(255,255,255,0.2); color: white;'
+								: 'color: rgba(255,255,255,0.8);'}"
+							onmouseover={(e) => { if (!isActive(item.href)) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; }}
+							onmouseout={(e) => { if (!isActive(item.href)) e.currentTarget.style.backgroundColor = 'transparent'; }}
+							title={item.name}
+						>
+							<span class="text-xl {isSidebarOpen ? 'mr-3' : ''}">{item.icon}</span>
+							{#if isSidebarOpen}
+								{item.name}
+							{/if}
+						</a>
+					{/if}
+				{/each}
+			</nav>
+		</div>
+	</aside>
+
+	<!-- Mobile Overlay -->
+	{#if isSidebarOpen}
+		<button
+			onclick={toggleSidebar}
+			class="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden"
+			aria-label="Close sidebar"
+		></button>
+	{/if}
+
+	<!-- Main Content -->
+	<div class="transition-all duration-200 {isSidebarOpen ? 'lg:pl-64' : 'lg:pl-16'}">
+		<!-- Top Bar -->
+		<header class="sticky top-0 z-40 bg-white shadow-sm">
+			<div class="flex items-center justify-between h-16 px-4">
+				<div class="flex items-center space-x-4">
+					<button
+						onclick={toggleSidebar}
+						class="p-2 rounded-md hover:bg-gray-100 transition-colors"
+						title={isSidebarOpen ? 'Tutup Menu' : 'Buka Menu'}
+					>
+						<span class="text-2xl">{isSidebarOpen ? '◀' : '☰'}</span>
+					</button>
+
+					<h1 class="text-xl font-semibold text-gray-900">
+						{#if $page.url.pathname === '/'}
+							Dashboard
+						{:else if $page.url.pathname === '/identities' || $page.url.pathname.startsWith('/identities')}
+							Identitas (SSO Accounts)
+						{:else if $page.url.pathname === '/sync'}
+							Sync & Import
+						{:else if $page.url.pathname === '/realms'}
+							Realm/Entitas
+						{:else if $page.url.pathname === '/org-units'}
+							Unit Kerja/Divisi
+						{:else if $page.url.pathname === '/org-structure'}
+							Struktur Organisasi
+						{:else if $page.url.pathname.startsWith('/org-structure/versions')}
+							Versi Struktur
+						{:else if $page.url.pathname === '/positions'}
+							Posisi/Jabatan
+						{:else if $page.url.pathname === '/clients'}
+							OAuth Clients
+						{:else if $page.url.pathname === '/clients-scim' || $page.url.pathname.startsWith('/clients-scim')}
+							SCIM Clients
+						{:else if $page.url.pathname === '/audit'}
+							Audit Log
+						{/if}
+					</h1>
+				</div>
+
+				<div class="flex items-center space-x-2">
+					<!-- Realm Selector -->
+					{#if realms.length > 1}
+						<div class="hidden sm:flex items-center px-2 py-1 rounded-md text-sm" style="background-color: rgba(var(--brand-primary-rgb), 0.1); color: var(--brand-primary)">
+							<span class="mr-1">🌐</span>
+							<select
+								class="bg-transparent border-none outline-none font-medium cursor-pointer text-sm"
+								style="color: var(--brand-primary)"
+								value={activeRealm?._id || ''}
+								onchange={(e) => switchRealm(e.currentTarget.value)}
+							>
+								{#each realms as realm}
+									<option value={realm._id}>{realm.name}</option>
+								{/each}
+							</select>
+						</div>
+					{:else}
+						<div class="hidden sm:flex items-center px-3 py-1.5 rounded-md text-sm" style="background-color: rgba(var(--brand-primary-rgb), 0.1); color: var(--brand-primary)">
+							<span class="mr-1">🌐</span>
+							<span class="font-medium">{activeRealm?.name || appName}</span>
+						</div>
+					{/if}
+
+					<button class="p-2 rounded-md hover:bg-gray-100 transition-colors" title="Notifikasi">
+						<span class="text-xl">🔔</span>
+					</button>
+
+					<!-- User Menu Dropdown -->
+					<div class="relative">
+						<button
+							onclick={toggleUserMenu}
+							class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 transition-colors"
+						>
+							<div class="w-8 h-8 rounded-full flex items-center justify-center brand-bg-primary">
+								<span class="text-white text-sm font-medium">{userInitial}</span>
+							</div>
+							<div class="hidden md:block text-left">
+								<p class="text-sm font-medium text-gray-700">{userName}</p>
+								<p class="text-xs text-gray-500">{user?.email}</p>
+							</div>
+						</button>
+
+						{#if showUserMenu}
+							<div class="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 border border-gray-200 z-50">
+								<a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+									👤 Profil Saya
+								</a>
+								<a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+									⚙️ Pengaturan
+								</a>
+								<a href="/docs" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+									📒 Documentation
+								</a>
+								<hr class="my-1" />
+								<form method="POST" action="/logout">
+									<button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+										🚪 Keluar
+									</button>
+								</form>
+							</div>
+						{/if}
+					</div>
+				</div>
+			</div>
+		</header>
+
+		<!-- Page Content -->
+		<main class="p-6">
+			{@render children()}
+		</main>
+	</div>
+</div>
+
+<!-- Click outside to close user menu -->
+{#if showUserMenu}
+	<button
+		onclick={toggleUserMenu}
+		class="fixed inset-0 z-30"
+		aria-label="Close user menu"
+	></button>
+{/if}

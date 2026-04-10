@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun -e:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(rm /Users/HERIAWAN/Project/_mya/jss/sso/src/routes/api/org-units/\\\\[code\\\\]/+server.ts && rm /Users/HERIAWAN/Project/_mya/jss/sso/src/routes/api/positions/\\\\[code\\\\]/+server.ts && rm /Users/HERIAWAN/Project/_mya/jss/sso/src/routes/api/realms/\\\\[code\\\\]/+server.ts && rm /Users/HERIAWAN/Project/_mya/jss/sso/src/routes/api/oauth-clients/\\\\[clientId\\\\]/+server.ts && rm /Users/HERIAWAN/Project/_mya/jss/sso/src/routes/api/scim-clients/\\\\[clientId\\\\]/+server.ts && echo \"done\")",
+      "Bash(python3 -c \"\ncontent = open\\('/Users/HERIAWAN/Project/_mya/jss/sso/src/routes/\\(app\\)/positions/+page.svelte'\\).read\\(\\)\nidx = content.find\\('selectedPosition.name}'\\)\nprint\\(repr\\(content[idx-50:idx+150]\\)\\)\n\")",
+      "Bash(bun run:*)",
+      "Bash(grep:*)",
+      "Bash(bun test:*)",
+      "Bash(bun add:*)",
+      "Bash(cat:*)",
+      "Bash(bash scripts/test/custom.sh:*)",
+      "Bash(test:*)",
+      "Bash(npx svelte-check:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

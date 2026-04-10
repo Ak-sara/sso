@@ -1,0 +1,151 @@
+import { redirect, error } from '@sveltejs/kit';
+import type { PageServerLoad, Actions } from './$types';
+import { authorizeSchema } from '$lib/validation.js';
+import { oauthStore } from '$lib/store.js';
+import { generateAuthorizationCode } from '$lib/crypto.js';
+import { verify } from '@node-rs/argon2';
+import { getBrandingForClient } from '$lib/branding.js';
+import { useLogger } from '@ak-sara/fbao/foundation';
+
+const log = useLogger({ module: 'oauth:authorize' });
+
+export const load: PageServerLoad = async ({ url, cookies }) => {
+    const params = Object.fromEntries(url.searchParams.entries());
+
+    try {
+        const validatedParams = authorizeSchema.parse(params);
+
+        // Check if client exists
+        const client = await oauthStore.getClient(validatedParams.client_id);
+        if (!client) {
+            throw error(400, 'Invalid client_id');
+        }
+
+        // Check if redirect_uri is allowed
+        if (!client.redirect_uris.includes(validatedParams.redirect_uri)) {
+            throw error(400, 'Invalid redirect_uri');
+        }
+
+        // Get branding for this client
+        const branding = await getBrandingForClient(validatedParams.client_id);
+
+        // Check if user is logged in
+        const identityId = cookies.get('identity_id') || cookies.get('user_id'); // Support both for migration
+        if (identityId) {
+            const user = await oauthStore.getUserById(identityId);
+            if (user) {
+                return {
+                    params: validatedParams,
+                    client,
+                    user,
+                    branding,
+                    isLoggedIn: true
+                };
+            }
+        }
+
+        return {
+            params: validatedParams,
+            client,
+            branding,
+            isLoggedIn: false
+        };
+    } catch (err) {
+        log.error('OAuth authorize error', { error: err });
+        if (err instanceof Error) {
+            throw error(400, `Invalid request: ${err.message}`);
+        }
+        throw error(400, 'Invalid request parameters');
+    }
+};
+
+export const actions: Actions = {
+    default: async ({ locals, cookies, url }) => {
+        const formData = locals.body
+        const actionType = formData?.action;
+
+        // Login action
+        if (actionType === 'login') {
+            const username = formData?.email as string; // Can be email or NIK
+            const password = formData?.password as string;
+
+            if (!username || !password) {
+                return { error: 'Email/NIK and password are required' };
+            }
+
+            const user = await oauthStore.getUserByEmailOrNIK(username);
+            if (!user || !(await verify(user.password, password))) {
+                return { error: 'Invalid credentials' };
+            }
+
+            cookies.set('identity_id', user.id, {
+                path: '/',
+                maxAge: 60 * 60 * 24 * 7, // 7 days
+                httpOnly: true,
+                secure: false // Set to true in production with HTTPS
+            });
+
+            // Redirect back to authorize with current params
+            throw redirect(302, `/oauth/authorize?${url.searchParams.toString()}`);
+        }
+
+        // Authorize action (default when no action type specified)
+        try {
+            const params = Object.fromEntries(url.searchParams.entries());
+            const validatedParams = authorizeSchema.parse(params);
+
+            const identityId = cookies.get('identity_id') || cookies.get('user_id'); // Support both for migration
+            log.debug('Authorize action - Identity ID from cookie', { identityId });
+
+            if (!identityId) {
+                return { error: 'Not logged in' };
+            }
+
+            const user = await oauthStore.getUserById(identityId);
+            log.debug('Authorize action - User found', { email: user ? user.email : null });
+
+            if (!user) {
+                return { error: 'User not found' };
+            }
+
+            // Generate authorization code
+            const code = generateAuthorizationCode();
+            const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+            log.debug('Authorize action - Saving auth code', {
+                code,
+                client_id: validatedParams.client_id,
+                identity_id: user.id,
+                redirect_uri: validatedParams.redirect_uri,
+                scope: validatedParams.scope
+            });
+
+            await oauthStore.saveAuthCode({
+                code,
+                client_id: validatedParams.client_id,
+                identity_id: user.id,
+                redirect_uri: validatedParams.redirect_uri,
+                scope: validatedParams.scope,
+                expires_at: expiresAt,
+                code_challenge: validatedParams.code_challenge,
+                code_challenge_method: validatedParams.code_challenge_method
+            });
+
+            log.debug('Authorize action - Auth code saved successfully');
+
+            // Build redirect URL
+            const redirectUrl = new URL(validatedParams.redirect_uri);
+            redirectUrl.searchParams.set('code', code);
+            if (validatedParams.state) {
+                redirectUrl.searchParams.set('state', validatedParams.state);
+            }
+
+            log.debug('Authorize action - Redirecting', { redirectUrl: redirectUrl.toString() });
+
+            throw redirect(302, redirectUrl.toString());
+        } catch (err) {
+            log.error('Authorize action error', { error: err });
+            throw err;
+        }
+    }
+};
