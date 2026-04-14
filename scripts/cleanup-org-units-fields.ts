@@ -12,7 +12,7 @@ const isCheck = process.argv.includes('--check');
 const MONGODB_URI=process.env.MONGODB_URI as string;
 
 const dbName='aksara_sso'
-const collName='org_units'
+const collName='identities'
 
 async function main() {	
 	const client = new MongoClient(MONGODB_URI);
@@ -21,23 +21,23 @@ async function main() {
 	const coll = db.collection(collName);
 	
 	try {
-		// const colls = await db.listCollections().toArray();
-		// console.log(`available colls: ${isCheck ? "withCheck":"noCheck"}`);
-		// colls.map((x,i)=>{ console.log(`${i}. ${x.name}`) })
-		// console.log(`Found ${colls.length} collections\n\n`);
+		const colls = await db.listCollections().toArray();
+		console.log(`available colls: ${isCheck ? "withCheck":"noCheck"}`);
+		colls.map((x,i)=>{ console.log(`${i}. ${x.name}`) })
+		console.log(`Found ${colls.length} collections\n\n`);
 
 		// Execute Opr
-		const result = await coll.updateMany( {_id:new ObjectId('69cc9954b454efea52234a22')},
-			{	
-				// $unset: {  isNeck: '',  level: '', sortOrder: ''  }  
-				$set:{code:'NECK'}
-			}
-		);
-		console.log(`Modified: ${result.modifiedCount} documents\n`);
+		// const result = await coll.updateMany( {_id:new ObjectId('69cc9954b454efea52234a22')},
+		// 	{	
+		// 		// $unset: {  isNeck: '',  level: '', sortOrder: ''  }  
+		// 		$set:{code:'NECK'}
+		// 	}
+		// );
+		// console.log(`Modified: ${result.modifiedCount} documents\n`);
 
-		// const rec = await coll.find({code:'IT'}).toArray();
-		// rec.map(x=>{ console.log(x) })
-		// console.log(`Found ${rec.length} documents\n\n`);
+		const rec = await coll.find().limit(20).toArray();
+		rec.map(x=>{ console.log(x) })
+		console.log(`Found ${rec.length} documents\n\n`);
 
 	} catch (err) {
 		console.error('Error:', err);

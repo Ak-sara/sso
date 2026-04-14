@@ -457,7 +457,7 @@ export class QueryHelper {
 	 * @param filters - Optional filters (orgUnitId, positionId, etc.)
 	 * @returns Array of version entries where employee matches criteria
 	 */
-	async searchEmployeeHistory(
+	async searchEmployeeAssignments(
 		employeeId: string,
 		filters?: {
 			orgUnitId?: string;

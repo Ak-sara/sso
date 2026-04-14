@@ -4,7 +4,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { hash } from '@node-rs/argon2';
 import { logIdentityOperation } from '$lib/audit/logger';
 import { getMaskingConfig } from '$lib/utils/masking-helper';
-import { getIdentityById, createIdentity, updateIdentity } from '$lib/services/identity-service';
+import { getIdentityById,getAssignments, createIdentity, updateIdentity } from '$lib/services/identity-service';
 import { listOrganizations } from '$lib/services/organization-service';
 import { listPositions } from '$lib/services/position-service';
 
@@ -15,8 +15,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const maskingConfig = await getMaskingConfig();
 	const userRoles = locals.user?.roles || [];
 
-	const [identityResult, organizations, orgUnits, positions] = await Promise.all([
+	const [identityResult, assignments, organizations, orgUnits, positions] = await Promise.all([
 		isNew ? null : getIdentityById(params.id, { maskingConfig, userRoles, applyMask: mode === 'view' }),
+		isNew ? null : getAssignments(params.id),
 		listOrganizations(),
 		db.orgUnits.find(),
 		listPositions(),
@@ -28,6 +29,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		mode: isNew ? 'edit' : mode,
 		isNew,
 		identity: identityResult && identityResult.ok ? identityResult.data : null,
+		assignments: assignments && assignments.ok ? assignments.data : null,
 		organizations: organizations.map(o => ({ _id: o._id, name: o.name, code: o.code })),
 		orgUnits: (orgUnits as any[]).map(u => ({ _id: u._id.toString(), name: u.name, code: u.code })),
 		positions: positions.map(p => ({ _id: p._id, name: p.name, code: p.code })),

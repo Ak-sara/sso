@@ -19,7 +19,7 @@ export { orgUnitHasChildren, orgUnitHasEmployees, getOrgUnitDescendants } from '
 
 export { OrgStructureVersionSchema, type OrgStructureVersion } from './org-structure-version';
 export { SystemSettingsSchema, type SystemSettings } from './system-settings';
-export { EmployeeHistorySchema, type EmployeeHistory } from './employee-history';
+export { EmployeeAssignmentsSchema, type EmployeeAssignments } from './employee-assignments';
 
 export { PositionSchema, type Position } from './position';
 export { positionIsInUse } from './position';

@@ -66,7 +66,7 @@
 				<div class="flex items-center">
 					<span class="text-xl mr-2">${getTypeIcon(row.type)}</span>
 					<div>
-						<div class="text-sm font-medium text-gray-900" style="margin-left: ${row.level * 20}px">${value}</div>
+						<div class="text-sm font-medium text-gray-900">${value}</div>
 						${row.shortName ? `<div class="text-xs text-gray-500">${row.shortName}</div>` : ''}
 					</div>
 				</div>`

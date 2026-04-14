@@ -195,10 +195,8 @@
 
 <!-- Footer -->
 <div class="sticky bottom-0 bg-gray-50 border-t px-6 py-4 flex justify-end gap-3">
-	<button
-		onclick={onSave}
-		class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-	>
+	<button class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+		onclick={onSave} >
 		{unit._id ? 'Save Changes' : '+ Buat Unit'}
 	</button>
 </div>

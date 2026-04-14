@@ -27,12 +27,21 @@ export const IdentitySchema = z.object({
 	// Demographics
 	dateOfBirth: z.date().optional(),
 	gender: z.enum(['male', 'female', 'other']).optional(),
+	nationality: z.string().optional(), 
 	idNumber: z.string().optional(), // KTP
 	taxId: z.string().optional(), // NPWP
 	personalEmail: z.string().email().optional(),
 
-	// Organization context
+	// Organization context / Assignment
+	employeeId: z.string().optional(), // NIK - UNIQUE, can be used as username
 	organizationId: z.string(), // Which realm/org this identity belongs to
+	orgUnitId: z.string().optional(), // Department/division
+	positionId: z.string().optional(), // Job title
+	
+	workLocation: z.string().optional(), // CGK, DPS, etc
+	region: z.string().optional(),
+	isRemote: z.boolean().optional(),
+
 	joinDate: z.date().optional(),
 	endDate: z.date().optional(), // For PKWT/contract
 	probationEndDate: z.date().optional(),
@@ -40,17 +49,6 @@ export const IdentitySchema = z.object({
 	// Employment details
 	employmentType: z.enum(['permanent', 'pkwt', 'outsource', 'contract']).optional(),
 	employmentStatus: z.enum(['active', 'probation', 'terminated', 'resigned']).optional(),
-
-	// Assignment
-	workLocation: z.string().optional(), // CGK, DPS, etc
-	region: z.string().optional(),
-	isRemote: z.boolean().optional(),
-
-	// === EMPLOYEE-SPECIFIC FIELDS (only if identityType === 'employee') ===
-	employeeId: z.string().optional(), // NIK - UNIQUE, can be used as username
-	orgUnitId: z.string().optional(), // Department/division
-	positionId: z.string().optional(), // Job title
-	managerId: z.string().optional(), // Direct manager (another identity's _id)
 
 	// Secondary assignments (multi-company)
 	secondaryAssignments: z.array(

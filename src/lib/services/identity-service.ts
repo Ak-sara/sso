@@ -4,8 +4,10 @@ import { db, type PaginationInput } from '$lib/db/db';
 import type { Identity } from '$lib/db/schemas/identity';
 import { getMaskedIdentity, getMaskedIdentities } from '$lib/utils/data-masking';
 import type { MaskingConfig } from '$lib/utils/data-masking';
-import type { MongoFilter, MongoUpdate } from './types';
+import type { ServiceResult, MongoFilter, MongoUpdate } from './types';
+import { ObjectId, type Filter } from 'mongodb';
 import { validateBody, nonEmptyString, optionalString, emailField, booleanFromString } from '$lib/utils/validate';
+import type { EmployeeAssignments } from '$lib/db/schemas';
 
 const log = useLogger({ module: 'service:identity' });
 
@@ -55,6 +57,25 @@ export function serializeIdentity(doc: any): IdentitySerialized {
 }
 
 // ── Queries ────────────────────────────────────────────────────────────────
+
+export async function getAssignments(id:string): Promise<ServiceResult<any>> {
+	const result = await db.employeeAssignments.findPaginated(
+		{ page: 1, pageSize: 10, sortKey:  undefined, sortDirection: 'desc', search: undefined  } as any, 
+		{ identityId: new ObjectId(id) }
+	);
+	return {
+		ok: true, 
+		data: {
+			rows: result.items.map((u: any) => ({
+					...u,
+					_id: u._id.toString(),
+				})) as EmployeeAssignments[],
+			page: result.page,
+			pageSize: result.pageSize,
+			total: result.total,
+			totalPages: result.totalPages, 
+	} }
+}
 
 export async function listIdentities(
 	params: PaginationInput,
