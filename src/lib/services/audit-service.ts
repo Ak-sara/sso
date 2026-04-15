@@ -1,15 +1,16 @@
-import { useLogger } from '@ak-sara/fbao/foundation';
+import { useLogger, AuditLogger } from '@ak-sara/fbao/foundation';
 import { ObjectId } from 'mongodb';
+import { getDB } from '$lib/db/connection';
 import { db, type PaginationInput } from '$lib/db/db';
-import type { AuditLog } from '$lib/db/schemas/audit-log';
 import type { MongoFilter } from './types';
+import type { Identity } from '$lib/db/schemas/identity';
 
 const log = useLogger({ module: 'service:audit' });
-
-// ── Queries (single) ──────────────────────────────────────────────────────
+const auditLogger = new AuditLogger(() => getDB(), { collectionName: 'audit_log' });
+const col = () => getDB().collection('audit_log');
 
 export async function getAuditLogById(id: string) {
-	const doc = await db.auditLogs.findById(id) as any;
+	const doc = await col().findOne({ _id: new ObjectId(id) }) as any;
 	if (!doc) return null;
 
 	let identityInfo = null;
@@ -40,32 +41,22 @@ export async function getAuditLogById(id: string) {
 	};
 }
 
-// ── Write ──────────────────────────────────────────────────────────────────
-
-export async function logEvent(event: Omit<AuditLog, '_id' | 'timestamp'>): Promise<void> {
-	try {
-		await db.auditLogs.insertOne({ ...event, timestamp: new Date() } as any);
-	} catch (err) {
-		log.error('Failed to write audit log', { error: err, event });
-	}
-}
-
-// ── Queries ────────────────────────────────────────────────────────────────
-
 export async function listAuditLogs(params: PaginationInput, filter: Record<string, any> = {}) {
-	const result = await db.auditLogs.findPaginated(
-		params,
-		filter,
-		['action', 'resource', 'resourceId']
-	);
+	const page = params.page || 1;
+	const pageSize = params.pageSize || 20;
+	const skip = (page - 1) * pageSize;
 
-	// Batch-resolve identity names
-	const identityIds = result.items
+	const [items, total] = await Promise.all([
+		col().find(filter).sort({ timestamp: -1 }).skip(skip).limit(pageSize).toArray(),
+		col().countDocuments(filter),
+	]);
+
+	const identityIds = items
 		.map((l: any) => l.identityId)
 		.filter((id: string) => id && id !== 'system' && ObjectId.isValid(id));
 
 	const identities = identityIds.length > 0
-		? await db.identities.find({ _id: { $in: identityIds.map((id: string) => new ObjectId(id)) } } as MongoFilter<AuditLog>)
+		? await db.identities.find({ _id: { $in: identityIds.map((id: string) => new ObjectId(id)) } } as MongoFilter<Identity>)
 		: [];
 
 	const identityMap = new Map(
@@ -76,7 +67,7 @@ export async function listAuditLogs(params: PaginationInput, filter: Record<stri
 	);
 
 	return {
-		items: result.items.map((l: any) => ({
+		items: items.map((l: any) => ({
 			...l,
 			_id: l._id.toString(),
 			timestamp: l.timestamp instanceof Date ? l.timestamp.toISOString() : l.timestamp,
@@ -84,9 +75,29 @@ export async function listAuditLogs(params: PaginationInput, filter: Record<stri
 				? { name: 'System', email: null, employeeId: null }
 				: identityMap.get(l.identityId) || null,
 		})),
-		page: result.page,
-		pageSize: result.pageSize,
-		total: result.total,
-		totalPages: result.totalPages,
+		page, pageSize, total,
+		totalPages: Math.ceil(total / pageSize),
 	};
+}
+
+export async function getIdentityAuditLogs(identityId: string, limit = 50) {
+	const results = await auditLogger.query({ identityId }, { limit, sort: { timestamp: -1 } });
+	return results.map((r: any) => ({
+		...r,
+		_id: r._id?.toString(),
+		timestamp: r.timestamp instanceof Date ? r.timestamp.toISOString() : r.timestamp,
+	}));
+}
+
+export async function getRecentFailedLogins(email: string, minutesAgo = 15): Promise<number> {
+	const results = await auditLogger.query({
+		action: 'login_failed',
+		'details.email': email,
+		timestamp: { $gte: new Date(Date.now() - minutesAgo * 60 * 1000) }
+	} as any);
+	return results.length;
+}
+
+export async function cleanupOldAuditLogs(daysToKeep = 90): Promise<number> {
+	return auditLogger.cleanup(daysToKeep);
 }

@@ -1,5 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/db/db';
+import { listAuditLogs } from '$lib/services/audit-service';
 
 export const load: PageServerLoad = async () => {
 	// Get statistics
@@ -11,7 +12,7 @@ export const load: PageServerLoad = async () => {
 	]);
 
 	// Get recent audit logs (last 5)
-	const auditLogs = await db.auditLogs.find({}, { timestamp: -1 }, 5);
+	const { items: auditLogs } = await listAuditLogs({ page: 1, pageSize: 5 });
 
 	// Map action icons
 	const getActionIcon = (action: string) => {
@@ -71,7 +72,7 @@ export const load: PageServerLoad = async () => {
 	const recentActivity = auditLogs.map((log: any) => ({
 		icon: getActionIcon(log.action),
 		description: getActionDescription(log.action, log.details || {}),
-		time: formatRelativeTime(log.timestamp)
+		time: formatRelativeTime(new Date(log.timestamp))
 	}));
 
 	return {

@@ -1,11 +1,13 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { db } from '$lib/db/db';
+import { listAuditLogs } from '$lib/services/audit-service';
 import type { Identity } from '$lib/db/schemas';
 import { findIdentityByEmployeeId, findIdentityByEmail } from '$lib/db/schemas';
 import { listOrganizations } from '$lib/services/organization-service';
 import { createIdentity, updateIdentity } from '$lib/services/identity-service';
 import { testEntraIDConnection, getMicrosoftGraphToken, getEntraIDUsers } from '$lib/entraid/microsoft-graph';
+import { logAudit } from '$lib/audit/logger';
 import {
 	detectNIKEmailConflicts,
 	normalizeCSVColumns,
@@ -30,12 +32,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 		const config = await db.entraidConfigs.findOne({ organizationId: selectedOrg._id.toString() } as any) as any;
 		if (config) entraConfig = { ...config, _id: config._id?.toString(), clientSecret: '••••••••••••' };
 
-		const logs = await db.entraidSyncLogs.find(
-			{ organizationId: selectedOrg._id.toString() } as any,
-			{ createdAt: -1 },
-			10
+		const { items: logs } = await listAuditLogs(
+			{ page: 1, pageSize: 10 },
+			{ action: { $in: ['sync_completed', 'sync_failed', 'sync_started'] }, organizationId: selectedOrg._id.toString() }
 		);
-		syncHistory = (logs as any[]).map(log => ({ ...log, _id: log._id?.toString() }));
+		syncHistory = logs;
 	}
 
 	return {
@@ -372,13 +373,7 @@ export const actions: Actions = {
 				}
 			}
 
-			await db.entraidSyncLogs.insertOne({
-				syncId: `sync-${Date.now()}`, organizationId, type: 'user', status: 'completed',
-				startedAt: new Date(), completedAt: new Date(),
-				totalRecords: entraUsers.length, successCount: created + updated, failureCount: errors.length,
-				errors: errors.map(e => ({ recordId: '', error: e })),
-				triggeredBy: locals.user?.userId || 'manual'
-			} as any);
+			await logAudit({ action: 'sync_completed', resource: 'sync', identityId: locals.user?.userId || 'manual', status: errors.length > 0 ? 'failed' : 'success', organizationId, details: { syncType: 'entra_id_user', recordsProcessed: entraUsers.length, successCount: created + updated, failureCount: errors.length, errorMessage: errors.length > 0 ? errors.join('; ') : undefined } });
 
 			return {
 				success: true,

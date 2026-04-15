@@ -4,9 +4,9 @@
 	import FormModal from '$lib/components/FormModal.svelte';
 	import OrgUnitForm from './OrgUnitForm.svelte';
 	import PageHints from '$lib/components/PageHints.svelte';
-	import { goto, invalidate, invalidateAll } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { invalidateAll } from '$app/navigation';
 	import { useLogger } from '$lib/logger';
+	import { navigateWithParams } from '$lib/utils/navigate';
 
 	const log = useLogger({ module: 'app:org-units' });
 
@@ -28,14 +28,6 @@
 			managerId: null, managerName: null,
 			diagram: 'logical', isActive: true
 		};
-	}
-
-	async function navigate(params: Record<string, string | null>) {
-		const url = new URL($page.url);
-		for (const [key, val] of Object.entries(params))
-			val === null ? url.searchParams.delete(key) : url.searchParams.set(key, val);
-		await goto(url.toString(), { keepFocus: true, noScroll: true });
-		invalidate('app:pagination');
 	}
 
 	function unitToFormData(unit: any): FormData {
@@ -170,10 +162,10 @@
 		searchPlaceholder="Cari unit kerja (nama, kode)..."
 		searchable={true}
 		searchKeys={['name', 'code', 'type']}
-		onPageChange={(p) => navigate({ page: String(p) })}
-		onPageSizeChange={(s) => navigate({ pageSize: String(s), page: '1' })}
-		onSort={(e) => navigate({ sortKey: String(e.key), sortDirection: e.direction })}
-		onSearch={(q) => navigate({ search: q || null, page: '1' })}
+		onPageChange={(p) => navigateWithParams({ page: String(p) })}
+		onPageSizeChange={(s) => navigateWithParams({ pageSize: String(s), page: '1' })}
+		onSort={(e) => navigateWithParams({ sortKey: String(e.key), sortDirection: e.direction })}
+		onSearch={(q) => navigateWithParams({ search: q || null, page: '1' })}
 		actions={(row) => [
 			{ label: 'Edit',   onClick: () => handleEdit(row),   class: 'text-indigo-600 hover:text-indigo-800', icon: '✏️ ' },
 			{ label: 'Delete', onClick: () => handleDelete(row), class: 'text-red-600 hover:text-red-800',    icon: '🗑️' }

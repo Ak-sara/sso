@@ -5,7 +5,7 @@
 
 import { getDB } from '$lib/db/connection';
 import { sendOTP, validateOTP } from './otp';
-import { log2FAEvent } from '$lib/audit/auth-logger';
+import { logAudit } from '$lib/audit/logger';
 import { useLogger } from '@ak-sara/fbao/foundation';
 
 const log = useLogger({ module: 'auth:2fa' });
@@ -35,7 +35,7 @@ export async function enable2FA(identityId: string, email: string): Promise<{ su
 		}
 
 		// Log audit event
-		await log2FAEvent('2fa_enabled', identityId, email, true, { method: 'email_otp' });
+		await logAudit({ action: '2fa_enabled', resource: 'sessions', identityId, details: { email, method: 'email_otp' } });
 
 		return { success: true };
 	} catch (error: any) {
@@ -68,7 +68,7 @@ export async function disable2FA(identityId: string, email: string): Promise<{ s
 		}
 
 		// Log audit event
-		await log2FAEvent('2fa_disabled', identityId, email, true);
+		await logAudit({ action: '2fa_disabled', resource: 'sessions', identityId, details: { email } });
 
 		return { success: true };
 	} catch (error: any) {
@@ -120,16 +120,8 @@ export async function verify2FAOTP(
 
 	// Log the verification attempt
 	if (identityId) {
-		await log2FAEvent('2fa_verified', identityId, email, validation.isValid, {
-			attemptsRemaining: validation.attemptsRemaining
-		});
-
-		if (!validation.isValid) {
-			await log2FAEvent('2fa_failed', identityId, email, false, {
-				reason: validation.error,
-				attemptsRemaining: validation.attemptsRemaining
-			});
-		}
+		const action = validation.isValid ? '2fa_verified' : '2fa_failed';
+		await logAudit({ action, resource: 'sessions', identityId, status: validation.isValid ? 'success' : 'failed', details: { email, reason: validation.error, attemptsRemaining: validation.attemptsRemaining } });
 	}
 
 	return validation;

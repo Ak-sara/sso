@@ -2,7 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { db, Repository, lazy } from '$lib/db/db';
 import { sendOTP, validateOTP } from '$lib/auth/otp';
-import { logEmailChange } from '$lib/audit/auth-logger';
+import { logAudit } from '$lib/audit/logger';
 import { useLogger } from '@ak-sara/fbao/foundation';
 
 const log = useLogger({ module: 'app:change-email' });
@@ -129,7 +129,7 @@ export const actions: Actions = {
 			);
 
 			// Log audit event
-			await logEmailChange(session.userId, oldEmail, newEmail);
+			await logAudit({ action: 'email_changed', resource: 'identities', identityId: session.userId, details: { oldEmail, newEmail } });
 
 			return {
 				success: true,

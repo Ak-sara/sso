@@ -51,14 +51,31 @@ export const IdentitySchema = z.object({
 	employmentStatus: z.enum(['active', 'probation', 'terminated', 'resigned']).optional(),
 
 	// Secondary assignments (multi-company)
-	secondaryAssignments: z.array(
+	assignments: z.array(
 		z.object({
-			organizationId: z.string(),
-			orgUnitId: z.string().optional(),
-			positionId: z.string().optional(),
+			_id: z.custom<ObjectId>(),
+			
+			organizationId: z.string(), // Which realm/org this identity belongs to
+			orgUnitId: z.string().optional(), // Department/division
+			positionId: z.string().optional(), // Job level
+			employeeId: z.string().optional(), // NIK - UNIQUE, can be used as username	
+			
+			region: z.string().optional(),
+			workLocation: z.string().optional(), // CGK, DPS, etc
+			isRemote: z.boolean().optional(),
+			
+			// Employment details
+			employmentType: z.enum(['permanent', 'pkwt', 'outsource', 'contract', 'mutation', 'assignment']).optional(),
+			employmentStatus: z.enum(['active', 'probation', 'terminated', 'resigned']).optional(),
+
+			letterId: z.custom<ObjectId>().optional(),
+			letterNo: z.string().optional(),
+
 			startDate: z.date(),
 			endDate: z.date().optional(),
-			percentage: z.number().optional(),
+
+			createdAt: z.date().default(() => new Date()),
+			createdBy: z.string()
 		})
 	).optional().default([]),
 

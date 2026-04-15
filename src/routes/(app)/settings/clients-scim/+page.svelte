@@ -6,6 +6,7 @@
 	import ScimClientForm from './ScimClientForm.svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { useLogger } from '$lib/logger';
+	import { formatDate } from '$lib/utils/format';
 
 	const log = useLogger({ module: 'app:clients-scim' });
 
@@ -18,7 +19,8 @@
 	let newSecret = '';
 	let newClientId = '';
 
-	function formatDate(date: Date | string) {
+	// formatDate imported from $lib/utils/format — local override kept for datetime format
+	function formatDateTime(date: Date | string) {
 		return new Date(date).toLocaleDateString('id-ID', {
 			year: 'numeric',
 			month: 'short',
@@ -97,7 +99,7 @@
 				const label = value ? 'Active' : 'Inactive';
 				let html = `<span class="px-2 py-1 text-xs font-medium ${colorClass} rounded">${label}</span>`;
 				if (row.lastUsedAt) {
-					html += `<p class="text-xs text-gray-500 mt-1">Last used: ${formatDate(row.lastUsedAt)}</p>`;
+					html += `<p class="text-xs text-gray-500 mt-1">Last used: ${formatDateTime(row.lastUsedAt)}</p>`;
 				}
 				return html;
 			}

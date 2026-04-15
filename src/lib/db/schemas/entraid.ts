@@ -40,23 +40,3 @@ export const EntraIDConfigSchema = z.object({
 
 export type EntraIDConfig = z.infer<typeof EntraIDConfigSchema>;
 
-export const EntraIDSyncLogSchema = z.object({
-	_id: z.custom<ObjectId>().optional(),
-	syncId: z.string(),
-	organizationId: z.string(),
-	type: z.enum(['user', 'group', 'full']),
-	status: z.enum(['pending', 'running', 'completed', 'failed']),
-	startedAt: z.date(),
-	completedAt: z.date().optional(),
-	totalRecords: z.number().default(0),
-	successCount: z.number().default(0),
-	failureCount: z.number().default(0),
-	errors: z.array(z.object({
-		recordId: z.string(),
-		error: z.string(),
-	})).default([]),
-	triggeredBy: z.string(),
-	createdAt: z.date().default(() => new Date()),
-});
-
-export type EntraIDSyncLog = z.infer<typeof EntraIDSyncLogSchema>;

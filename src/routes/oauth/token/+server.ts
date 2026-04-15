@@ -3,7 +3,7 @@ import type { RequestHandler } from './$types';
 import { tokenSchema } from '$lib/validation.js';
 import { oauthStore } from '$lib/store.js';
 import { generateAccessToken, generateRefreshToken, createJWT, verifyCodeChallenge } from '$lib/crypto.js';
-import { logOAuth } from '$lib/audit/logger';
+import { logAudit } from '$lib/audit/logger';
 import { useLogger } from '@ak-sara/fbao/foundation';
 
 const log = useLogger({ module: 'oauth:token' });
@@ -137,18 +137,7 @@ export const POST: RequestHandler = async ({ locals, getClientAddress }) => {
 			}
 
 			// Log OAuth token grant
-			await logOAuth(
-				'oauth_token_grant',
-				authCode.identity_id,
-				{
-					clientId: validatedData.client_id,
-					clientName: client.name,
-					scope: authCode.scope,
-					grantType: 'authorization_code',
-					ipAddress,
-					userAgent
-				}
-			);
+			await logAudit({ action: 'oauth_token_grant', resource: 'tokens', identityId: authCode.identity_id, resourceId: validatedData.client_id, details: { clientName: client.name, scope: authCode.scope, grantType: 'authorization_code' }, ipAddress, userAgent });
 
 			return json(response);
 
@@ -189,17 +178,7 @@ export const POST: RequestHandler = async ({ locals, getClientAddress }) => {
 			});
 
 			// Log OAuth token refresh
-			await logOAuth(
-				'oauth_token_refresh',
-				storedRefreshToken.identity_id,
-				{
-					clientId: validatedData.client_id,
-					clientName: client.name,
-					grantType: 'refresh_token',
-					ipAddress,
-					userAgent
-				}
-			);
+			await logAudit({ action: 'oauth_token_refresh', resource: 'tokens', identityId: storedRefreshToken.identity_id, resourceId: validatedData.client_id, details: { clientName: client.name, grantType: 'refresh_token' }, ipAddress, userAgent });
 
 			return json({
 				access_token: accessToken,

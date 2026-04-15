@@ -4,6 +4,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { hashToken } from '$lib/crypto';
 import { hash } from '@node-rs/argon2';
 import { useLogger } from '@ak-sara/fbao/foundation';
+import { logAudit } from '$lib/audit/logger';
 
 const log = useLogger({ module: 'auth:reset-password' });
 
@@ -152,17 +153,13 @@ export const actions: Actions = {
 			const { sessionManager } = await import('$lib/auth/session');
 			await sessionManager.invalidateAllUserSessions(identity._id?.toString() as string, 'password_reset');
 
-			// Log audit event
-			await db.auditLogs.insertOne({
-				eventType: 'password_reset',
-				identityId: identity._id?.toString() as string,
-				email: identity.email,
-				metadata: {
-					method: 'email_token'
-				},
-				timestamp: new Date(),
-				ipAddress: undefined
-			} as any);
+			await logAudit({
+				identityId: identity._id?.toString(),
+				action: 'password_reset_complete',
+				resource: 'identities',
+				resourceId: identity._id?.toString(),
+				details: { method: 'email_token', email: identity.email },
+			});
 
 			throw redirect(303, '/login?message=Password berhasil diubah. Silakan login dengan password baru Anda.');
 		} catch (error: any) {

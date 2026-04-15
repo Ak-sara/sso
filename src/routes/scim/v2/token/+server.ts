@@ -10,6 +10,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { useLogger } from '@ak-sara/fbao/foundation';
 import { authenticateScimClient } from '$lib/scim/auth-enhanced';
+import { db } from '$lib/db/db';
 
 const log = useLogger({ module: 'scim:token' });
 
@@ -53,9 +54,7 @@ export const POST: RequestHandler = async ({ locals,request }) => {
 		}
 
 		// Get client to retrieve scopes
-		const { getDB } = await import('$lib/db/connection');
-		const db = getDB();
-		const client = await db.collection('scim_clients').findOne({ clientId: clientId.toString() });
+		const client = await db.scimClients.findOne({ clientId: clientId.toString() } as any);
 
 		if (!client) {
 			throw error(401, 'Invalid client credentials');

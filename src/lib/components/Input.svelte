@@ -11,6 +11,56 @@
 	}
 
 	let { type,name,style,label,options,value = $bindable(), onClick, onChange }: Props = $props();
+    let datecols=type=="date"? "3":(type=="datetime"? "6":undefined);
+
+    // --- date / datetime reactive parts ---
+    function parseDate(v: any) {
+        if (!v) return { d: '', m: '', y: '', h: '', i: '', s: '' };
+        const dt = new Date(v);
+        if (isNaN(dt.getTime())) return { d: '', m: '', y: '', h: '', i: '', s: '' };
+        return {
+            d: dt.getDate(),
+            m: dt.getMonth() + 1,
+            y: dt.getFullYear(),
+            h: dt.getHours(),
+            i: dt.getMinutes(),
+            s: dt.getSeconds(),
+        };
+    }
+
+    const init = parseDate(value);
+    let d = $state<number|''>(init.d);
+    let m = $state<number|''>(init.m);
+    let y = $state<number|''>(init.y);
+    let h = $state<number|''>(init.h);
+    let i = $state<number|''>(init.i);
+    let s = $state<number|''>(init.s);
+
+    let formatted = $derived.by(() => {
+        if (d === '' || m === '' || y === '') return '';
+        const dd = String(d).padStart(2, '0');
+        const mm = String(m).padStart(2, '0');
+        const yyyy = String(y).padStart(4, '0');
+        if (type === 'datetime') {
+            const hh = String(h || 0).padStart(2, '0');
+            const ii = String(i || 0).padStart(2, '0');
+            const ss = String(s || 0).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}T${hh}:${ii}:${ss}`;
+        }
+        return `${yyyy}-${mm}-${dd}`;
+    });
+    const today = () => {
+        const now = new Date();
+        d = now.getDate(); m = now.getMonth() + 1; y = now.getFullYear();
+        if (type === 'datetime') { h = now.getHours(); i = now.getMinutes(); s = now.getSeconds(); }
+    };
+    
+    $effect(() => {
+        if (type === 'date' || type === 'datetime') {
+            value = formatted;
+            onChange?.();
+        }
+    });
 </script>
 
 {#if type=="info"}
@@ -32,23 +82,21 @@
 </div>
 {/if}
 {#if type=="date" || type=="datetime"}
-<div>
-    <label class="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-    <input type="hidden" name={name} bind:value={value}/>
-    <div class="flex gap-2">
-        <input class="px-3 py-2 border border-gray-300 rounded-md w-[15%]"
-            type="number" name="d-{name}" value={value}/>
-        <input class="px-3 py-2 border border-gray-300 rounded-md w-[15%]"
-            type="number" name="m-{name}" value={value}/>
-        <input class="px-3 py-2 border border-gray-300 rounded-md w-[15%]"
-            type="number" name="y-{name}" value={value}/>
+<div class="{style}">
+    <label class="block text-sm font-medium text-gray-700 mb-1">{label}
+        {#if formatted==''}
+        <a class="text-sm text-blue-200 hover:cursor-pointer" onclick={today}>Today</a>
+        {/if}
+    </label>
+    <input type="hidden" name={name} value={formatted}/>
+    <div class="grid grid-cols-{datecols} gap-2">
+        <input type="number" placeholder="DD"   min="1" max="31"   bind:value={d} class="px-3 py-2 border border-gray-300 rounded-md text-center" />
+        <input type="number" placeholder="MM"   min="1" max="12"   bind:value={m} class="px-3 py-2 border border-gray-300 rounded-md text-center" />
+        <input type="number" placeholder="YYYY" min="1900" max="2999" bind:value={y} class="px-3 py-2 border border-gray-300 rounded-md text-center" />
     {#if type=="datetime"}
-        <input class="px-3 py-2 border border-gray-300 rounded-md w-[15%]"
-            type="number" name="h-{name}" value={value}/>
-        <input class="px-3 py-2 border border-gray-300 rounded-md w-[15%]"
-            type="number" name="i-{name}" value={value}/>
-        <input class="px-3 py-2 border border-gray-300 rounded-md w-[15%]"
-            type="number" name="s-{name}" value={value}/>
+        <input type="number" placeholder="HH" min="0" max="23" bind:value={h} class="px-3 py-2 border border-gray-300 rounded-md text-center" />
+        <input type="number" placeholder="MM" min="0" max="59" bind:value={i} class="px-3 py-2 border border-gray-300 rounded-md text-center" />
+        <input type="number" placeholder="SS" min="0" max="59" bind:value={s} class="px-3 py-2 border border-gray-300 rounded-md text-center" />
     {/if}
     </div>
 </div>
@@ -65,14 +113,31 @@
 </div>
 {/if}
 {#if type=="multi-select"}
-<div>
+<div class="{style}">
     <label class="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-    <select class="w-full px-3 py-2 border border-gray-300 rounded-md"
-        name={name}  bind:value={value} multiple>
+    <input type="hidden" name={name} value={JSON.stringify(Array.isArray(value) ? value : [])}/>
+    <div class="border border-gray-300 rounded-md divide-y divide-gray-100">
         {#each Object.entries(options as Record<string,string>) as [key, v]}
-            <option selected={ (value).indexOf(v)>=0 ? true : false} value={key} >{v}</option>
+            {@const checked = Array.isArray(value) && value.includes(key)}
+            <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-50">
+                <input class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    type="checkbox" value={key} {checked}
+                    onchange={(e) => {
+                        const v = Array.isArray(value) ? [...value] : [];
+                        if ((e.target as HTMLInputElement).checked) {
+                            if (!v.includes(key)) v.push(key);
+                        } else {
+                            const idx = v.indexOf(key);
+                            if (idx >= 0) v.splice(idx, 1);
+                        }
+                        value = v;
+                        onChange?.();
+                    }}
+                />
+                <span class="text-sm text-gray-800">{v}</span>
+            </label>
         {/each}
-    </select>
+    </div>
 </div>
 {/if}
 {#if type=="checkbox"}

@@ -3,7 +3,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/db/db';
 import { sendOTP, validateOTP } from '$lib/auth/otp';
 import { sessionManager } from '$lib/auth/session';
-import { logAuthEvent, logLoginSuccess, logLoginFailed } from '$lib/audit/auth-logger';
+import { logAudit } from '$lib/audit/logger';
 import { useLogger } from '@ak-sara/fbao/foundation';
 import { ObjectId } from 'mongodb';
 
@@ -52,12 +52,7 @@ export const actions: Actions = {
 		}
 
 		// Log OTP sent
-		await logAuthEvent({
-			eventType: 'login_otp_sent',
-			identityId: identity?._id as string|undefined,
-			email,
-			success: true
-		});
+		await logAudit({ action: 'login_otp_sent', resource: 'sessions', identityId: identity?._id as string | undefined, details: { email } });
 
 		return {
 			otpSent: true,
@@ -79,7 +74,7 @@ export const actions: Actions = {
 		const identity = await db.identities.findOne({ email });
 
 		if (!identity) {
-			await logLoginFailed(email, 'user_not_found');
+			await logAudit({ action: 'login_failed', resource: 'sessions', status: 'failed', details: { email, reason: 'user_not_found' } });
 			return fail(400, { error: 'Email atau kode OTP tidak valid', email, otpSent: true });
 		}
 
@@ -87,7 +82,7 @@ export const actions: Actions = {
 		const verification = await validateOTP(email, otpCode, 'login');
 
 		if (!verification.isValid) {
-			await logLoginFailed(email, 'invalid_otp');
+			await logAudit({ action: 'login_failed', resource: 'sessions', status: 'failed', details: { email, reason: 'invalid_otp' } });
 			return fail(400, {
 				error: verification.error || 'Kode OTP tidak valid',
 				email,
@@ -110,20 +105,8 @@ export const actions: Actions = {
 			// Set session cookie
 			sessionManager.setSessionCookie(cookies, session.sessionId);
 
-			// Log successful login
-			await logLoginSuccess(identity._id?.toString() as string, identity.email as string, {
-				sessionId: session.sessionId,
-				method: 'otp'
-			});
-
-			// Log OTP verified
-			await logAuthEvent({
-				eventType: 'login_otp_verified',
-				identityId: identity._id?.toString() as string,
-				email,
-				success: true,
-				sessionId: session.sessionId
-			});
+			await logAudit({ action: 'login', resource: 'sessions', identityId: identity._id?.toString(), details: { email, method: 'otp', sessionId: session.sessionId } });
+			await logAudit({ action: 'login_otp_verified', resource: 'sessions', identityId: identity._id?.toString(), details: { email, sessionId: session.sessionId } });
 
 			throw redirect(303, '/');
 		} catch (error: any) {

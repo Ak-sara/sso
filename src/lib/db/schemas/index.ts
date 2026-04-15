@@ -19,12 +19,11 @@ export { orgUnitHasChildren, orgUnitHasEmployees, getOrgUnitDescendants } from '
 
 export { OrgStructureVersionSchema, type OrgStructureVersion } from './org-structure-version';
 export { SystemSettingsSchema, type SystemSettings } from './system-settings';
-export { EmployeeAssignmentsSchema, type EmployeeAssignments } from './employee-assignments';
 
 export { PositionSchema, type Position } from './position';
 export { positionIsInUse } from './position';
 
 export { SKPenempatanSchema, type SKPenempatan } from './sk-penempatan';
-export { ScimClientSchema, type ScimClient, ScimAccessTokenSchema, type ScimAccessToken, ScimAuditLogSchema, type ScimAuditLog } from './scim';
-export { EntraIDConfigSchema, type EntraIDConfig, EntraIDSyncLogSchema, type EntraIDSyncLog } from './entraid';
+export { ScimClientSchema, type ScimClient, ScimAccessTokenSchema, type ScimAccessToken } from './scim';
+export { EntraIDConfigSchema, type EntraIDConfig } from './entraid';
 export { AuditLogSchema, type AuditLog } from './audit-log';

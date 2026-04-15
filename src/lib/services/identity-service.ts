@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { useLogger } from '@ak-sara/fbao/foundation';
 import { db, type PaginationInput } from '$lib/db/db';
+import { getDB } from '$lib/db/connection';
 import type { Identity } from '$lib/db/schemas/identity';
 import { getMaskedIdentity, getMaskedIdentities } from '$lib/utils/data-masking';
 import type { MaskingConfig } from '$lib/utils/data-masking';
@@ -37,6 +38,12 @@ function toISO(v: any): string | undefined {
 
 export function serializeIdentity(doc: any): IdentitySerialized {
 	const { password: _pw, ...rest } = doc;
+	doc.assignments.map((x:any,i)=>{
+		doc.assignments[i]._id=toStr(x._id)
+		doc.assignments[i].identityId=String(x.identityId)
+		doc.assignments[i].startDate=toISO(x.startDate)
+		doc.assignments[i].endDate=toISO(x.endDate)
+	});
 	return {
 		...rest,
 		_id: toStr(doc._id) || '',
@@ -58,24 +65,6 @@ export function serializeIdentity(doc: any): IdentitySerialized {
 
 // ── Queries ────────────────────────────────────────────────────────────────
 
-export async function getAssignments(id:string): Promise<ServiceResult<any>> {
-	const result = await db.employeeAssignments.findPaginated(
-		{ page: 1, pageSize: 10, sortKey:  undefined, sortDirection: 'desc', search: undefined  } as any, 
-		{ identityId: new ObjectId(id) }
-	);
-	return {
-		ok: true, 
-		data: {
-			rows: result.items.map((u: any) => ({
-					...u,
-					_id: u._id.toString(),
-				})) as EmployeeAssignments[],
-			page: result.page,
-			pageSize: result.pageSize,
-			total: result.total,
-			totalPages: result.totalPages, 
-	} }
-}
 
 export async function listIdentities(
 	params: PaginationInput,
@@ -160,17 +149,84 @@ export async function createIdentity(
 	}
 }
 
-export async function updateIdentity(id: string, updates: Partial<Identity>): Promise<ServiceResult<null>> {
+export async function updateIdentity(id: string, updates: Partial<Identity>): Promise<ServiceResult<string>> {
 	const validation = validateBody(UpdateIdentitySchema, updates);
 	if (!validation.ok) return validation;
 
 	try {
 		const updated = await db.identities.updateById(id, { ...updates, updatedAt: new Date() } as MongoUpdate<Identity>);
 		if (!updated) return { ok: false, error: 'Identitas tidak ditemukan', status: 404 };
-		return { ok: true, data: null };
+		return { ok: true, data: `${updated?'updated':'none'}` };
 	} catch (err) {
 		log.error('Failed to update identity', { error: err, id });
 		return { ok: false, error: 'Gagal memperbarui identitas', status: 500 };
+	}
+}
+
+export async function upsertAssignment(
+	identityId: string,
+	data: Record<string, any>
+): Promise<ServiceResult<null>> {
+	try {
+		const col = getDB().collection('identities');
+		const oid = new ObjectId(identityId);
+
+		const assignment: any = {
+			identityId: oid,
+			organizationId: data.organizationId || '',
+			orgUnitId: data.orgUnitId || undefined,
+			positionId: data.positionId || undefined,
+			employeeId: data.employeeId || undefined,
+			region: data.region || undefined,
+			workLocation: data.workLocation || undefined,
+			isRemote: data.isRemote === 'true' || data.isRemote === true,
+			employmentType: data.employmentType || undefined,
+			employmentStatus: data.employmentStatus || undefined,
+			letterId: data.letterId || undefined,
+			letterNo: data.letterNo || undefined,
+			startDate: data.startDate ? new Date(data.startDate) : undefined,
+			endDate: data.endDate ? new Date(data.endDate) : undefined,
+			createdBy: data.createdBy || 'system',
+			createdAt: new Date(),
+		};
+		// strip undefined
+		for (const k of Object.keys(assignment)) {
+			if (assignment[k] === undefined) delete assignment[k];
+		}
+
+		if (data._id) {
+			const result = await col.updateOne(
+				{ _id: oid },
+				{ $set: { 'assignments.$[elem]': { ...assignment, _id: new ObjectId(data._id) } } },
+				{ arrayFilters: [{ 'elem._id': new ObjectId(data._id) }] }
+			);
+			if (result.matchedCount === 0) return { ok: false, error: 'Identity not found', status: 404 };
+		} else {
+			await col.updateOne(
+				{ _id: oid },
+				{ $push: { assignments: { ...assignment, _id: new ObjectId() } } } as any
+			);
+		}
+
+		return { ok: true, data: null };
+	} catch (err) {
+		log.error('Failed to upsert assignment', { error: err, identityId });
+		return { ok: false, error: err instanceof Error ? err.message : 'Gagal menyimpan assignment', status: 500 };
+	}
+}
+
+export async function deleteAssignment(identityId: string, assignmentId: string): Promise<ServiceResult<null>> {
+	try {
+		const col = getDB().collection('identities');
+		const result = await col.updateOne(
+			{ _id: new ObjectId(identityId) },
+			{ $pull: { assignments: { _id: new ObjectId(assignmentId) } } } as any
+		);
+		if (result.matchedCount === 0) return { ok: false, error: 'Identity not found', status: 404 };
+		return { ok: true, data: null };
+	} catch (err) {
+		log.error('Failed to delete assignment', { error: err, identityId, assignmentId });
+		return { ok: false, error: err instanceof Error ? err.message : 'Gagal menghapus assignment', status: 500 };
 	}
 }
 

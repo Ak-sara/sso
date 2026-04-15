@@ -217,7 +217,7 @@
 			<!-- pre-Header -->
 			{#if header_before} {@html header_before} {/if}
 			<!-- Search Bar -->
-			{#if searchable}				
+			{#if searchable}
 				<div class="relative flex-1">
 					<input
 						type="text"
@@ -411,7 +411,7 @@
 	</div>
 
 	<!-- Pagination -->
-	{#if !loading && paginatedData().length > 0}
+	{#if searchable && !loading && paginatedData().length > 0}
 		<div class="mt-4 flex items-center justify-between text-sm">
 			
 			<div class="flex items-center gap-2 text-sm text-gray-600">

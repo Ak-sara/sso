@@ -15,9 +15,9 @@ import type { PaginatedResult, PaginationInput } from '@ak-sara/fbao/foundation'
 import { getDB } from './connection';
 import type {
 	Identity, Organization, OrgUnit, Position, OAuthClient,
-	AuthCode, RefreshToken, OrgStructureVersion, AuditLog,
-	SystemSettings, EmployeeAssignments, SKPenempatan,
-	ScimClient, EntraIDConfig, EntraIDSyncLog,
+	AuthCode, RefreshToken, OrgStructureVersion,
+	SystemSettings, SKPenempatan,
+	ScimClient, ScimAccessToken, EntraIDConfig,
 } from './schemas';
 
 // Re-export for consumers that import types from here
@@ -39,15 +39,13 @@ export const lazy = () => getDB();
 7. auth_codes
 8. refresh_tokens
 9. scim_clients
+10. scim_access_tokens
 
-10. audit_logs
 11. system_settings
 12. entraid_configs
 
-?. scim_audit_logs
-?. scim_access_tokens
-?. audit_log
-?. sessions
+?. audit_log  -> FBA managed (AuditLogger)
+?. sessions   -> FBA managed (MongoSessionManager)
  */
 export const db = {
 	identities: new Repository<Identity>(lazy, 'identities'),
@@ -60,13 +58,9 @@ export const db = {
 	authCodes: new Repository<AuthCode>(lazy, 'auth_codes'),
 	refreshTokens: new Repository<RefreshToken>(lazy, 'refresh_tokens'),
 	scimClients: new Repository<ScimClient>(lazy, 'scim_clients'),
-
-	auditLogs: new Repository<AuditLog>(lazy, 'audit_logs'),
+	scimAccessTokens: new Repository<ScimAccessToken>(lazy, 'scim_access_tokens'),
 
 	systemSettings: new Repository<SystemSettings>(lazy, 'system_settings'),
 	entraidConfigs: new Repository<EntraIDConfig>(lazy, 'entraid_configs'),
-
-	entraidSyncLogs: new Repository<EntraIDSyncLog>(lazy, 'entraid_sync_logs'), /* ?? */
-	skPenempatan: new Repository<SKPenempatan>(lazy, 'sk_penempatan'), 			/* ?? */
-	employeeAssignments: new Repository<EmployeeAssignments>(lazy, 'employee_assignments'), /* ?? */
+	skPenempatan: new Repository<SKPenempatan>(lazy, 'sk_penempatan'),
 };

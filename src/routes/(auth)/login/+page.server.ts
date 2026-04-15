@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { passwordService } from '$lib/auth/password';
 import { sessionManager } from '$lib/auth/session';
-import { logAuth } from '$lib/audit/logger';
+import { logAudit } from '$lib/audit/logger';
 import { findIdentityByEmailOrNIK, updateLastLogin } from '$lib/db/schemas';
 import { getSetting } from '$lib/services/settings-service';
 import { getBranding } from '$lib/branding';
@@ -44,12 +44,7 @@ export const actions: Actions = {
 
 		if (!identity) {
 			// Log failed login attempt
-			await logAuth('login_failed', undefined, {
-				ipAddress,
-				userAgent,
-				username,
-				reason: 'Identity not found'
-			});
+			await logAudit({ action: 'login_failed', resource: 'sessions', status: 'failed', details: { username, reason: 'Identity not found' }, ipAddress, userAgent });
 
 			return fail(401, {
 				error: `Username/Email/NIK atau password salah`,
@@ -59,13 +54,7 @@ export const actions: Actions = {
 
 		if (!identity.isActive) {
 			// Log failed login attempt (inactive account)
-			await logAuth('login_failed', identity._id!.toString(), {
-				ipAddress,
-				userAgent,
-				email: identity.email,
-				username: identity.username,
-				reason: 'Account inactive'
-			});
+			await logAudit({ action: 'login_failed', resource: 'sessions', identityId: identity._id!.toString(), status: 'failed', details: { email: identity.email, username: identity.username, reason: 'Account inactive' }, ipAddress, userAgent });
 
 			return fail(403, {
 				error: 'Akun Anda tidak aktif. Silakan hubungi administrator.',
@@ -77,13 +66,7 @@ export const actions: Actions = {
 
 		if (!isPasswordValid) {
 			// Log failed login attempt (wrong password)
-			await logAuth('login_failed', identity._id!.toString(), {
-				ipAddress,
-				userAgent,
-				email: identity.email,
-				username: identity.username,
-				reason: 'Invalid password'
-			});
+			await logAudit({ action: 'login_failed', resource: 'sessions', identityId: identity._id!.toString(), status: 'failed', details: { email: identity.email, username: identity.username, reason: 'Invalid password' }, ipAddress, userAgent });
 
 			return fail(401, {
 				error: 'Username/Email/NIK atau password salah',
@@ -106,12 +89,7 @@ export const actions: Actions = {
 		sessionManager.setSessionCookie(cookies, session.sessionId);
 
 		// Log successful login
-		await logAuth('login', identity._id!.toString(), {
-			ipAddress,
-			userAgent,
-			email: identity.email,
-			username: identity.username
-		});
+		await logAudit({ action: 'login', resource: 'sessions', identityId: identity._id!.toString(), details: { email: identity.email, username: identity.username }, ipAddress, userAgent });
 
 		throw redirect(302, '/');
 	},

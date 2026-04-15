@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { sessionManager } from '$lib/auth/session';
-import { logAuth } from '$lib/audit/logger';
+import { logAudit } from '$lib/audit/logger';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ cookies, locals, getClientAddress }) => {
@@ -14,12 +14,7 @@ export const POST: RequestHandler = async ({ cookies, locals, getClientAddress }
 
 	// Log logout
 	if (identityId) {
-		await logAuth('logout', identityId, {
-			ipAddress: getClientAddress(),
-			userAgent: locals.vars.user_agent || undefined,
-			email: locals.user?.email,
-			username: locals.user?.username
-		});
+		await logAudit({ action: 'logout', resource: 'sessions', identityId, details: { email: locals.user?.email, username: locals.user?.username }, ipAddress: getClientAddress(), userAgent: locals.vars.user_agent || undefined });
 	}
 
 	throw redirect(302, '/login');

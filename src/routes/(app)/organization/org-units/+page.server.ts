@@ -22,7 +22,6 @@ export const load: PageServerLoad = async ({ locals, depends }) => {
 		listOrgUnits(params, locals.activeRealmId?.toString()),
 		getOrganizationOptions()
 	]);
-	console.log(result.items)
 	return {
 		orgUnits: result.items,
 		organizationOptions,

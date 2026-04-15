@@ -2,7 +2,7 @@ import { setupFBA } from '$lib/setup';
 import '$lib/auth/roles';
 import { connectDB } from '$lib/db/connection';
 import { sessionManager } from '$lib/auth/session';
-import { extractRequestMetadata, logAccessControl } from '$lib/audit/logger';
+import { extractRequestMetadata, logAudit } from '$lib/audit/logger';
 import { sequence } from '@sveltejs/kit/hooks';
 import { sanitizeObject, createSanitizeHook, createRateLimitHook, useLogger } from '@ak-sara/fbao/foundation';
 import type { Handle } from '@sveltejs/kit';
@@ -107,16 +107,7 @@ const mainHandle: Handle = async ({ event, resolve }) => {
 		const identityId = event.locals.user?.userId?.toString();
 
 		// Log access denied event
-		await logAccessControl(
-			'access_denied',
-			identityId,
-			{
-				resource: event.url.pathname,
-				reason: response.status === 401 ? 'Unauthorized' : 'Forbidden',
-				...requestMetadata,
-				organizationId: event.locals.user?.organizationId
-			}
-		);
+		await logAudit({ action: 'access_denied', resource: 'sessions', identityId, status: 'denied', details: { resource: event.url.pathname, reason: response.status === 401 ? 'Unauthorized' : 'Forbidden' }, organizationId: event.locals.user?.organizationId, ...requestMetadata });
 	}
 	return response;
 };

@@ -1,6 +1,8 @@
 import { fail, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/db/db';
+import { listAuditLogs } from '$lib/services/audit-service';
+import { logAudit } from '$lib/audit/logger';
 import { testEntraIDConnection } from '$lib/entraid/microsoft-graph';
 
 export const load: PageServerLoad = async () => {
@@ -8,16 +10,15 @@ export const load: PageServerLoad = async () => {
 	if (!org) return { config: null, organizationId: null, syncHistory: [] };
 
 	const config = await db.entraidConfigs.findOne({ organizationId: org._id.toString() } as any) as any;
-	const syncHistory = await db.entraidSyncLogs.find(
-		{ organizationId: org._id.toString() } as any,
-		{ createdAt: -1 },
-		10
+	const { items: syncHistory } = await listAuditLogs(
+		{ page: 1, pageSize: 10 },
+		{ action: { $in: ['sync_completed', 'sync_failed', 'sync_started'] }, organizationId: org._id.toString() }
 	);
 
 	return {
 		config: config ? { ...config, _id: config._id?.toString(), clientSecret: '••••••••••••' } : null,
 		organizationId: org._id.toString(),
-		syncHistory: syncHistory.map((log: any) => ({ ...log, _id: log._id?.toString() }))
+		syncHistory
 	};
 };
 
@@ -115,12 +116,7 @@ export const actions: Actions = {
 			if (!config) return fail(400, { error: 'EntraID configuration not found.' });
 			if (!config.isConnected) return fail(400, { error: 'Not connected to EntraID.' });
 
-			const syncId = `sync-${Date.now()}`;
-			await db.entraidSyncLogs.insertOne({
-				syncId, organizationId, type: 'full', status: 'pending',
-				startedAt: new Date(), totalRecords: 0, successCount: 0, failureCount: 0,
-				errors: [], triggeredBy: 'manual'
-			} as any);
+			await logAudit({ action: 'sync_started', resource: 'sync', identityId: 'manual', organizationId, details: { syncType: 'entra_id_full' } });
 
 			return { success: true, message: 'Sync initiated!', syncId };
 		} catch (err: any) {
