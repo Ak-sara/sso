@@ -64,47 +64,48 @@
 </script>
 
 {#if type=="info"}
-<div class="grid grid-cols-2 gap-4 my-2">
-    <span class="font-medium text-gray-500">{label}</span>
+<div class="grid grid-cols-[1fr_3fr] my-1 items-center">
+    <span class="text-xs text-gray-500">{label}</span>
 	<span class="text-gray-900">{value}</span>
 </div>
 {/if}
 {#if type=="avatar"}
     <div class="{style}">
-        <img src="/1.gif" class="w-[120px] object-cover rounded-[50%]"/>
+        <img src="/1.gif" class="w-[110px] object-cover rounded-[50%]"/>
     </div>
 {/if}
 {#if type=="text"}
 <div class="{style}">
-    <label class="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-    <input class="w-full px-3 py-2 border border-gray-300 rounded-md"
+    <label class="block text-xs font-medium text-gray-700 mt-1 ml-1 mb-[-.1em]">{label}</label>
+    <input class="w-full px-2 py-1 border border-gray-300 rounded-md"
         type="text" name={name} bind:value={value}/>
 </div>
 {/if}
 {#if type=="date" || type=="datetime"}
 <div class="{style}">
-    <label class="block text-sm font-medium text-gray-700 mb-1">{label}
+    <label class="flex justify-between text-xs font-medium text-gray-700 mt-1 ml-1 mb-[-.1em]">
+        {label}
         {#if formatted==''}
-        <a class="text-sm text-blue-200 hover:cursor-pointer" onclick={today}>Today</a>
+        <a class="text-xs text-blue-700 hover:cursor-pointer" onclick={today}>Today</a>
         {/if}
     </label>
     <input type="hidden" name={name} value={formatted}/>
     <div class="grid grid-cols-{datecols} gap-2">
-        <input type="number" placeholder="DD"   min="1" max="31"   bind:value={d} class="px-3 py-2 border border-gray-300 rounded-md text-center" />
-        <input type="number" placeholder="MM"   min="1" max="12"   bind:value={m} class="px-3 py-2 border border-gray-300 rounded-md text-center" />
-        <input type="number" placeholder="YYYY" min="1900" max="2999" bind:value={y} class="px-3 py-2 border border-gray-300 rounded-md text-center" />
+        <input type="number" placeholder="DD"   min="1" max="31" bind:value={d} class="px-2 py-1 border border-gray-300 rounded-md text-center" />
+        <input type="number" placeholder="MM"   min="1" max="12" bind:value={m} class="px-2 py-1 border border-gray-300 rounded-md text-center" />
+        <input type="number" placeholder="YYYY" min="1900" max="2999" bind:value={y} class="px-2 py-1 border border-gray-300 rounded-md text-center" />
     {#if type=="datetime"}
-        <input type="number" placeholder="HH" min="0" max="23" bind:value={h} class="px-3 py-2 border border-gray-300 rounded-md text-center" />
-        <input type="number" placeholder="MM" min="0" max="59" bind:value={i} class="px-3 py-2 border border-gray-300 rounded-md text-center" />
-        <input type="number" placeholder="SS" min="0" max="59" bind:value={s} class="px-3 py-2 border border-gray-300 rounded-md text-center" />
+        <input type="number" placeholder="HH" min="0" max="23" bind:value={h} class="px-2 py-1 border border-gray-300 rounded-md text-center" />
+        <input type="number" placeholder="MM" min="0" max="59" bind:value={i} class="px-2 py-1 border border-gray-300 rounded-md text-center" />
+        <input type="number" placeholder="SS" min="0" max="59" bind:value={s} class="px-2 py-1 border border-gray-300 rounded-md text-center" />
     {/if}
     </div>
 </div>
 {/if}
 {#if type=="select"}
 <div>
-    <label class="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-    <select class="w-full px-3 py-2 border border-gray-300 rounded-md"
+    <label class="block text-xs font-medium text-gray-700 mt-1 ml-1 mb-[-.1em]">{label}</label>
+    <select class="w-full px-2 py-1 border border-gray-300 rounded-md"
         name={name} bind:value={value} required >
         {#each Object.entries(options as Record<string,string>) as [key, v]}
             <option value={key} selected={ (v===value as string) ? true : false} >{v}</option>
@@ -114,12 +115,12 @@
 {/if}
 {#if type=="multi-select"}
 <div class="{style}">
-    <label class="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+    <label class="block text-xs font-medium text-gray-700 mt-1 ml-1 mb-[-.1em]">{label}</label>
     <input type="hidden" name={name} value={JSON.stringify(Array.isArray(value) ? value : [])}/>
     <div class="border border-gray-300 rounded-md divide-y divide-gray-100">
         {#each Object.entries(options as Record<string,string>) as [key, v]}
             {@const checked = Array.isArray(value) && value.includes(key)}
-            <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-50">
+            <label class="flex items-center gap-2 px-2 py-1 cursor-pointer hover:bg-gray-50">
                 <input class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                     type="checkbox" value={key} {checked}
                     onchange={(e) => {
@@ -142,8 +143,8 @@
 {/if}
 {#if type=="checkbox"}
 <div>
-    <label class="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-    <span class="flex items-center px-3 py-3">
+    <label class="block text-xs font-medium text-gray-700 mt-1 ml-1 mb-[-.1em]">{label}</label>
+    <span class="flex items-center p-2">
         <input class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
             type="checkbox" name={name} bind:checked={value} />
         <span class="ml-2 text-sm text-gray-900">{label}</span>

@@ -22,6 +22,10 @@
 	}
 
 	interface Props {
+		header_before?: boolean|string,
+		header_actions?: () => HeaderActions[],
+		cssClass?:string,
+
 		data: T[];
 		columns: Column<T>[];
 		// Pagination
@@ -29,8 +33,6 @@
 		pageSize?: number;
 		totalItems?: number;
 		pageSizeOptions?: number[];
-		header_before?: boolean|string,
-		header_actions?: () => HeaderActions[],
 		// Search
 		searchable?: boolean;
 		searchPlaceholder?: string;
@@ -62,24 +64,30 @@
 	}
 
 	let {
+		header_before=false,
+		header_actions,
+		cssClass="",
 		data = [],
 		columns,
+
 		page = 1,
 		pageSize = 10,
 		totalItems = 0,
 		pageSizeOptions = [10, 25, 50, 100],
-		header_before=false,
-		header_actions,
+
 		searchable = true,
 		searchPlaceholder = 'Find...',
 		searchKeys = [],
+
 		sortKey = $bindable(''),
 		sortDirection = $bindable('asc'),
+
 		striped = true,
 		hoverable = true,
 		bordered = false,
 		compact = false,
 		showActions = false,
+
 		actionColumn,
 		actions,
 		exportable = false,
@@ -211,7 +219,7 @@
 	});
 </script>
 
-<div class="datatable-container">
+<div class="datatable-container {cssClass}">
 	<div class="flex justify-between items-center mb-4 gap-4">
 		<div class="flex flex-1 items-center gap-4">
 			<!-- pre-Header -->

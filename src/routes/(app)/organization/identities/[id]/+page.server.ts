@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/db/db';
-import { error, fail, redirect, isRedirect, isHttpError } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { hash } from '@node-rs/argon2';
 import { logAudit } from '$lib/audit/logger';
 import { getMaskingConfig } from '$lib/utils/masking-helper';
@@ -88,7 +88,7 @@ export const actions: Actions = {
 			throw redirect(303, `/organization/identities/${result.data._id}`);
 		} catch (err) {
 			if (err instanceof Response) throw err;
-			return fail(500, { error: 'Gagal membuat identitas' });
+			return fail(500, { error: 'Fail to create identity' });
 		}
 	},
 

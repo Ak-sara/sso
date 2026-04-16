@@ -8,7 +8,6 @@ import type { MaskingConfig } from '$lib/utils/data-masking';
 import type { ServiceResult, MongoFilter, MongoUpdate } from './types';
 import { ObjectId, type Filter } from 'mongodb';
 import { validateBody, nonEmptyString, optionalString, emailField, booleanFromString } from '$lib/utils/validate';
-import type { EmployeeAssignments } from '$lib/db/schemas';
 
 const log = useLogger({ module: 'service:identity' });
 
@@ -38,7 +37,7 @@ function toISO(v: any): string | undefined {
 
 export function serializeIdentity(doc: any): IdentitySerialized {
 	const { password: _pw, ...rest } = doc;
-	doc.assignments.map((x:any,i)=>{
+	doc.assignments?.map((x:any,i)=>{
 		doc.assignments[i]._id=toStr(x._id)
 		doc.assignments[i].identityId=String(x.identityId)
 		doc.assignments[i].startDate=toISO(x.startDate)
@@ -64,7 +63,6 @@ export function serializeIdentity(doc: any): IdentitySerialized {
 }
 
 // ── Queries ────────────────────────────────────────────────────────────────
-
 
 export async function listIdentities(
 	params: PaginationInput,

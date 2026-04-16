@@ -1,20 +1,17 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import type { PageData, ActionData } from './$types';
+import { enhance } from '$app/forms';
+import FormModal from '$lib/components/FormModal.svelte';
+import type { PageData, ActionData } from './$types';
 
-	let { data, form }: { data: PageData; form?: ActionData } = $props();
+let { data, form = $bindable() }: { data: PageData; form?: ActionData } = $props();
+
 </script>
 
-<svelte:head>
-	<title>Change Email - Aksara SSO</title>
-</svelte:head>
+<FormModal wide onClose={() => { form = null; }} 
+	title={`Change Email Address` }
+	subtitle="Update your email address with OTP verification" >
 
-<div class="space-y-6">
-	<!-- Header -->
-	<div>
-		<h2 class="text-2xl font-bold text-gray-900">Change Email Address</h2>
-		<p class="text-sm text-gray-500 mt-1">Update your email address with OTP verification</p>
-	</div>
+<div class="grid p-2 gap-4">
 
 	<!-- Success/Error Messages -->
 	{#if form?.success}
@@ -34,7 +31,21 @@
 			{form.message}
 		</div>
 	{/if}
-
+	<!-- Security Notice -->
+	<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+		<div class="flex items-start gap-3">
+			<span class="text-2xl">⚠️</span>
+			<div>
+				<h4 class="text-sm font-semibold text-yellow-900 mb-1">Important Security Notice</h4>
+				<ul class="text-sm text-yellow-800 space-y-1">
+					<li>• Changing your email will update your login credentials</li>
+					<li>• You'll receive a verification code at the new email address</li>
+					<li>• All active sessions will remain active with the new email</li>
+					<li>• Make sure you have access to the new email before proceeding</li>
+				</ul>
+			</div>
+		</div>
+	</div>
 	<!-- Current Email -->
 	<div class="bg-white shadow rounded-lg p-6">
 		<h3 class="text-lg font-medium text-gray-900 mb-4">Current Email</h3>
@@ -57,25 +68,20 @@
 					<label for="newEmail" class="block text-sm font-medium text-gray-700 mb-1">
 						New Email Address
 					</label>
-					<input
+					<input class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
 						type="email"
 						id="newEmail"
 						name="newEmail"
 						value={form?.newEmail || ''}
 						required
-						placeholder="new.email@example.com"
-						class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-					/>
+						placeholder="new.email@example.com" />
 					<p class="text-xs text-gray-500 mt-1">
 						We'll send a verification code to this email
 					</p>
 				</div>
 
-				<button
-					type="submit"
-					class="w-full px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700"
-				>
-					Send Verification Code
+				<button class="w-full px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700"
+					type="submit"> Send Verification Code
 				</button>
 			</form>
 		{:else}
@@ -99,51 +105,28 @@
 					<label for="otpCode" class="block text-sm font-medium text-gray-700 mb-1">
 						Verification Code
 					</label>
-					<input
+					<input class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
 						type="text"
 						id="otpCode"
 						name="otpCode"
 						required
 						maxlength="6"
-						placeholder="000000"
-						class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-					/>
+						placeholder="000000" />
 					<p class="text-xs text-gray-500 mt-1">
 						Enter the 6-digit code sent to your new email
 					</p>
 				</div>
 
 				<div class="flex gap-3">
-					<a
-						href="/profile/change-email"
-						class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 text-center"
-					>
-						Cancel
-					</a>
-					<button
-						type="submit"
-						class="flex-1 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700"
-					>
+					<a class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 text-center"
+						href="/profile/change-email" > Cancel </a>
+					<button class="flex-1 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700"
+						type="submit" >
 						Verify and Change
 					</button>
 				</div>
 			</form>
 		{/if}
 	</div>
-
-	<!-- Security Notice -->
-	<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-		<div class="flex items-start gap-3">
-			<span class="text-2xl">⚠️</span>
-			<div>
-				<h4 class="text-sm font-semibold text-yellow-900 mb-1">Important Security Notice</h4>
-				<ul class="text-sm text-yellow-800 space-y-1">
-					<li>• Changing your email will update your login credentials</li>
-					<li>• You'll receive a verification code at the new email address</li>
-					<li>• All active sessions will remain active with the new email</li>
-					<li>• Make sure you have access to the new email before proceeding</li>
-				</ul>
-			</div>
-		</div>
-	</div>
 </div>
+</FormModal>
