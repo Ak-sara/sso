@@ -143,7 +143,7 @@ export const actions = {
 				createdBy: 'system'
 			} as any);
 
-			throw redirect(303, `/sk-penempatan/${(insertId as any)._id}`);
+			throw redirect(303, `/organization/sk-penempatan/${(insertId as any)._id}`);
 		} catch (err) {
 			if (err instanceof Response) throw err;
 			return fail(500, { error: 'Gagal membuat SK Penempatan' });

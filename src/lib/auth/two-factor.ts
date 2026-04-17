@@ -3,12 +3,35 @@
  * Provides OTP-based 2FA for enhanced security
  */
 
+import { ObjectId } from 'mongodb';
 import { getDB } from '$lib/db/connection';
-import { sendOTP, validateOTP } from './otp';
+import { validateOTP } from './otp';
 import { logAudit } from '$lib/audit/logger';
 import { useLogger } from '@ak-sara/fbao/foundation';
 
 const log = useLogger({ module: 'auth:2fa' });
+
+/**
+ * Get 2FA status for a user
+ */
+export async function get2FAStatus(identityId: string) {
+	const db = getDB();
+
+	const identity = await db.collection('identities').findOne(
+		{ _id: new ObjectId(identityId) },
+		{ projection: { twoFactor: 1, email: 1 } }
+	);
+
+	if (!identity) { return null; }
+
+	return {
+		enabled: identity.twoFactor?.enabled || false,
+		method: identity.twoFactor?.method || null,
+		enabledAt: identity.twoFactor?.enabledAt || null,
+		backupCodesCount: identity.twoFactor?.backupCodes?.length || 0,
+		email: identity.email
+	};
+}
 
 /**
  * Enable 2FA for a user
@@ -19,7 +42,7 @@ export async function enable2FA(identityId: string, email: string): Promise<{ su
 	try {
 		// Update identity to enable 2FA
 		const result = await db.collection('identities').updateOne(
-			{ _id: { $oid: identityId } },
+			{ _id: new ObjectId(identityId) },
 			{
 				$set: {
 					'twoFactor.enabled': true,
@@ -53,7 +76,7 @@ export async function disable2FA(identityId: string, email: string): Promise<{ s
 	try {
 		// Update identity to disable 2FA
 		const result = await db.collection('identities').updateOne(
-			{ _id: { $oid: identityId } },
+			{ _id: new ObjectId(identityId) },
 			{
 				$set: {
 					'twoFactor.enabled': false,
@@ -84,28 +107,11 @@ export async function is2FAEnabled(identityId: string): Promise<boolean> {
 	const db = getDB();
 
 	const identity = await db.collection('identities').findOne(
-		{ _id: { $oid: identityId } },
+		{ _id: new ObjectId(identityId) },
 		{ projection: { twoFactor: 1 } }
 	);
 
 	return identity?.twoFactor?.enabled === true;
-}
-
-/**
- * Send 2FA OTP code
- */
-export async function send2FAOTP(
-	email: string,
-	firstName?: string
-): Promise<{ success: boolean; error?: string }> {
-	const result = await sendOTP({
-		email,
-		purpose: '2fa',
-		firstName,
-		expiryMinutes: 10
-	});
-
-	return result;
 }
 
 /**
@@ -148,7 +154,7 @@ export async function generateBackupCodes(identityId: string): Promise<string[]>
 
 	// Store hashed codes
 	await db.collection('identities').updateOne(
-		{ _id: { $oid: identityId } },
+		{ _id: new ObjectId(identityId) },
 		{
 			$set: {
 				'twoFactor.backupCodes': hashedCodes,
@@ -183,7 +189,7 @@ export async function verifyBackupCode(identityId: string, code: string): Promis
 
 	// Remove used backup code
 	await db.collection('identities').updateOne(
-		{ _id: { $oid: identityId } },
+		{ _id: new ObjectId(identityId) },
 		{
 			$pull: {
 				'twoFactor.backupCodes': hashedCode
@@ -195,28 +201,4 @@ export async function verifyBackupCode(identityId: string, code: string): Promis
 	);
 
 	return true;
-}
-
-/**
- * Get 2FA status for a user
- */
-export async function get2FAStatus(identityId: string) {
-	const db = getDB();
-
-	const identity = await db.collection('identities').findOne(
-		{ _id: { $oid: identityId } },
-		{ projection: { twoFactor: 1, email: 1 } }
-	);
-
-	if (!identity) {
-		return null;
-	}
-
-	return {
-		enabled: identity.twoFactor?.enabled || false,
-		method: identity.twoFactor?.method || null,
-		enabledAt: identity.twoFactor?.enabledAt || null,
-		backupCodesCount: identity.twoFactor?.backupCodes?.length || 0,
-		email: identity.email
-	};
 }

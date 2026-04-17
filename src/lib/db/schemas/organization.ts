@@ -38,6 +38,17 @@ export const OrganizationSchema = z.object({
 		supportUrl: z.string().url().optional(),
 	}).optional(),
 
+	// Per-realm email transport (overrides system_settings when set)
+	emailTransport: z.object({
+		provider: z.enum(['gmail', 'microsoft365', 'sendgrid', 'nodemailer', 'resend', 'microsoft_graph']).optional(),
+		gmail: z.object({ user: z.string(), appPassword: z.string(), fromName: z.string() }).optional(),
+		microsoft365: z.object({ user: z.string(), appPassword: z.string(), fromName: z.string() }).optional(),
+		sendgrid: z.object({ apiKey: z.string(), fromEmail: z.string(), fromName: z.string() }).optional(),
+		nodemailer: z.object({ host: z.string(), port: z.number(), secure: z.boolean(), user: z.string(), password: z.string(), fromEmail: z.string(), fromName: z.string() }).optional(),
+		resend: z.object({ apiKey: z.string(), fromEmail: z.string(), fromName: z.string() }).optional(),
+		microsoft_graph: z.object({ tenantId: z.string(), clientId: z.string(), clientSecret: z.string(), fromEmail: z.string(), fromName: z.string() }).optional(),
+	}).optional(),
+
 	createdAt: z.date().default(() => new Date()),
 	updatedAt: z.date().default(() => new Date()),
 });

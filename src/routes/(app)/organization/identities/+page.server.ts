@@ -2,19 +2,18 @@ import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { hash } from '@node-rs/argon2';
 import { getMaskingConfig } from '$lib/utils/masking-helper';
-import { sanitizePaginationParams } from '$lib/utils/pagination';
 import { listIdentities, getTabCounts, deleteIdentity, createIdentity } from '$lib/services/identity-service';
 
 export const load: PageServerLoad = async ({ locals, depends }) => {
 	depends('app:pagination');
 	const tab = locals.query?.tab || 'employee';
-	const params = sanitizePaginationParams({
-		page: Number(locals.query?.page) || undefined,
-		pageSize: Number(locals.query?.pageSize) || undefined,
-		sortKey: locals.query?.sortKey || undefined,
-		sortDirection: locals.query?.sortDirection as 'asc' | 'desc' | undefined,
-		search: locals.query?.search || undefined
-	});
+	const params = {
+		page: Number(locals.query?.page) || 1,
+		pageSize: Number(locals.query?.pageSize) || 10,
+		sortKey: locals.query?.sortKey,
+		sortDirection: (locals.query?.sortDirection as 'asc' | 'desc') || 'asc',
+		search: locals.query?.search
+	};
 
 	const realmFilter: Record<string, any> = {};
 	if (locals.activeRealmId) realmFilter.organizationId = locals.activeRealmId;

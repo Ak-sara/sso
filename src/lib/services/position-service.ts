@@ -1,5 +1,6 @@
 import { useLogger } from '@ak-sara/fbao/foundation';
 import { db } from '$lib/db/db';
+import type { PaginationInput, PaginatedResult } from '$lib/db/db';
 import type { Position } from '$lib/db/schemas/position';
 import type { MongoFilter, MongoUpdate } from './types';
 
@@ -24,8 +25,20 @@ export function serializePosition(doc: any): PositionSerialized {
 
 // ── Queries ────────────────────────────────────────────────────────────────
 
-export async function listPositions(filter: Record<string, any> = {}): Promise<PositionSerialized[]> {
-	const positions = await db.positions.find(filter, { level: 1, name: 1 });
+export async function listPositions(filter?: Record<string, any>): Promise<PositionSerialized[]>;
+export async function listPositions(params: PaginationInput, filter?: Record<string, any>): Promise<PaginatedResult<PositionSerialized>>;
+export async function listPositions(
+	paramsOrFilter?: PaginationInput | Record<string, any>,
+	filter: Record<string, any> = {}
+): Promise<PositionSerialized[] | PaginatedResult<PositionSerialized>> {
+	const isPaginated = paramsOrFilter !== undefined && 'pageSize' in paramsOrFilter;
+
+	if (isPaginated) {
+		const result = await db.positions.findPaginated(paramsOrFilter as PaginationInput, filter, ['name', 'code', 'level']);
+		return { ...result, items: (result.items as any[]).map(serializePosition) };
+	}
+
+	const positions = await db.positions.find((paramsOrFilter as Record<string, any>) ?? {}, { level: 1, name: 1 });
 	return (positions as any[]).map(serializePosition);
 }
 

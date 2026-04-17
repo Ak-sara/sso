@@ -2,12 +2,18 @@
 	import type { PageData } from './$types';
 	import DataTable from '$lib/components/DataTable.svelte';
 	import FormModal from '$lib/components/FormModal.svelte';
+	import Input from '$lib/components/Input.svelte';
 
 	let { data }: { data: PageData } = $props();
 
 	let activeTab = $state('structure');
 	let showApproveModal = $state(false);
 	let showCreateSKModal = $state(false);
+
+	// date state for Input components
+	let skDate = $state(data.version?.skDate ? new Date(data.version.skDate).toISOString().split('T')[0] : '');
+	let createSkDate = $state('');
+	let createEffectiveDate = $state('');
 
 	// Build parent code lookup map once
 	const idToCode: Record<string, string> = {};
@@ -76,7 +82,7 @@
 	<div class="flex items-center justify-between">
 		<div>
 			<div class="flex items-center space-x-3">
-				<a href="/org-structure" class="text-gray-500 hover:text-gray-700">
+				<a href="/organization/org-structure" class="text-gray-500 hover:text-gray-700">
 					← Kembali
 				</a>
 				<h2 class="text-2xl font-bold">
@@ -143,13 +149,7 @@
 				/>
 			</div>
 			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-2">Tanggal SK *</label>
-				<input
-					type="date"
-					name="skDate"
-					value={data.version.skDate ? new Date(data.version.skDate).toISOString().split('T')[0] : ''}
-					class="w-full px-3 py-2 border rounded-md"
-				/>
+				<Input type="date" name="skDate" label="Tanggal SK *" bind:value={skDate} />
 			</div>
 			<div>
 				<label class="block text-sm font-medium text-gray-700 mb-2">Ditandatangani Oleh</label>
@@ -305,7 +305,7 @@
 				<div class="space-y-3">
 					{#each data.linkedSKPenempatan as sk}
 						<a
-							href="/sk-penempatan/{sk._id}"
+							href="/organization/sk-penempatan/{sk._id}"
 							class="block p-5 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-indigo-300 transition-all"
 						>
 							<div class="flex items-start justify-between">
@@ -423,13 +423,7 @@
 						/>
 					</div>
 					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-2">Tanggal SK *</label>
-						<input
-							type="date"
-							name="skDate"
-							required
-							class="w-full px-3 py-2 border rounded-md"
-						/>
+						<Input type="date" name="skDate" label="Tanggal SK *" bind:value={createSkDate} />
 					</div>
 				</div>
 
@@ -444,13 +438,7 @@
 				</div>
 
 				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Efektif *</label>
-					<input
-						type="date"
-						name="effectiveDate"
-						required
-						class="w-full px-3 py-2 border rounded-md"
-					/>
+					<Input type="date" name="effectiveDate" label="Tanggal Efektif *" bind:value={createEffectiveDate} />
 				</div>
 
 				<div>

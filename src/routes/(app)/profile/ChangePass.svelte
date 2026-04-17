@@ -1,38 +1,29 @@
 <script lang="ts">
 import { enhance } from '$app/forms';
 import FormModal from '$lib/components/FormModal.svelte';
+import { showNotif } from '$lib/stores/notif.svelte';
 import type { ActionData } from './$types';
 
 interface Props { form?: ActionData; }
 let { form = $bindable() }: Props = $props();
 
 let isLoading = $state(false);
+
+$effect(() => {
+	if (form?.success) {
+		showNotif('success', 'Password berhasil diubah!');
+		form = null;
+	} else if (form?.error) {
+		showNotif('error', form.error);
+	}
+});
 </script>
 
-<FormModal wide onClose={() => { form = null; }} title={'Change Password'} 
+<FormModal wide onClose={() => { form = null; }} title={'Change Password'}
 	subtitle="Pastikan password baru Anda kuat dan aman">
 
 	<!-- Form Content -->
 	<div class="grid p-2 gap-4">
-		<!-- Success Message -->
-		{#if form?.success}
-			<div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-				<div class="flex items-start">
-					<span class="text-green-500 mr-2">✓</span>
-					<p class="text-sm text-green-700">Password berhasil diubah!</p>
-				</div>
-			</div>
-		{/if}
-
-		<!-- Error Message -->
-		{#if form?.error}
-			<div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-				<div class="flex items-start">
-					<span class="text-red-500 mr-2">⚠️</span>
-					<p class="text-sm text-red-700">{form.error}</p>
-				</div>
-			</div>
-		{/if}
 
 		<!-- Password Requirements Info -->
 		<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">

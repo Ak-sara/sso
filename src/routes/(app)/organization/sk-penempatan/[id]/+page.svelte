@@ -1,338 +1,241 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
+	import { tick } from 'svelte';
+	import DataTable from '$lib/components/DataTable.svelte';
+	import Input from '$lib/components/Input.svelte';
+	import ReassignmentModal from './ReassignmentModal.svelte';
+	import { showNotif } from '$lib/stores/notif.svelte';
+	import { downloadCSVTemplate, getStatusBadge, getStatusLabel, formatDateID } from '$lib/services/sk-penempatan-utils';
 
 	let { data }: { data: PageData } = $props();
+	const { sk, directors } = $derived(data);
+	const isNew = $derived(!sk);
 
-	let activeTab = $state('info');
-	let showImportModal = $state(false);
+	let activeTab = $state<'info' | 'employees'>('info');
+	let csvFile = $state<File | null>(null);
+	let actReassignment: { index: number; data: any } | null = $state(null);
+	let deleteFormEl: HTMLFormElement;
+	let pendingDeleteIndex = $state(-1);
+
+	let directorOptions = $derived(
+		Object.fromEntries(directors.map((d: any) => [d.employeeId, `${d.fullName} - ${d.positionName}`]))
+	);
+
+	// Local editable copies for info form
+	let skNumber = $state(sk?.skNumber ?? '');
+	let skTitle = $state(sk?.skTitle ?? '');
+	let skDate = $state(sk?.skDate ? new Date(sk.skDate).toISOString().split('T')[0] : '');
+	let effectiveDate = $state(sk?.effectiveDate ? new Date(sk.effectiveDate).toISOString().split('T')[0] : '');
+	let signedBy = $state(sk?.signedBy ?? '');
+	let description = $state(sk?.description ?? '');
+
+	async function handleDelete(index: number) {
+		if (!confirm('Hapus data karyawan ini dari SK?')) return;
+		pendingDeleteIndex = index;
+		await tick();
+		deleteFormEl.requestSubmit();
+	}
+
+	const reassignmentColumns = [
+		{ key: 'employeeId', label: 'NIK', sortable: false },
+		{ key: 'employeeName', label: 'Nama', sortable: false },
+		{
+			key: 'previousOrgUnitName', label: 'Dari Unit', sortable: false,
+			render: (v: any) => `<span class="text-xs text-gray-600">${v ?? '-'}</span>`
+		},
+		{
+			key: 'newOrgUnitName', label: 'Ke Unit', sortable: false,
+			render: (v: any) => `<span class="text-xs font-medium">${v ?? '-'}</span>`
+		},
+		{
+			key: 'newPositionName', label: 'Posisi Baru', sortable: false,
+			render: (v: any) => `<span class="text-xs">${v ?? '-'}</span>`
+		},
+		{
+			key: 'reason', label: 'Alasan', sortable: false,
+			render: (v: any) => `<span class="text-xs text-gray-500">${v ?? '-'}</span>`
+		},
+		{
+			key: 'executed', label: 'Status', sortable: false,
+			render: (v: boolean) => v
+				? `<span class="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">✓ Executed</span>`
+				: `<span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">Pending</span>`
+		}
+	];
 </script>
 
-<div class="space-y-6">
-	<!-- Header -->
-	<div class="flex items-center justify-between">
-		<div>
-			<div class="flex items-center space-x-3">
-				{#if data.orgStructureVersion}
-					<a href="/org-structure/versions/{data.orgStructureVersion._id}" class="text-gray-500 hover:text-gray-700">
-						← Kembali ke Versi Struktur
-					</a>
-				{:else}
-					<a href="/sk-penempatan" class="text-gray-500 hover:text-gray-700">
-						← Kembali ke Daftar SK
-					</a>
-				{/if}
-			</div>
-			<h2 class="text-2xl font-bold mt-2">{data.sk.skNumber}</h2>
-			<p class="text-sm text-gray-500 mt-1">
-				{data.sk.skTitle || data.sk.description || 'SK Penempatan Karyawan'}
-			</p>
-			<div class="flex items-center space-x-3 mt-2">
-				{#if data.sk.status === 'draft'}
-					<span class="px-3 py-1 bg-gray-100 text-gray-800 text-sm font-semibold rounded-full">
-						DRAFT
-					</span>
-				{:else if data.sk.status === 'pending_approval'}
-					<span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded-full">
-						MENUNGGU APPROVAL
-					</span>
-				{:else if data.sk.status === 'approved'}
-					<span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
-						APPROVED
-					</span>
-				{:else if data.sk.status === 'executed'}
-					<span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">
-						✓ EXECUTED
-					</span>
-				{/if}
-			</div>
-		</div>
-
-		<div class="flex space-x-2">
-			<button class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
-				📥 Download SK
-			</button>
-			{#if data.sk.status === 'draft'}
-				<button class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">
-					Submit for Approval
-				</button>
-			{/if}
-		</div>
+<!-- Page header -->
+<div class="mb-6 flex items-center justify-between">
+	<div class="flex items-center gap-3">
+		<a href="/organization/sk-penempatan" class="text-gray-400 hover:text-gray-600 text-sm">← SK Penempatan</a>
+		<span class="text-gray-300">/</span>
+		<h1 class="text-lg font-semibold text-gray-900">{isNew ? 'Buat SK Baru' : sk.skNumber}</h1>
+		{#if !isNew && sk.skTitle}
+			<span class="text-sm text-gray-500">{sk.skTitle}</span>
+		{/if}
 	</div>
-
-	<!-- Tabs -->
-	<div class="border-b border-gray-200">
-		<nav class="-mb-px flex space-x-8">
-			<button
-				onclick={() => activeTab = 'info'}
-				class="py-2 px-1 border-b-2 font-medium text-sm {activeTab === 'info' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
-			>
-				📋 Informasi SK
-			</button>
-			<button
-				onclick={() => activeTab = 'employees'}
-				class="py-2 px-1 border-b-2 font-medium text-sm {activeTab === 'employees' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
-			>
-				👥 Karyawan Terdampak ({data.sk.totalReassignments || 0})
-			</button>
-		</nav>
-	</div>
-
-	<!-- Tab Content -->
-	{#if activeTab === 'info'}
-		<div class="bg-white shadow rounded-lg p-6">
-			<h3 class="text-lg font-medium mb-4">Informasi Surat Keputusan</h3>
-
-			{#if data.orgStructureVersion}
-				<div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-					<p class="text-sm text-blue-800">
-						🔗 <strong>Terkait Versi Struktur Organisasi:</strong>
-						<a href="/org-structure/versions/{data.orgStructureVersion._id}" class="underline font-semibold">
-							{data.orgStructureVersion.versionName} (Version {data.orgStructureVersion.versionNumber})
-						</a>
-					</p>
-				</div>
-			{/if}
-
-			<form method="POST" action="?/updateSK" class="space-y-4">
-				<div class="grid grid-cols-2 gap-4">
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-2">Nomor SK *</label>
-						<input
-							type="text"
-							name="skNumber"
-							value={data.sk.skNumber || ''}
-							placeholder="SK-PENEMPATAN-001/IAS/2025"
-							class="w-full px-3 py-2 border rounded-md"
-						/>
-					</div>
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-2">Tanggal SK *</label>
-						<input
-							type="date"
-							name="skDate"
-							value={data.sk.skDate ? new Date(data.sk.skDate).toISOString().split('T')[0] : ''}
-							class="w-full px-3 py-2 border rounded-md"
-						/>
-					</div>
-				</div>
-
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Judul SK</label>
-					<input
-						type="text"
-						name="skTitle"
-						value={data.sk.skTitle || ''}
-						placeholder="Penempatan Karyawan Batch 1"
-						class="w-full px-3 py-2 border rounded-md"
-					/>
-				</div>
-
-				<div class="grid grid-cols-2 gap-4">
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Efektif *</label>
-						<input
-							type="date"
-							name="effectiveDate"
-							value={data.sk.effectiveDate ? new Date(data.sk.effectiveDate).toISOString().split('T')[0] : ''}
-							class="w-full px-3 py-2 border rounded-md"
-						/>
-					</div>
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-2">Ditandatangani Oleh</label>
-						<select name="signedBy" class="w-full px-3 py-2 border rounded-md">
-							<option value="">Pilih penandatangan...</option>
-							{#each data.directors as director}
-								<option value={director.employeeId} selected={data.sk.signedBy === director.employeeId}>
-									{director.fullName} - {director.positionName}
-								</option>
-							{/each}
-						</select>
-					</div>
-				</div>
-
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
-					<textarea
-						name="description"
-						rows="3"
-						class="w-full px-3 py-2 border rounded-md"
-					>{data.sk.description || ''}</textarea>
-				</div>
-
-				<div class="flex justify-end">
-					<button
-						type="submit"
-						class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-					>
-						Simpan Perubahan
-					</button>
-				</div>
-			</form>
-		</div>
-
-	{:else if activeTab === 'employees'}
-		<div class="bg-white shadow rounded-lg p-6">
-			<div class="flex items-center justify-between mb-4">
-				<h3 class="text-lg font-medium">Daftar Karyawan Terdampak</h3>
-				<div class="flex space-x-2">
-					<button
-						type="button"
-						onclick={() => showImportModal = true}
-						class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center space-x-2"
-					>
-						<span>📤</span>
-						<span>Import CSV</span>
-					</button>
-					<a
-						href="/api/sk-penempatan/template.csv"
-						download
-						class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 flex items-center space-x-2"
-					>
-						<span>📥</span>
-						<span>Download Template</span>
-					</a>
-					{#if data.sk.reassignments && data.sk.reassignments.length > 0}
-						<button class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
-							📊 Export Excel
-						</button>
-					{/if}
-				</div>
-			</div>
-
-			{#if !data.sk.reassignments || data.sk.reassignments.length === 0}
-				<div class="border border-gray-200 rounded-lg p-12 text-center">
-					<div class="text-gray-400 text-5xl mb-4">👥</div>
-					<p class="text-gray-600 font-medium mb-2">Belum ada karyawan terdampak</p>
-					<p class="text-sm text-gray-500 mb-4">
-						Import data karyawan menggunakan file CSV atau tambahkan secara manual.
-					</p>
-					<button
-						type="button"
-						onclick={() => showImportModal = true}
-						class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-					>
-						Import CSV
-					</button>
-				</div>
-			{:else}
-				<!-- Statistics -->
-				<div class="grid grid-cols-3 gap-4 mb-6">
-					<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-						<p class="text-sm text-blue-600 font-medium">Total Karyawan</p>
-						<p class="text-2xl font-bold text-blue-900">{data.sk.totalReassignments}</p>
-					</div>
-					<div class="bg-green-50 border border-green-200 rounded-lg p-4">
-						<p class="text-sm text-green-600 font-medium">Berhasil Dieksekusi</p>
-						<p class="text-2xl font-bold text-green-900">{data.sk.successfulReassignments || 0}</p>
-					</div>
-					<div class="bg-red-50 border border-red-200 rounded-lg p-4">
-						<p class="text-sm text-red-600 font-medium">Gagal</p>
-						<p class="text-2xl font-bold text-red-900">{data.sk.failedReassignments || 0}</p>
-					</div>
-				</div>
-
-				<!-- Data Table -->
-				<div class="overflow-x-auto">
-					<table class="min-w-full divide-y divide-gray-200">
-						<thead class="bg-gray-50">
-							<tr>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">NIK</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dari Unit</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ke Unit</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Posisi Baru</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Alasan</th>
-								<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-							</tr>
-						</thead>
-						<tbody class="bg-white divide-y divide-gray-200">
-							{#each data.sk.reassignments as reassignment, i}
-								<tr class="hover:bg-gray-50">
-									<td class="px-6 py-4 whitespace-nowrap text-sm">{i + 1}</td>
-									<td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{reassignment.employeeId}</td>
-									<td class="px-6 py-4 whitespace-nowrap text-sm">{reassignment.employeeName}</td>
-									<td class="px-6 py-4 text-sm text-gray-600">
-										<div class="text-xs">{reassignment.previousOrgUnitName || '-'}</div>
-										<div class="text-xs text-gray-400">{reassignment.previousPositionName || ''}</div>
-									</td>
-									<td class="px-6 py-4 text-sm font-medium">
-										<div class="text-xs">{reassignment.newOrgUnitName || '-'}</div>
-									</td>
-									<td class="px-6 py-4 text-sm">
-										<div class="text-xs">{reassignment.newPositionName || '-'}</div>
-									</td>
-									<td class="px-6 py-4 text-sm text-gray-500">{reassignment.reason || '-'}</td>
-									<td class="px-6 py-4 whitespace-nowrap text-sm">
-										{#if reassignment.executed}
-											<span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-												✓ Executed
-											</span>
-										{:else}
-											<span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-												Pending
-											</span>
-										{/if}
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
-			{/if}
-		</div>
+	{#if !isNew}
+		<span class="px-3 py-1 text-xs font-semibold rounded-full {getStatusBadge(sk.status)}">
+			{getStatusLabel(sk.status)}
+		</span>
 	{/if}
 </div>
 
-<!-- Import CSV Modal -->
-{#if showImportModal}
-	<div class="fixed inset-0 z-50 overflow-y-auto">
-		<div class="flex items-center justify-center min-h-screen px-4">
-			<button type="button" onclick={() => showImportModal = false} class="fixed inset-0 bg-black bg-opacity-50"></button>
+<!-- Tabs (only in edit mode) -->
+{#if !isNew}
+<div class="border-b border-gray-200 mb-6">
+	<nav class="-mb-px flex space-x-6">
+		{#each [['info','📋 Informasi SK'],['employees','👥 Karyawan Terdampak']] as [id, label]}
+			<button type="button" onclick={() => activeTab = id as any}
+				class="py-2 px-1 border-b-2 text-sm font-medium whitespace-nowrap
+					{activeTab === id ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}">
+				{label}{id === 'employees' ? ` (${sk.totalReassignments ?? 0})` : ''}
+			</button>
+		{/each}
+	</nav>
+</div>
+{/if}
 
-			<div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6 z-10">
-				<h3 class="text-lg font-medium mb-4">Import Data Karyawan dari CSV</h3>
+<!-- Info tab (always shown in new mode, tab-gated in edit mode) -->
+{#if activeTab === 'info' || isNew}
+	
+	<form method="POST" action={isNew ? '?/createSK' : '?/updateSK'}
+		use:enhance={() => async ({ result, update }) => {
+			if (result.type === 'success') showNotif('success', isNew ? 'SK berhasil dibuat' : 'SK berhasil diperbarui');
+			else if (result.type === 'failure') showNotif('error', (result.data as any)?.error ?? 'Gagal menyimpan');
+			await update({ reset: false });
+		}}
+		class="space-y-4 bg-white border border-gray-200 rounded-lg p-6">
 
-				<form method="POST" action="?/importCSV" enctype="multipart/form-data" class="space-y-4">
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-2">Upload File CSV</label>
-						<input
-							type="file"
-							name="csvFile"
-							accept=".csv"
-							required
-							class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-						/>
-						<p class="text-xs text-gray-500 mt-1">Format: CSV (Comma-separated values)</p>
-					</div>
-
-					<div class="bg-blue-50 border border-blue-200 rounded p-4">
-						<p class="text-sm text-blue-800 font-medium mb-2">📝 Format CSV:</p>
-						<code class="text-xs text-blue-900 block">
-							NIK,Nama,Unit Baru,Posisi Baru,Lokasi,Region,Alasan,Catatan
-						</code>
-						<p class="text-xs text-blue-700 mt-2">
-							Download template untuk format yang benar.
-						</p>
-					</div>
-
-					<div class="flex justify-end space-x-3">
-						<button
-							type="button"
-							onclick={() => showImportModal = false}
-							class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-						>
-							Batal
-						</button>
-						<button
-							type="submit"
-							class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-						>
-							Import CSV
-						</button>
-					</div>
-				</form>
-			</div>
+		<div class="grid grid-cols-2 gap-4">
+			<Input type="text" name="skNumber" label="Nomor SK *" bind:value={skNumber} />
+			<Input type="date" name="skDate" label="Tanggal SK *" bind:value={skDate} />
 		</div>
+		<Input type="text" name="skTitle" label="Judul SK" bind:value={skTitle} />
+		<div class="grid grid-cols-2 gap-4">
+			<Input type="date" name="effectiveDate" label="Tanggal Efektif *" bind:value={effectiveDate} />
+			<Input type="select" name="signedBy" label="Ditandatangani Oleh *"
+				bind:value={signedBy} options={directorOptions} />
+		</div>
+		<div>
+			<label class="block text-xs font-medium text-gray-700 mt-1 ml-1 mb-1">Deskripsi</label>
+			<textarea name="description" rows="3"
+				class="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
+				bind:value={description}></textarea>
+		</div>
+
+		<div class="flex justify-between items-center pt-2">
+			<div class="text-xs text-gray-400">
+				{#if !isNew && sk.importedFromCSV}
+					📁 Diimport dari: {sk.csvFilename ?? 'CSV'}
+				{/if}
+			</div>
+			<button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+				{isNew ? 'Buat SK' : 'Simpan Perubahan'}
+			</button>
+		</div>
+	</form>
+
+
+<!-- Employees tab (edit mode only) -->
+{:else if !isNew}
+	<div class="space-y-4">
+
+		<!-- Stats -->
+		{#if (sk.totalReassignments ?? 0) > 0}
+			<div class="grid grid-cols-3 gap-4 max-w-sm">
+				<div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+					<p class="text-xs text-blue-600 font-medium">Total</p>
+					<p class="text-xl font-bold text-blue-900">{sk.totalReassignments}</p>
+				</div>
+				<div class="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+					<p class="text-xs text-green-600 font-medium">Berhasil</p>
+					<p class="text-xl font-bold text-green-900">{sk.successfulReassignments ?? 0}</p>
+				</div>
+				<div class="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+					<p class="text-xs text-red-600 font-medium">Gagal</p>
+					<p class="text-xl font-bold text-red-900">{sk.failedReassignments ?? 0}</p>
+				</div>
+			</div>
+		{/if}
+
+		<!-- CSV Import -->
+		<form method="POST" action="?/addReassignmentsCSV" enctype="multipart/form-data"
+			use:enhance={() => async ({ result, update }) => {
+				if (result.type === 'success') {
+					showNotif('success', (result.data as any)?.message ?? 'CSV berhasil diimport');
+					csvFile = null;
+					await invalidateAll();
+				} else if (result.type === 'failure') {
+					showNotif('error', (result.data as any)?.error ?? 'Gagal import');
+				}
+				await update({ reset: false });
+			}}
+			class="flex items-center gap-3 bg-white border border-gray-200 rounded-lg p-3">
+			<input type="file" name="csvFile" accept=".csv" required
+				onchange={(e) => { csvFile = (e.target as HTMLInputElement).files?.[0] ?? null; }}
+				class="flex-1 px-2 py-1 border border-gray-300 rounded-md text-sm" />
+			<button type="button" onclick={downloadCSVTemplate}
+				class="text-xs text-indigo-600 hover:text-indigo-800 whitespace-nowrap">
+				📥 Template
+			</button>
+			<button type="submit"
+				class="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm whitespace-nowrap">
+				Import CSV
+			</button>
+			{#if csvFile}
+				<span class="text-xs text-green-700">✓ {csvFile.name}</span>
+			{/if}
+		</form>
+
+		<!-- Reassignments table -->
+		<DataTable
+			data={sk.reassignments ?? []}
+			columns={reassignmentColumns}
+			page={1}
+			pageSize={(sk.reassignments?.length || 0) + 1}
+			totalItems={sk.reassignments?.length ?? 0}
+			searchable={false}
+			header_actions={() => [
+				{ text: '+ Tambah Manual', class: 'px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm',
+					action: () => { actReassignment = { index: -1, data: null }; } }
+			]}
+			actions={(row) => [
+				{ label: 'Edit', onClick: () => {
+					const idx = (sk.reassignments ?? []).indexOf(row);
+					actReassignment = { index: idx, data: row };
+				}, class: 'text-indigo-600 hover:text-indigo-800' },
+				{ label: 'Hapus', onClick: () => {
+					const idx = (sk.reassignments ?? []).indexOf(row);
+					handleDelete(idx);
+				}, class: 'text-red-600 hover:text-red-800' }
+			]}
+			emptyMessage="Belum ada karyawan terdampak. Tambah manual atau import CSV."
+		/>
+
+		<!-- Hidden delete form -->
+		<form bind:this={deleteFormEl} method="POST" action="?/deleteReassignment"
+			use:enhance={() => async ({ result, update }) => {
+				if (result.type === 'success') {
+					showNotif('success', 'Data karyawan dihapus');
+					await invalidateAll();
+				} else if (result.type === 'failure') {
+					showNotif('error', (result.data as any)?.error ?? 'Gagal menghapus');
+				}
+				await update({ reset: false });
+			}}
+			class="hidden">
+			<input type="hidden" name="index" value={pendingDeleteIndex} />
+		</form>
 	</div>
+{/if}
+
+{#if actReassignment}
+	<ReassignmentModal
+		index={actReassignment.index}
+		reassignment={actReassignment.data}
+		onClose={() => { actReassignment = null; }}
+	/>
 {/if}

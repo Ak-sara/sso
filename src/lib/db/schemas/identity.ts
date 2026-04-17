@@ -50,7 +50,7 @@ export const IdentitySchema = z.object({
 	employmentType: z.enum(['permanent', 'pkwt', 'outsource', 'contract']).optional(),
 	employmentStatus: z.enum(['active', 'probation', 'terminated', 'resigned']).optional(),
 
-	// Secondary assignments (multi-company)
+	// assignments (multi-company)
 	assignments: z.array(
 		z.object({
 			_id: z.custom<ObjectId>(),
@@ -78,6 +78,16 @@ export const IdentitySchema = z.object({
 			createdBy: z.string()
 		})
 	).optional().default([]),
+
+	// Two-Factor Authentication
+	twoFactor: z.object({
+		enabled: z.boolean().default(false),
+		method: z.enum(['email_otp']).nullable().optional(),
+		enabledAt: z.date().optional(),
+		disabledAt: z.date().optional(),
+		backupCodes: z.array(z.string()).optional().default([]), // hashed
+		backupCodesGeneratedAt: z.date().optional(),
+	}).optional(),
 
 	// Custom properties (extensible)
 	customProperties: z.record(z.string(), z.any()).optional().default({}),

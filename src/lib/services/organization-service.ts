@@ -1,5 +1,6 @@
 import { useLogger } from '@ak-sara/fbao/foundation';
 import { db } from '$lib/db/db';
+import type { PaginationInput, PaginatedResult } from '$lib/db/db';
 import type { Organization } from '$lib/db/schemas/organization';
 import type { ServiceResult,MongoFilter, MongoUpdate } from './types';
 
@@ -34,16 +35,30 @@ export async function listActiveOrgs(): Promise<Pick<OrganizationSerialized, '_i
 	return (orgs as any[]).map((o) => ({ _id: o._id.toString(), code: o.code, name: o.name, type: o.type }));
 }
 
-export async function listOrganizations(withUserCounts = false): Promise<OrganizationSerialized[]> {
-	const orgs = await db.organizations.find({}, { name: 1 });
-	if (!withUserCounts) return (orgs as any[]).map((o) => serializeOrg(o));
+export async function listOrganizations(withUserCounts?: boolean): Promise<OrganizationSerialized[]>;
+export async function listOrganizations(params: PaginationInput, withUserCounts?: boolean): Promise<PaginatedResult<OrganizationSerialized>>;
+export async function listOrganizations(
+	paramsOrCounts?: PaginationInput | boolean,
+	withUserCounts = false
+): Promise<OrganizationSerialized[] | PaginatedResult<OrganizationSerialized>> {
+	const isPaginated = paramsOrCounts !== undefined && typeof paramsOrCounts === 'object';
+	const counts = isPaginated ? withUserCounts : (paramsOrCounts as boolean ?? false);
 
-	return Promise.all(
-		(orgs as any[]).map(async (org) => {
-			const userCount = await db.identities.count({ organizationId: org._id.toString() } as MongoFilter<Organization>);
-			return serializeOrg(org, userCount);
-		})
-	);
+	if (isPaginated) {
+		const result = await db.organizations.findPaginated(paramsOrCounts as PaginationInput, {}, ['name', 'code']);
+		const items = await Promise.all((result.items as any[]).map(async (o) => {
+			const userCount = counts ? await db.identities.count({ organizationId: o._id.toString() } as MongoFilter<Organization>) : undefined;
+			return serializeOrg(o, userCount);
+		}));
+		return { ...result, items };
+	}
+
+	const orgs = await db.organizations.find({}, { name: 1 });
+	if (!counts) return (orgs as any[]).map((o) => serializeOrg(o));
+	return Promise.all((orgs as any[]).map(async (org) => {
+		const userCount = await db.identities.count({ organizationId: org._id.toString() } as MongoFilter<Organization>);
+		return serializeOrg(org, userCount);
+	}));
 }
 
 export async function getOrganizationById(id: string): Promise<ServiceResult<OrganizationSerialized>> {

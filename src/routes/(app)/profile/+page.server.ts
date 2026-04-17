@@ -6,13 +6,14 @@ import { listPositions } from '$lib/services/position-service';
 import { formatDate, datamap } from '$lib/utils/format';
 
 import { fail } from '@sveltejs/kit';
+import { ObjectId } from 'mongodb';
 import { db, Repository, lazy } from '$lib/db/db';
 
 import { passwordService } from '$lib/auth/password';
 import { sendOTP, validateOTP } from '$lib/auth/otp';
 import { useLogger } from '@ak-sara/fbao/foundation';
 import { logAudit } from '$lib/audit/logger';
-import { get2FAStatus, enable2FA, disable2FA, send2FAOTP, verify2FAOTP, generateBackupCodes } from '$lib/auth/two-factor';
+import { get2FAStatus, enable2FA, disable2FA, verify2FAOTP, generateBackupCodes } from '$lib/auth/two-factor';
 
 const log = useLogger({ module: 'app:change-email' });
 
@@ -23,20 +24,20 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const [identityResult, organizations, orgUnits, positions] = await Promise.all([
 		getIdentityById( locals.user!.userId  ),
 		listOrganizations(),
-		listOrgUnits({page:0,pageSize:0}),
+		listOrgUnits(),
 		listPositions(),
 	]);
 	const session = locals.session;	
-	// const status2FA = await get2FAStatus(session!.userId);
+	const status2FA = await get2FAStatus(session!.userId);
 
 	return {
 		user: identityResult && identityResult.ok ? identityResult.data : null,
 		orgs: datamap(organizations), 
-		ous: datamap(orgUnits.items),
+		ous: datamap(orgUnits),
 		pos: datamap(positions),
 
 		currentEmail: !session ? null : session.email,
-		status2FA: null//!session ? null : status2FA 
+		status2FA: !session ? null : status2FA 
 	};
 };
 
@@ -123,7 +124,7 @@ export const actions: Actions = {
 
 			// Update email
 			const result = await db.identities.col.updateOne(
-				{ _id: { $oid: session.userId } },
+				{ _id: new ObjectId(session.userId) },
 				{
 					$set: {
 						email: newEmail,
@@ -216,7 +217,7 @@ export const actions: Actions = {
 
 		if (!otpCode) {
 			// Step 1: Send OTP
-			const result = await send2FAOTP(session.email, session.firstName);
+			const result = await sendOTP({ email: session.email, purpose: '2fa', firstName: session.firstName, expiryMinutes: 10 });
 
 			if (!result.success) {
 				return fail(400, { error: result.error || 'Failed to send OTP' });
@@ -266,7 +267,7 @@ export const actions: Actions = {
 
 		if (!otpCode) {
 			// Step 1: Send OTP for verification
-			const result = await send2FAOTP(session.email, session.firstName);
+			const result = await sendOTP({ email: session.email, purpose: '2fa', firstName: session.firstName, expiryMinutes: 10 });
 
 			if (!result.success) {
 				return fail(400, { error: result.error || 'Failed to send OTP' });

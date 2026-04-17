@@ -1,36 +1,28 @@
 <script lang="ts">
 import { enhance } from '$app/forms';
 import FormModal from '$lib/components/FormModal.svelte';
+import { showNotif } from '$lib/stores/notif.svelte';
 import type { PageData, ActionData } from './$types';
 
 let { data, form = $bindable() }: { data: PageData; form?: ActionData } = $props();
 
+$effect(() => {
+	if (form?.success) {
+		showNotif('success', form.message ?? 'Email berhasil diubah!');
+		form = null;
+	} else if (form?.error) {
+		showNotif('error', form.error);
+	} else if (form?.otpSent) {
+		showNotif('info', form.message ?? 'Kode OTP telah dikirim ke email baru Anda.');
+	}
+});
 </script>
 
-<FormModal wide onClose={() => { form = null; }} 
-	title={`Change Email Address` }
+<FormModal wide onClose={() => { form = null; }}
+	title="Change Email Address"
 	subtitle="Update your email address with OTP verification" >
 
 <div class="grid p-2 gap-4">
-
-	<!-- Success/Error Messages -->
-	{#if form?.success}
-		<div class="p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
-			{form.message}
-		</div>
-	{/if}
-
-	{#if form?.error}
-		<div class="p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
-			{form.error}
-		</div>
-	{/if}
-
-	{#if form?.otpSent && !form?.error}
-		<div class="p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded-md">
-			{form.message}
-		</div>
-	{/if}
 	<!-- Security Notice -->
 	<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
 		<div class="flex items-start gap-3">

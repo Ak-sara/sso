@@ -4,13 +4,14 @@
         name?: string;
         style?: string;
 		label?: string;
+		placeholder?: string;
         value?: any;
         options?: Record<string,string>;
 		onClick?: () => void;
         onChange?: () => void;
 	}
 
-	let { type,name,style,label,options,value = $bindable(), onClick, onChange }: Props = $props();
+	let { type,name,style,label,placeholder,options,value = $bindable(), onClick, onChange }: Props = $props();
     let datecols=type=="date"? "3":(type=="datetime"? "6":undefined);
 
     // --- date / datetime reactive parts ---
@@ -78,16 +79,20 @@
 <div class="{style}">
     <label class="block text-xs font-medium text-gray-700 mt-1 ml-1 mb-[-.1em]">{label}</label>
     <input class="w-full px-2 py-1 border border-gray-300 rounded-md"
-        type="text" name={name} bind:value={value}/>
+        type="text" name={name} placeholder={placeholder} bind:value={value}/>
 </div>
 {/if}
 {#if type=="date" || type=="datetime"}
 <div class="{style}">
     <label class="flex justify-between text-xs font-medium text-gray-700 mt-1 ml-1 mb-[-.1em]">
         {label}
-        {#if formatted==''}
-        <a class="text-xs text-blue-700 hover:cursor-pointer" onclick={today}>Today</a>
-        {/if}
+        <span class="flex gap-2">
+            {#if formatted !== ''}
+            <a class="text-xs text-gray-400 hover:text-red-500 hover:cursor-pointer"
+               onclick={() => { d = ''; m = ''; y = ''; h = ''; i = ''; s = ''; }}>×</a>
+            {/if}
+            <a class="text-xs text-blue-700 hover:cursor-pointer" onclick={today}>Today</a>
+        </span>
     </label>
     <input type="hidden" name={name} value={formatted}/>
     <div class="grid grid-cols-{datecols} gap-2">

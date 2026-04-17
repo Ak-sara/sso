@@ -1,62 +1,83 @@
 <script lang="ts">
 import type { PageData } from './$types';
-import SKPenempatanTable from '$lib/components/sk-penempatan/SKPenempatanTable.svelte';
-import SKPenempatanCreateModal from '$lib/components/sk-penempatan/SKPenempatanCreateModal.svelte';
-import SKPenempatanCSVImportModal from '$lib/components/sk-penempatan/SKPenempatanCSVImportModal.svelte';
+import { goto } from '$app/navigation';
+import DataTable from '$lib/components/DataTable.svelte';
+import PageHints from '$lib/components/PageHints.svelte';
+import { navigateWithParams } from '$lib/utils/navigate';
+import { getStatusBadge, getStatusLabel, formatDateID } from '$lib/services/sk-penempatan-utils';
 
 let { data }: { data: PageData } = $props();
 
-import PageHints from '$lib/components/PageHints.svelte';
 let showPageHints = $state(false);
 
-let showCreateModal = $state(false);
-let showImportCSVModal = $state(false);
+const columns = [
+	{
+		key: 'skNumber', label: 'No. SK', sortable: true,
+		render: (value: string, row: any) =>
+			`<div class="text-sm font-medium text-gray-900">${value}</div>
+			${row.skTitle ? `<div class="text-xs text-gray-500">${row.skTitle}</div>` : ''}`
+	},
+	{
+		key: 'skDate', label: 'Tanggal SK', sortable: true,
+		render: (value: any) => `<span class="text-sm text-gray-500">${formatDateID(value)}</span>`
+	},
+	{
+		key: 'effectiveDate', label: 'Efektif', sortable: true,
+		render: (value: any) => `<span class="text-sm text-gray-500">${formatDateID(value)}</span>`
+	},
+	{
+		key: 'totalReassignments', label: 'Karyawan', sortable: true,
+		render: (value: number, row: any) =>
+			`<div class="flex items-center gap-2">
+				<span class="font-medium">${value}</span>
+				${row.successfulReassignments > 0 ? `<span class="text-xs text-green-600">(${row.successfulReassignments} sukses)</span>` : ''}
+			</div>`
+	},
+	{
+		key: 'status', label: 'Status', sortable: true,
+		render: (value: string) =>
+			`<span class="px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(value)}">${getStatusLabel(value)}</span>`
+	},
+	{
+		key: 'importedFromCSV', label: 'Tipe', sortable: false,
+		render: (value: boolean, row: any) =>
+			value
+				? `<span class="inline-flex items-center text-green-600 text-sm" title="${row.csvFilename ?? ''}">📁 CSV</span>`
+				: `<span class="text-gray-400 text-sm">Manual</span>`
+	}
+];
 </script>
 
 <div class="space-y-6">
-
-	<!-- Header -->
-	<div class="flex justify-between items-center">
-		<div>
-			<h1 class="text-2xl font-bold text-gray-900">SK Penempatan Karyawan</h1>
-			<p class="text-sm text-gray-500">Kelola Surat Keputusan penempatan karyawan</p>
-		</div>
-		<div class="flex gap-2">
-			<button onclick={() => (showPageHints = true)} 
-				class="px-2 py-0 text-2xl inline-block transition-transform duration-200 hover:-rotate-12 cursor-pointer s-Fn0TUbj6pO7c">ℹ️</button>
-			<button onclick={() => (showImportCSVModal = true)}
-				class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors inline-flex items-center gap-2"
-			> 📥 Import CSV
-			</button>
-			<button onclick={() => (showCreateModal = true)}
-				class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors inline-flex items-center gap-2"
-			> + Buat SK Baru
-			</button>
-		</div>
-	</div>
-
-	<!-- SK List -->
-	<SKPenempatanTable data={data.skList} />
+	<DataTable
+		data={data.skList}
+		{columns}
+		page={data.pagination.page}
+		pageSize={data.pagination.pageSize}
+		totalItems={data.pagination.total}
+		searchable={true}
+		searchPlaceholder="Cari SK (nomor, judul)..."
+		searchKeys={['skNumber', 'skTitle']}
+		header_actions={() => [
+			{ text: 'ℹ️', class: 'px-2 py-0 text-2xl inline-block transition-transform duration-200 hover:-rotate-12 cursor-pointer', action: () => (showPageHints = true) },
+			{ text: '+ Buat SK Baru', class: 'px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors', action: () => goto('/organization/sk-penempatan/new') }
+		]}
+		actions={(row) => [
+			{ label: 'Detail', onClick: () => goto(`/organization/sk-penempatan/${row._id}`), class: 'text-indigo-600 hover:text-indigo-800' }
+		]}
+		onPageChange={(p) => navigateWithParams({ page: String(p) })}
+		onPageSizeChange={(s) => navigateWithParams({ pageSize: String(s), page: '1' })}
+		onSort={(e) => navigateWithParams({ sortKey: String(e.key), sortDirection: e.direction })}
+		onSearch={(q) => navigateWithParams({ search: q || null, page: '1' })}
+		emptyMessage="Belum ada SK Penempatan. Buat SK baru untuk memulai."
+	/>
 </div>
 
 <PageHints
 	bind:visible={showPageHints}
 	title='Tentang SK Penempatan Karyawan'
 	paragraph='<p class="mt-1 text-sm text-blue-700">
-					SK Penempatan adalah dokumen resmi untuk melakukan perubahan penempatan karyawan secara bulk.
-					Anda dapat membuat SK baru secara manual atau mengimpor dari file CSV untuk penempatan massal.
-					Setiap SK akan mencatat histori perubahan dan otomatis memperbarui data karyawan saat dieksekusi.
-				</p>'
-/>
-<!-- Modals -->
-<SKPenempatanCreateModal
-	bind:show={showCreateModal}
-	directors={data.directors}
-	onClose={() => (showCreateModal = false)}
-/>
-
-<SKPenempatanCSVImportModal
-	bind:show={showImportCSVModal}
-	directors={data.directors}
-	onClose={() => (showImportCSVModal = false)}
+		SK Penempatan adalah dokumen resmi untuk melakukan perubahan penempatan karyawan secara bulk.
+		Buat SK baru, tambahkan karyawan secara manual atau import dari CSV, lalu eksekusi untuk memperbarui data karyawan.
+	</p>'
 />

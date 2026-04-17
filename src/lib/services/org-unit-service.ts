@@ -1,7 +1,7 @@
 import { ObjectId, type Filter } from 'mongodb';
 import { useLogger } from '@ak-sara/fbao/foundation';
 import { sanitizeString } from '@ak-sara/fbao/foundation/sanitize';
-import { db, type PaginationInput } from '$lib/db/db';
+import { db, type PaginationInput, type PaginatedResult } from '$lib/db/db';
 import { OrgUnitSchema, type OrgUnit, orgUnitHasChildren, orgUnitHasEmployees } from '$lib/db/schemas/org-unit';
 import type { ServiceResult, MongoFilter, MongoUpdate } from './types';
 
@@ -53,36 +53,43 @@ export async function getOrgUnitsByOrg(organizationId: string): Promise<OrgUnitD
 	})) as OrgUnitDetail[];
 }
 
-export async function listOrgUnits(params: PaginationInput, organizationId?: string) {
-	const sanitizedParams = {
-		...params,
-		search: params.search ? sanitizeString(params.search) : undefined,
-	};
-	const filter: any = {organizationId: new ObjectId(organizationId)};
-
-	const docs = await db.orgUnits.col.
-		find({ organizationId: new ObjectId(organizationId), isActive: true } as any).toArray();
-	const nodes: Record<string, any> = {};
-	docs.map( doc =>{ nodes[doc._id.toString()]= doc })
-	
-	const result = await db.orgUnits.findPaginated(sanitizedParams, filter, ['name', 'code', 'shortName']);
+function serializeOrgUnit(u: any, nodes: Record<string, any> = {}): OrgUnitDetail {
 	return {
-		items: result.items.map((u: any) => ({
-			...u,
-			_id: u._id.toString(),
-			organizationId: u.organizationId?.toString() || null,
-			parentId: u.parentId?.toString() || null,
-			parentName:(nodes[u.parentId?.toString()])?.code,
-			groupId: u.groupId?.toString() || null,
-			groupName:(nodes[u.groupId?.toString()])?.code,
-			picId: u.picId?.toString() || null,
-			managerId: u.managerId?.toString() || null,
-		})) as OrgUnitDetail[],
-		page: result.page,
-		pageSize: result.pageSize,
-		total: result.total,
-		totalPages: result.totalPages,
-	};
+		...u,
+		_id: u._id.toString(),
+		organizationId: u.organizationId?.toString() || null,
+		parentId: u.parentId?.toString() || null,
+		parentName: nodes[u.parentId?.toString()]?.code ?? null,
+		groupId: u.groupId?.toString() || null,
+		groupName: nodes[u.groupId?.toString()]?.code ?? null,
+		picId: u.picId?.toString() || null,
+		managerId: u.managerId?.toString() || null,
+	} as OrgUnitDetail;
+}
+
+export async function listOrgUnits(organizationId?: string): Promise<OrgUnitDetail[]>;
+export async function listOrgUnits(params: PaginationInput, organizationId?: string): Promise<PaginatedResult<OrgUnitDetail>>;
+export async function listOrgUnits(
+	paramsOrOrgId?: PaginationInput | string,
+	organizationId?: string
+): Promise<OrgUnitDetail[] | PaginatedResult<OrgUnitDetail>> {
+	const isPaginated = paramsOrOrgId !== undefined && typeof paramsOrOrgId === 'object';
+	const orgId = isPaginated ? organizationId : (paramsOrOrgId as string | undefined);
+	const filter: any = orgId ? { organizationId: new ObjectId(orgId), isActive: true } : { isActive: true };
+
+	// Load all docs for parent/group name resolution
+	const docs = await db.orgUnits.col.find(filter).toArray();
+	const nodes: Record<string, any> = {};
+	docs.forEach(doc => { nodes[doc._id.toString()] = doc; });
+
+	if (!isPaginated) {
+		return docs.map(u => serializeOrgUnit(u, nodes));
+	}
+
+	const params = paramsOrOrgId as PaginationInput;
+	const sanitizedParams = { ...params, search: params.search ? sanitizeString(params.search) : undefined };
+	const result = await db.orgUnits.findPaginated(sanitizedParams, filter, ['name', 'code', 'shortName']);
+	return { ...result, items: result.items.map((u: any) => serializeOrgUnit(u, nodes)) };
 }
 
 export async function getOrgUnitById(id: string): Promise<ServiceResult<OrgUnitDetail>> {
