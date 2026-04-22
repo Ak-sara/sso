@@ -2,7 +2,8 @@ import type { PageServerLoad, Actions } from './$types';
 import { db, Repository, lazy } from '$lib/db/db';
 import { fail } from '@sveltejs/kit';
 import { generateVerificationToken, hashToken } from '$lib/crypto';
-import { sendEmailWithSystemConfig } from '$lib/email/email-service';
+import { sendMail } from '$lib/email/email-service';
+import { resolveRealmCode } from '$lib/services/settings-service';
 import { getPasswordResetEmail } from '$lib/email/templates';
 import { useLogger } from '@ak-sara/fbao/foundation';
 
@@ -81,7 +82,9 @@ export const actions: Actions = {
 
 			// Send password reset email
 			const emailTemplate = getPasswordResetEmail(token, identity.firstName);
-			await sendEmailWithSystemConfig(email, emailTemplate.subject, emailTemplate.html, emailTemplate.text);
+			const realmCode = await resolveRealmCode(identity.organizationId);
+			const sent = await sendMail(realmCode, email, emailTemplate.subject, emailTemplate.html, emailTemplate.text);
+			if (!sent.ok) throw new Error(sent.reason);
 
 			return {
 				success: true,

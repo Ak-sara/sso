@@ -7,7 +7,7 @@ import type { OTPValidation } from '@ak-sara/fbao/foundation';
 
 const log = useLogger({ module: 'auth:otp' });
 import { getDB } from '$lib/db/connection';
-import { sendEmailWithSystemConfig } from '$lib/email/email-service';
+import { sendMail } from '$lib/email/email-service';
 import { getOTPEmail } from '$lib/email/templates';
 
 export type { OTPValidation };
@@ -22,6 +22,7 @@ export interface OTPOptions {
 	email: string;
 	purpose: 'login' | 'password_reset' | '2fa' | 'account_recovery' | 'verification';
 	firstName?: string;
+	realmCode?: string | undefined;
 	expiryMinutes?: number;
 	digits?: number;
 }
@@ -32,7 +33,7 @@ export interface OTPOptions {
 export async function sendOTP(
 	options: OTPOptions
 ): Promise<{ success: boolean; error?: string }> {
-	const { email, purpose, firstName = '' } = options;
+	const { email, purpose, firstName = '', realmCode } = options;
 
 	try {
 		const { allowed, retryAfterMs } = await otpService.canRequestOTP(email, purpose);
@@ -47,7 +48,8 @@ export async function sendOTP(
 		const { code } = await otpService.createOTP(email, purpose);
 
 		const emailTemplate = getOTPEmail(code, firstName, purpose);
-		await sendEmailWithSystemConfig(email, emailTemplate.subject, emailTemplate.html, emailTemplate.text);
+		const sent = await sendMail(realmCode, email, emailTemplate.subject, emailTemplate.html, emailTemplate.text);
+		if (!sent.ok) throw new Error(sent.reason);
 
 		return { success: true };
 	} catch (error: any) {

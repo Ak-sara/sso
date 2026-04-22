@@ -112,7 +112,7 @@ export const actions: Actions = {
 		if (requiresEmailVerification) {
 			try {
 				const { generateVerificationToken, hashToken } = await import('$lib/crypto');
-				const { sendEmailWithSystemConfig } = await import('$lib/email/email-service');
+				const { sendMail } = await import('$lib/email/email-service');
 				const { getVerificationEmail } = await import('$lib/email/templates');
 
 				// Generate verification token
@@ -131,7 +131,8 @@ export const actions: Actions = {
 
 				// Send verification email
 				const emailTemplate = getVerificationEmail(token, firstName);
-				await sendEmailWithSystemConfig(email, emailTemplate.subject, emailTemplate.html, emailTemplate.text);
+				const sent = await sendMail(realmCode, email, emailTemplate.subject, emailTemplate.html, emailTemplate.text);
+				if (!sent.ok) throw new Error(sent.reason);
 
 				return {
 					success: true,

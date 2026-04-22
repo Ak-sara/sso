@@ -2,23 +2,11 @@
 	import { enhance } from '$app/forms';
 	import type { PageData, ActionData } from './$types';
 	import MailerModal from './MailerModal.svelte';
-
+    import Input from '$lib/components/Input.svelte';
+    
 	let { data, form }: { data: PageData; form?: ActionData } = $props();
-	let isEditing = $state(false);
 	let editedSettings: Record<string, any> = $state({});
 	let actMailer: any = $state(null);
-
-	// Helper to format duration values for display
-	function formatDuration(seconds: number): string {
-		if (seconds >= 86400) {
-			return `${Math.floor(seconds / 86400)} days`;
-		} else if (seconds >= 3600) {
-			return `${Math.floor(seconds / 3600)} hours`;
-		} else if (seconds >= 60) {
-			return `${Math.floor(seconds / 60)} minutes`;
-		}
-		return `${seconds} seconds`;
-	}
 
 	// Helper to convert duration to appropriate unit
 	function getDurationValue(seconds: number, preferredUnit: 'days' | 'hours' | 'minutes' | 'seconds' = 'hours'): number {
@@ -36,29 +24,13 @@
 		return value;
 	}
 
-	// Initialize edited settings when entering edit mode
-	function startEditing() {
-		editedSettings = {};
-		data.settings.forEach((setting: any) => {
-			editedSettings[setting.key] = setting.type === 'duration'
-				? getDurationValue(setting.value, 'hours')
-				: setting.value;
-		});
-		isEditing = true;
-	}
+	const EXCLUDED_CATEGORIES = new Set(['privacy', 'email']);
 
-	function cancelEditing() {
-		isEditing = false;
-		editedSettings = {};
-	}
-
-	// Group settings by category
 	const settingsByCategory = $derived(() => {
 		const grouped: Record<string, any[]> = {};
 		data.settings.forEach((setting: any) => {
-			if (!grouped[setting.category]) {
-				grouped[setting.category] = [];
-			}
+			if (EXCLUDED_CATEGORIES.has(setting.category)) return;
+			if (!grouped[setting.category]) grouped[setting.category] = [];
 			grouped[setting.category].push(setting);
 		});
 		return grouped;
@@ -66,7 +38,7 @@
 
 	// Get setting value (edited or original)
 	function getSettingValue(setting: any) {
-		if (isEditing && editedSettings[setting.key] !== undefined) {
+		if ( editedSettings[setting.key] !== undefined ) {
 			return editedSettings[setting.key];
 		}
 		if (setting.type === 'duration') {
@@ -74,218 +46,185 @@
 		}
 		return setting.value;
 	}
+	const sets: Record<string, any> = {}
+	data.settings.forEach(x => { sets[x.key] = x });
+
+	// DB value (seeded from DEFAULT_SETTINGS) is the canonical provider template+values
+	const emailConfig: Record<string, Record<string, any>> = sets.email_service_config?.value ?? {};
+
+	const pvdopt: Record<string, string> = Object.fromEntries(Object.keys(emailConfig).map(p => [p, p]));
+
+	let selectedProvider = $state<string>(sets.email_service_provider?.value ?? Object.keys(pvdopt)[0]);
 </script>
 
 <div class="space-y-6">
+	<form method="POST" action="?/update" use:enhance>
 	<!-- Header -->
-	<div class="flex justify-between items-center">
-		<div>
-			<h2 class="text-2xl font-bold text-gray-900">System Settings</h2>
-			<p class="text-sm text-gray-500">Configure global SSO settings</p>
-		</div>
-		{#if !isEditing}
-			<button
-				onclick={startEditing}
-				class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-			>
-				Edit Settings
+		<div class="flex justify-between items-center my-2">
+			<div>
+				<h2 class="text-2xl font-bold text-gray-900">System Settings</h2>
+				<p class="text-sm text-gray-500">Configure global SSO settings</p>
+			</div>
+			<button class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+				type="submit" > Save Changes
 			</button>
-		{/if}
-	</div>
+		</div>
 
 	{#if form?.success}
 		<div class="p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
 			{form.success}
 		</div>
 	{/if}
-
 	{#if form?.error}
 		<div class="p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
 			{form.error}
 		</div>
 	{/if}
 
-	<form method="POST" action="?/update" use:enhance>
-		{#if isEditing}
-			<div class="flex justify-end gap-3 sticky top-0 mb-4">
-				<button
-					type="button"
-					onclick={cancelEditing}
-					class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-				>
-					Cancel
-				</button>
-				<button
-					type="submit"
-					class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-				>
-					Save Changes
-				</button>
-			</div>
-		{/if}
-		{#each Object.entries(settingsByCategory()) as [category, settings]}
-			{#if category === 'privacy'}
-				<!-- Skip privacy category - it has a dedicated page at /settings/data-masking -->
-			{:else if category === 'email'}
-				<!-- Email: per-realm mailer config table -->
-				<div class="bg-white shadow rounded-lg p-6 mb-6">
-					<div class="flex items-center justify-between mb-4">
-						<div>
-							<h3 class="text-lg font-medium text-gray-900">📧 Email Transport</h3>
-							<p class="text-xs text-gray-500 mt-0.5">
-								Configure per-realm mailer. MASTER realm is the system-wide fallback.
-							</p>
-						</div>
+	{#each Object.entries(settingsByCategory()) as [category, settings]}
+		<div class="bg-white shadow rounded-lg p-4 my-2">
+			<h3 class="text-lg font-medium text-gray-900 capitalize">{category} Settings</h3>
+			{#each settings as setting}
+				<div class="flex items-center justify-between border-b border-gray-200 my-2">
+					<div class="flex-1">
+						<label class="block text-sm font-medium text-gray-900">{setting.label}</label>
+						{#if setting.description}
+							<p class="text-xs text-gray-500 mt-1">{setting.description}</p>
+						{/if}
 					</div>
-					<table class="w-full text-sm">
-						<thead>
-							<tr class="border-b border-gray-200 text-xs text-gray-500 uppercase">
-								<th class="text-left py-2 pr-4 font-medium">Realm</th>
-								<th class="text-left py-2 pr-4 font-medium">Code</th>
-								<th class="text-left py-2 pr-4 font-medium">Provider</th>
-								<th class="text-left py-2 font-medium">From</th>
-								<th></th>
-							</tr>
-						</thead>
-						<tbody class="divide-y divide-gray-100">
-							{#each data.realms as realm}
-								{@const transport = (realm as any).emailTransport}
-								{@const branding = (realm as any).branding}
-								<tr class="hover:bg-gray-50">
-									<td class="py-2 pr-4 font-medium text-gray-900">{realm.name}</td>
-									<td class="py-2 pr-4">
-										<span class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-mono">{realm.code}</span>
-										{#if realm.code === 'MASTER'}
-											<span class="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-xs">fallback</span>
-										{/if}
-									</td>
-									<td class="py-2 pr-4">
-										{#if transport?.provider}
-											<span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium capitalize">
-												{transport.provider.replace('_', ' ')}
-											</span>
-										{:else}
-											<span class="text-gray-400 text-xs">— inherits</span>
-										{/if}
-									</td>
-									<td class="py-2 text-gray-500 text-xs">
-										{branding?.emailFromAddress || '—'}
-									</td>
-									<td class="py-2 text-right">
-										<button onclick={() => { actMailer = { ...realm }; }}
-											class="text-indigo-600 hover:text-indigo-800 text-xs font-medium">
-											Configure
-										</button>
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
-
-			{:else}
-			<div class="bg-white shadow rounded-lg p-6 mb-6">
-				<h3 class="text-lg font-medium text-gray-900 mb-4 capitalize">{category} Settings</h3>
-
-				<div class="space-y-4">
-					{#each settings as setting}
-						<div class="border border-gray-200 rounded-lg p-4">
-							<div class="flex items-center justify-between">
-								<div class="flex-1">
-									<label class="block text-sm font-medium text-gray-900">
-										{setting.label}
-									</label>
-									{#if setting.description}
-										<p class="text-xs text-gray-500 mt-1">{setting.description}</p>
-									{/if}
-								</div>
-
-								{#if isEditing}
-									<div class="ml-4">
-										{#if setting.type === 'boolean'}
-											<input type="hidden" name="setting_{setting.key}_type" value="boolean" />
-											<label class="flex items-center gap-2">
-												<input
-													type="checkbox"
-													name="setting_{setting.key}"
-													bind:checked={editedSettings[setting.key]}
-													value="true"
-													class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-												/>
-												<span class="text-sm text-gray-700">Enabled</span>
-											</label>
-										{:else if setting.type === 'duration'}
-											<div class="flex items-center gap-2">
-												<input
-													type="number"
-													name="setting_{setting.key}"
-													value={getSettingValue(setting)}
-													min="1"
-													onchange={(e) => {
-														const hours = parseInt(e.currentTarget.value);
-														editedSettings[setting.key] = toSeconds(hours, 'hours');
-													}}
-													class="w-24 px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
-												/>
-												<span class="text-sm text-gray-700">hours</span>
-											</div>
-										{:else if setting.type === 'number'}
-											<div class="flex items-center gap-2">
-												<input
-													type="number"
-													name="setting_{setting.key}"
-													value={getSettingValue(setting)}
-													min="1"
-													onchange={(e) => (editedSettings[setting.key] = parseInt(e.currentTarget.value))}
-													class="w-24 px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
-												/>
-												{#if setting.unit}
-													<span class="text-sm text-gray-700">{setting.unit}</span>
-												{/if}
-											</div>
-										{:else}
-											<input
-												type="text"
-												name="setting_{setting.key}"
-												value={getSettingValue(setting)}
-												onchange={(e) => (editedSettings[setting.key] = e.currentTarget.value)}
-												class="w-64 px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
-											/>
-										{/if}
-									</div>
-								{:else}
-									<div class="ml-4">
-										{#if setting.type === 'boolean'}
-											<span class="px-2 py-1 text-xs font-semibold rounded-full {setting.value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-												{setting.value ? 'Enabled' : 'Disabled'}
-											</span>
-										{:else if setting.type === 'duration'}
-											<span class="text-sm font-semibold text-indigo-600">
-												{formatDuration(setting.value)}
-											</span>
-										{:else}
-											<span class="text-sm font-semibold text-indigo-600">
-												{setting.value}
-												{#if setting.unit}
-													<span class="text-gray-600">{setting.unit}</span>
-												{/if}
-											</span>
-										{/if}
-									</div>
+					<div class="ml-4">
+						{#if setting.type === 'boolean'}
+							<input type="hidden" name="setting_{setting.key}_type" value="boolean" />
+							<label class="flex items-center gap-2">
+								<input class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+									type="checkbox" name="setting_{setting.key}"
+									bind:checked={editedSettings[setting.key]} value="true" />
+								<span class="text-sm text-gray-700">Enabled</span>
+							</label>
+						{:else if setting.type === 'duration'}
+							<div class="flex items-center gap-2">
+								<input class="w-24 border rounded-md focus:ring-2 focus:ring-indigo-500"
+									type="number" name="setting_{setting.key}" min="1"
+									value={getSettingValue(setting)}
+									onchange={(e) => {
+										const hours = parseInt(e.currentTarget.value);
+										editedSettings[setting.key] = toSeconds(hours, 'hours');
+									}} />
+								<span class="text-sm text-gray-700">hours</span>
+							</div>
+						{:else if setting.type === 'number'}
+							<div class="flex items-center gap-2">
+								<input class="w-24 border rounded-md focus:ring-2 focus:ring-indigo-500"
+									type="number" name="setting_{setting.key}" min="1"
+									value={getSettingValue(setting)}
+									onchange={(e) => (editedSettings[setting.key] = parseInt(e.currentTarget.value))} />
+								{#if setting.unit}
+									<span class="text-sm text-gray-700">{setting.unit}</span>
 								{/if}
 							</div>
-						</div>
-					{/each}
+						{:else if setting.type === 'json'}
+							{#each Object.entries(getSettingValue(setting)) as [k, v]}
+								<p class="border-t">Provider:<span class="font-bold"> {k}</span></p>
+								<div class="grid grid-cols-4 gap-2 mb-1">
+									{#each Object.entries(v as Object) as [kk, vv]}
+										<label for="">{kk}</label>
+										<input class="w-64 border rounded-md focus:ring-2 focus:ring-indigo-500"
+											type="text" name="{kk}" value={vv} />
+									{/each}
+								</div>
+							{/each}
+						{:else}
+							<input class="w-64 border rounded-md focus:ring-2 focus:ring-indigo-500"
+								type="text" name="setting_{setting.key}"
+								value={getSettingValue(setting)}
+								onchange={(e) => (editedSettings[setting.key] = e.currentTarget.value)} />
+						{/if}
+					</div>
 				</div>
-			</div>
-			{/if}
-		{/each}
-
-
+			{/each}
+		</div>
+	{/each}
 	</form>
 
+	<form  method="POST" action="?/update-default-email-provider" use:enhance>
+		<!-- Email Settings (excluded from generic each, rendered explicitly) -->
+		<div class="bg-white shadow rounded-lg p-4 mb-2">
+			<div class="flex items-center justify-between border-b border-gray-200 p-2 my-2">
+				<h3 class="text-lg font-medium text-gray-900 capitalize">Email Settings</h3>
+				<button class="px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+					type="submit" > Save Changes
+				</button>
+			</div>
+			<div class="flex items-center justify-between border-b border-gray-200 my-2">
+				<div class="flex-1">
+					<label class="block text-sm font-medium text-gray-900">{sets.email_service_provider.label}</label>
+					<p class="text-xs text-gray-500 mt-1">{sets.email_service_provider.description}</p>
+				</div>
+				<div class="ml-4">
+					<Input type="select" name="settings_email_service_provider" bind:value={selectedProvider} options={pvdopt} />
+				</div>
+			</div>
+			<div>
+				{#each Object.entries(emailConfig[selectedProvider] ?? {}) as [k, v]}
+					<Input type="text" label={k} name="settings_email_service_config_{selectedProvider}_{k}" value={String(v)} />
+				{/each}
+			</div>
+		</div>
+	</form>
 </div>
 
+<!-- Email: per-realm mailer config table -->
+<div class="bg-white shadow rounded-lg p-4 my-2">
+	<div class="flex items-center justify-between mb-2">
+		<div>
+			<h3 class="text-lg font-medium text-gray-900">📧 Email Transport</h3>
+			<p class="text-xs text-gray-500 mt-0.5">
+				Fallback chain: realm transport → Email Settings above → none.
+			</p>
+		</div>
+	</div>
+	<table class="w-full text-sm">
+		<thead>
+			<tr class="border-b border-gray-200 text-xs text-gray-500 uppercase">
+				<th class="text-left py-2 pr-4 font-medium">Realm</th>
+				<th class="text-left py-2 pr-4 font-medium">Code</th>
+				<th class="text-left py-2 pr-4 font-medium">Provider</th>
+				<th class="text-left py-2 font-medium">From</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody class="divide-y divide-gray-100">
+			{#each data.realms as realm}
+				{@const transport = (realm as any).emailTransport}
+				{@const branding = (realm as any).branding}
+				<tr class="hover:bg-gray-50">
+					<td class="py-2 pr-4 font-medium text-gray-900">{realm.name}</td>
+					<td class="py-2 pr-4">
+						<span class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-mono">{realm.code}</span>
+					</td>
+					<td class="py-2 pr-4">
+						{#if transport?.provider}
+							<span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium capitalize">
+								{transport.provider.replace('_', ' ')}
+							</span>
+						{:else}
+							<span class="text-gray-400 text-xs">— inherits</span>
+						{/if}
+					</td>
+					<td class="py-2 text-gray-500 text-xs">
+						{branding?.emailFromAddress || '—'}
+					</td>
+					<td class="py-2 text-right">
+						<button onclick={() => { actMailer = { ...realm }; }}
+							class="text-indigo-600 hover:text-indigo-800 text-xs font-medium">
+							Configure
+						</button>
+					</td>
+				</tr>
+			{/each}
+		</tbody>
+	</table>
+</div>
 {#if actMailer}
 	<MailerModal bind:form={actMailer} />
 {/if}

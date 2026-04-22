@@ -1,22 +1,12 @@
-import { sendEmail } from '@ak-sara/fbao/foundation';
-import { getDB } from '$lib/db/connection';
-import { useLogger } from '@ak-sara/fbao/foundation';
-
-export { sendEmail };
+import { sendEmail, useLogger, defineJob, useQueue } from '@ak-sara/fbao/foundation';
+import { getEmailConfig } from '$lib/services/settings-service';
+import type { EmailFrom,EmailSystemConfig } from '$lib/services/settings-service';
 
 const log = useLogger({ module: 'email:service' });
 
-export interface EmailFrom { fromName?: string; fromEmail?: string; }
-
-export interface ResolvedEmailConfig {
-	provider: string;
-	config: Record<string, unknown>;
-	from?: EmailFrom;
-}
-
 // ── Provider implementations ───────────────────────────────────────────────
 
-export async function sendViaResend(config: any, to: string, subject: string, html: string, text?: string, from?: EmailFrom) {
+async function sendViaResend(config: any, to: string, subject: string, html: string, text?: string, from?: EmailFrom) {
 	const fromEmail = from?.fromEmail || config.fromEmail;
 	const fromName  = from?.fromName  || config.fromName;
 	const fromStr   = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
@@ -32,7 +22,7 @@ export async function sendViaResend(config: any, to: string, subject: string, ht
 	}
 }
 
-export async function sendViaMicrosoftGraph(config: any, to: string, subject: string, html: string, text?: string, from?: EmailFrom) {
+async function sendViaMicrosoftGraph(config: any, to: string, subject: string, html: string, text?: string, from?: EmailFrom) {
 	const tokenRes = await fetch(
 		`https://login.microsoftonline.com/${config.tenantId}/oauth2/v2.0/token`,
 		{
@@ -72,94 +62,92 @@ export async function sendViaMicrosoftGraph(config: any, to: string, subject: st
 	}
 }
 
-// ── Config resolution ──────────────────────────────────────────────────────
+// ── Send ───────────────────────────────────────────────────────────────────
 
-/** Load global transport from system_settings */
-export async function getGlobalEmailConfig(): Promise<ResolvedEmailConfig> {
-	const db = getDB();
-	const [providerDoc, configDoc] = await Promise.all([
-		db.collection('system_settings').findOne({ key: 'email_service_provider' }),
-		db.collection('system_settings').findOne({ key: 'email_service_config' })
-	]);
-	if (!providerDoc || !configDoc) throw new Error('Email service not configured');
-	const provider = providerDoc.value as string;
-	return { provider, config: configDoc.value[provider] ?? {} };
-}
+export type EmailResult = { ok: true } | { ok: false; reason: string };
 
-/**
- * Resolve email config for a realm.
- * Priority: realm.emailTransport → MASTER.emailTransport → system_settings
- * The from name/address is always taken from realm.branding if set.
- */
-export async function getEmailConfigForRealm(realmCode: string): Promise<ResolvedEmailConfig> {
-	const db = getDB();
-	const code = realmCode.toUpperCase();
-
-	const [realm, master] = await Promise.all([
-		code !== 'MASTER' ? db.collection('organizations').findOne({ code }) : Promise.resolve(null),
-		db.collection('organizations').findOne({ code: 'MASTER' })
-	]);
-
-	// Resolve transport: realm → master → global
-	let transport: { provider?: string; [key: string]: any } | undefined =
-		realm?.emailTransport?.provider ? realm.emailTransport :
-		master?.emailTransport?.provider ? master.emailTransport :
-		undefined;
-
-	const resolved: ResolvedEmailConfig = transport
-		? { provider: transport.provider!, config: transport[transport.provider!] ?? {} }
-		: await getGlobalEmailConfig();
-
-	// Apply branding from-address override (display identity, not transport)
-	const branding = (realm ?? master)?.branding as { emailFromName?: string; emailFromAddress?: string } | undefined;
-	if (branding?.emailFromName || branding?.emailFromAddress) {
-		resolved.from = { fromName: branding.emailFromName, fromEmail: branding.emailFromAddress };
-	}
-
-	return resolved;
-}
-
-// ── Send helpers ───────────────────────────────────────────────────────────
-
-async function dispatchEmail(resolved: ResolvedEmailConfig, to: string, subject: string, html: string, text?: string) {
+async function dispatchEmail(resolved: EmailSystemConfig, to: string, subject: string, html: string, text?: string) {
 	const { provider, config, from } = resolved;
+	log.info('Dispatching email', { provider, to, subject });
 	try {
-		if (provider === 'resend')           return await sendViaResend(config, to, subject, html, text, from);
-		if (provider === 'microsoft_graph')  return await sendViaMicrosoftGraph(config, to, subject, html, text, from);
-
-		// FBA providers: apply from override where supported
+		if (provider === 'resend')          return await sendViaResend(config, to, subject, html, text, from);
+		if (provider === 'microsoft_graph') return await sendViaMicrosoftGraph(config, to, subject, html, text, from);
 		const effectiveConfig = from
 			? { ...config, ...(from.fromEmail ? { fromEmail: from.fromEmail } : {}), ...(from.fromName ? { fromName: from.fromName } : {}) }
 			: config;
 		await sendEmail({ provider, config: effectiveConfig, to, subject, html, ...(text ? { text } : {}) });
-	} catch (err) {
-		log.error('Email dispatch failed', { provider, to, error: err });
+		log.info('Email dispatched successfully', { provider, to });
+	} catch (err: any) {
+		log.error('Email dispatch failed', { provider, to, subject, error: err?.message ?? err });
 		throw err;
 	}
 }
 
-/** Send using global system_settings transport */
-export async function sendEmailWithSystemConfig(to: string, subject: string, html: string, text?: string, from?: EmailFrom) {
-	const resolved = await getGlobalEmailConfig();
-	if (from) resolved.from = from;
-	return dispatchEmail(resolved, to, subject, html, text);
+/**
+ * Send email inline. realmCode undefined → system config directly.
+ * Fallback chain: realm transport → system config → no provider.
+ * Never throws — returns EmailResult so callers handle failure explicitly.
+ */
+export async function sendMail(realmCode: string | undefined, to: string, subject: string, html: string, text?: string): Promise<EmailResult> {
+	log.info('sendMail called', { realmCode: realmCode ?? 'system', to, subject });
+	try {
+		const resolved = await getEmailConfig(realmCode);
+		if (!resolved.provider) {
+			log.warn('sendMail: no provider configured', { realmCode, to });
+			return { ok: false, reason: 'no_provider' };
+		}
+		await dispatchEmail(resolved, to, subject, html, text);
+		return { ok: true };
+	} catch (err: any) {
+		const reason: string = err?.message ?? 'send_failed';
+		const structured = reason.includes('not configured') ? 'not_configured' : reason;
+		log.error('sendMail failed', { realmCode, to, subject, reason: structured });
+		return { ok: false, reason: structured };
+	}
 }
 
-/** Send using realm-specific transport (falls back to global) */
-export async function sendEmailWithRealm(realmCode: string, to: string, subject: string, html: string, text?: string) {
-	const resolved = await getEmailConfigForRealm(realmCode);
-	return dispatchEmail(resolved, to, subject, html, text);
+// ── Queue ──────────────────────────────────────────────────────────────────
+
+interface EmailJobPayload {
+	realmCode: string | undefined; to: string; subject: string; html: string; text?: string;
+}
+
+defineJob<EmailJobPayload>('send-email', async ({ realmCode, to, subject, html, text }) => {
+	log.info('Processing queued email job', { realmCode, to, subject });
+	const r = await sendMail(realmCode, to, subject, html, text);
+	if (!r.ok) {
+		log.error('Queued email job failed', { realmCode, to, subject, reason: r.reason });
+		throw new Error(r.reason); // triggers FBA retry
+	}
+	log.info('Queued email job completed', { realmCode, to });
+}, { retries: 3, timeout: 30_000 });
+
+/**
+ * Enqueue an email for async delivery with automatic retries.
+ * Use for fire-and-forget sends (welcome emails, notifications).
+ * Use sendMail() instead when the caller needs immediate delivery feedback.
+ */
+export async function queueEmail(realmCode: string | undefined, to: string, subject: string, html: string, text?: string): Promise<void> {
+	log.info('Queueing email', { realmCode: realmCode ?? 'system', to, subject });
+	try {
+		await useQueue().add('send-email', { realmCode, to, subject, html, text });
+		log.info('Email queued successfully', { realmCode, to });
+	} catch (err: any) {
+		log.error('Failed to queue email', { realmCode, to, subject, error: err?.message ?? err });
+		throw err;
+	}
 }
 
 /** Test a transport config directly (used by settings action) */
 export async function testEmailConfig(provider: string, config: Record<string, unknown>, to: string) {
-	const subject = '🧪 Aksara SSO — Email Configuration Test';
+	const subject = 'Aksara SSO — Email Configuration Test';
 	const html = `<div style="font-family:Arial,sans-serif;padding:20px">
-		<h2 style="color:#4f46e5">✅ Email Configuration Successful!</h2>
+		<h2 style="color:#4f46e5">Email Configuration Successful</h2>
 		<p><strong>Provider:</strong> ${provider}</p>
 		<p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
 		<p style="color:#6b7280;font-size:14px">If you received this, the transport is configured correctly.</p>
 	</div>`;
 	const text = `Email Test\nProvider: ${provider}\nTime: ${new Date().toLocaleString()}`;
+	log.info('Sending test email', { provider, to });
 	return dispatchEmail({ provider, config }, to, subject, html, text);
 }

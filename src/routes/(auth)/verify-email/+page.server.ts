@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { db, Repository, lazy } from '$lib/db/db';
 import { hashToken } from '$lib/crypto';
-import { sendEmailWithSystemConfig } from '$lib/email/email-service';
+import { queueEmail } from '$lib/email/email-service';
 import { getWelcomeEmail } from '$lib/email/templates';
 import { useLogger } from '@ak-sara/fbao/foundation';
 
@@ -85,9 +85,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 		// Send welcome email (fire and forget - don't block verification)
 		if (identity && organization) {
 			const { subject, html, text } = getWelcomeEmail(identity.firstName, organization.name);
-			sendEmailWithSystemConfig(identity.email as string, subject, html, text).catch((err) => {
-				log.error('Failed to send welcome email', { error: err });
-			});
+			const { resolveRealmCode } = await import('$lib/services/settings-service');
+			const realmCode = await resolveRealmCode(identity.organizationId);
+			queueEmail(realmCode, identity.email as string, subject, html, text)
+				.catch((err) => log.error('Failed to queue welcome email', { error: err?.message ?? err }));
 		}
 
 		return {

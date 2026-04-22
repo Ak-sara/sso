@@ -41,7 +41,6 @@ export async function loadSettings(): Promise<SystemSettings[]> {
 			settings = await db.systemSettings.find();
 		}
 	}
-
 	return settings as SystemSettings[];
 }
 
@@ -50,18 +49,96 @@ export async function getSetting<T = unknown>(key: string): Promise<T | undefine
 	return doc?.value as T | undefined;
 }
 
+export interface EmailFrom { fromName?: string; fromEmail?: string; }
+export interface EmailSystemConfig {
+	provider: string;
+	config: Record<string, unknown>;
+	from?: EmailFrom;
+}
+
+async function getEmailSystemConfig(): Promise<EmailSystemConfig> {
+	const [provider, fullConfig] = await Promise.all([
+		getSetting<string>('email_service_provider'),
+		getSetting<Record<string, Record<string, unknown>>>('email_service_config')
+	]);
+	if (!provider || !fullConfig) throw new Error('Email service not configured');
+	return { provider, config: fullConfig[provider] ?? {} };
+}
+
+export async function resolveRealmCode(orgId: string | undefined): Promise<string | undefined> {
+	if (!orgId) return undefined;
+	try {
+		const { ObjectId } = await import('mongodb');
+		const org = await db.organizations.findOne({ _id: new ObjectId(orgId) } as any);
+		return (org as any)?.code ?? undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+export async function getEmailConfig(realmCode: string | undefined): Promise<EmailSystemConfig> {
+	if (!realmCode) {
+		log.info('Email config resolved', { source: 'system' });
+		return getEmailSystemConfig();
+	}
+
+	const code = realmCode.toUpperCase();
+	const realm = await db.organizations.findOne({ code } as any);
+	const transport: { provider?: string; [key: string]: any } | undefined =
+		realm?.emailTransport?.provider ? realm.emailTransport : undefined;
+
+	if (transport) log.info('Email config resolved', { source: `realm(${code})`, provider: transport.provider });
+	else log.info('Email config resolved', { source: 'system', realmCode: code });
+
+	const resolved: EmailSystemConfig = transport
+		? { provider: transport.provider!, config: transport[transport.provider!] ?? {} }
+		: await getEmailSystemConfig();
+
+	const branding = realm?.branding as { emailFromName?: string; emailFromAddress?: string } | undefined;
+	if (branding?.emailFromName || branding?.emailFromAddress) {
+		resolved.from = { fromName: branding.emailFromName, fromEmail: branding.emailFromAddress };
+	}
+	return resolved;
+}
+
 // ── Mutations ──────────────────────────────────────────────────────────────
 
-export async function updateSettingsFromForm(
-	formData: Record<string, unknown>,
-	updatedBy = 'admin'
-): Promise<void> {
-	// Detect boolean settings that may be absent when unchecked
+export async function updateSetting(key: string, value: unknown, updatedBy = 'admin'): Promise<void> {
+	await db.systemSettings.col.updateOne(
+		{ key } as any,
+		{ $set: { value, updatedAt: new Date(), updatedBy } as any }
+	);
+}
+
+export async function updateEmailProvider(provider: string, providerConfig: Record<string, unknown>): Promise<void> {
+	const existing = (await getSetting<Record<string, any>>('email_service_config')) ?? {};
+	const merged = { ...existing, [provider]: { ...(existing[provider] ?? {}), ...providerConfig } };
+	await Promise.all([
+		updateSetting('email_service_provider', provider),
+		updateSetting('email_service_config', merged)
+	]);
+}
+
+export async function getMaskingConfig(): Promise<Record<string, unknown>> {
+	const setting = await db.systemSettings.findOne({ key: 'data_masking_config' } as any);
+	if (!setting) {
+		const { getDefaultMaskingConfig } = await import('$lib/utils/data-masking');
+		const config = getDefaultMaskingConfig();
+		await updateSetting('data_masking_config', config);
+		return config;
+	}
+	return setting.value as Record<string, unknown>;
+}
+
+export async function updateMaskingConfig(config: Record<string, unknown>): Promise<void> {
+	await updateSetting('data_masking_config', config);
+}
+
+export async function updateSettings(formData: Record<string, unknown>, updatedBy = 'admin'): Promise<void> {
 	const booleanKeys = new Set<string>();
 	for (const [key, value] of Object.entries(formData)) {
-		if (key.endsWith('_type') && value === 'boolean') {
+		if (key.endsWith('_type') && value === 'boolean')
 			booleanKeys.add(key.replace('setting_', '').replace('_type', ''));
-		}
 	}
 
 	const updates: Array<{ key: string; value: unknown }> = [];
@@ -72,7 +149,6 @@ export async function updateSettingsFromForm(
 		updates.push({ key: settingKey, value: setting ? parseSettingValue(value, setting.type) : value });
 	}
 
-	// Unchecked booleans don't appear in form data — default to false
 	for (const boolKey of booleanKeys) {
 		if (!updates.some((u) => u.key === boolKey)) updates.push({ key: boolKey, value: false });
 	}
@@ -80,16 +156,9 @@ export async function updateSettingsFromForm(
 	if (updates.length === 0) return;
 
 	try {
-		await db.systemSettings.bulkWrite(
-			updates.map((u) => ({
-				updateOne: {
-					filter: { key: u.key },
-					update: { $set: { value: u.value, updatedAt: new Date(), updatedBy } },
-				},
-			}))
-		);
+		await Promise.all(updates.map((u) => updateSetting(u.key, u.value, updatedBy)));
 	} catch (err) {
-		log.error('Failed to bulk-update settings', { error: err });
+		log.error('Failed to update settings', { error: err });
 		throw err;
 	}
 }

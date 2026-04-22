@@ -1,11 +1,12 @@
 import { MongoClient, type Db } from 'mongodb';
-import { setMongo, useMongo, useLogger } from '@ak-sara/fbao/foundation';
+import { setMongo, useMongo, useLogger, initMongo } from '@ak-sara/fbao/foundation';
 
 const log = useLogger({ module: 'db' });
 
 let client: MongoClient | null = null;
 
 export async function connectDB(uri: string, dbName: string): Promise<Db> {
+	await initMongo()
 	if (client) return useMongo<Db>();
 
 	client = new MongoClient(uri);

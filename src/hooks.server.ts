@@ -16,7 +16,7 @@ async function ensureDBConnection() {
 	if (!dbConnected) {
 		try {
 			const { env } = await import('$env/dynamic/private');
-			setupFBA({ MONGODB_URI: env.MONGODB_URI!, MONGODB_DB: env.MONGODB_DB! });
+			setupFBA({ MONGODB_URI: env.MONGODB_URI!, MONGODB_DB: env.MONGODB_DB!, REDIS_URL: env.REDIS_URL });
 			await connectDB(env.MONGODB_URI!, env.MONGODB_DB!);
 			dbConnected = true;
 		} catch (error) {
