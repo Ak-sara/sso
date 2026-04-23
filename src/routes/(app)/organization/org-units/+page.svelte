@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import DataTable from '$lib/components/DataTable.svelte';
-	import FormModal from '$lib/components/FormModal.svelte';
-	import OrgUnitForm from './OrgUnitForm.svelte';
+	import OrgUnitModal from './OrgUnitModal.svelte';
 	import PageHints from '$lib/components/PageHints.svelte';
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
+	import { showNotif } from '$lib/stores/notif.svelte';
 	import { useLogger } from '$lib/logger';
 	import { navigateWithParams } from '$lib/utils/navigate';
 
@@ -13,31 +13,7 @@
 	let { data }: { data: PageData } = $props();
 
 	let showPageHints = $state(false);
-	let showEditModal = $state(false);
-	let selectedUnit: any = $state(null);
-
-	// ── Helpers ──────────────────────────────────────────────────────────────
-
-	function createDefaultUnit() {
-		return {
-			code: '', name: '', shortName: '', type: 'department', description: '',
-			organizationId: data.organizationOptions[0]?.value || null,
-			parentId: null, parentName: null,
-			groupId: null, groupName: null,
-			picId: null, picName: null,
-			managerId: null, managerName: null,
-			diagram: 'logical', isActive: true
-		};
-	}
-
-	function unitToFormData(unit: any): FormData {
-		const f = new FormData();
-		const skip = new Set(['parentName', 'groupName', 'picName', 'managerName']);
-		for (const [key, val] of Object.entries(unit))
-			if (!skip.has(key) && val !== null && val !== undefined)
-				f.append(key, String(val));
-		return f;
-	}
+	let actUnit: any = $state(null);
 
 	const getTypeIcon = (type: string) => ({
 		board: '👥', 
@@ -90,52 +66,28 @@
 
 	async function handleEdit(unit: any) {
 		try {
-			const response = await fetch(`/api/org-units/${unit._id}`);
-			if (!response.ok) { alert('Failed to load unit data'); return; }
-			selectedUnit = await response.json();
-			showEditModal = true;
+			const res = await fetch(`/api/org-units/${unit._id}`);
+			if (!res.ok) { showNotif('error', 'Gagal memuat data unit'); return; }
+			actUnit = await res.json();
 		} catch (err) {
 			log.error('Error loading unit', { error: err });
-			alert('Failed to load unit data');
-		}
-	}
-
-	async function saveChanges() {
-		if (!selectedUnit) return;
-		const isNew = !selectedUnit._id;
-		try {
-			const response = await fetch(isNew ? '?/create' : '?/update', {
-				method: 'POST',
-				body: unitToFormData(selectedUnit)
-			});
-			const result = await response.json();
-			if (result.type === 'failure') {
-				alert(JSON.parse(result.data).splice(1).join("\n") ?? 'Operation Failure');
-				return;
-			}
-			alert(isNew ? 'Org Unit Created' : 'Successfully save changes');
-			showEditModal = false;
-			selectedUnit = null;
-			await invalidateAll();
-		} catch (err) {
-			log.error('Error saving unit', { error: err });
-			alert('Operation Failure');
+			showNotif('error', 'Gagal memuat data unit');
 		}
 	}
 
 	async function handleDelete(unit: any) {
-		if (!confirm(`Apakah Anda yakin ingin menghapus unit "${unit.name}"? Tindakan ini tidak dapat dibatalkan.`)) return;
+		if (!confirm(`Hapus unit "${unit.name}"? Tindakan ini tidak dapat dibatalkan.`)) return;
 		try {
 			const f = new FormData();
 			f.append('code', unit.code);
-			const response = await fetch('?/delete', { method: 'POST', body: f });
-			const result = await response.json();
-			if (result.type === 'failure') { alert(result.data?.error ?? 'Gagal menghapus'); return; }
-			alert('Unit berhasil dihapus');
-			await invalidateAll();
+			const res = await fetch('?/delete', { method: 'POST', body: f });
+			const result = await res.json();
+			if (result.type === 'failure') { showNotif('error', result.data?.error ?? 'Gagal menghapus'); return; }
+			showNotif('success', 'Unit berhasil dihapus');
+			await invalidate('app:pagination');
 		} catch (err) {
 			log.error('Error deleting unit', { error: err });
-			alert('Gagal menghapus unit');
+			showNotif('error', 'Gagal menghapus unit');
 		}
 	}
 </script>
@@ -153,7 +105,7 @@
 			},{
 				text: '+ Tambah Unit Kerja',
 				class: 'px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors',
-				action: () => { selectedUnit = createDefaultUnit(); showEditModal = true; }
+				action: () => { actUnit = { code: '', name: '', shortName: '', type: 'department', description: '', organizationId: data.organizationOptions[0]?.value || null, parentId: null, parentName: null, groupId: null, groupName: null, picId: null, picName: null, managerId: null, managerName: null, diagram: 'logical', isActive: true }; }
 			}
 		]}
 		page={data.pagination.page}
@@ -184,17 +136,6 @@
 	</p>'
 />
 
-{#if showEditModal && selectedUnit}
-	<FormModal
-		onClose={() => { showEditModal = false; selectedUnit = null; }}
-		title={selectedUnit._id ? selectedUnit.name : 'Tambah Unit Kerja'}
-		subtitle={selectedUnit._id ? `Kode: ${selectedUnit.code}` : 'Isi data unit kerja baru'}>
-
-		<OrgUnitForm
-			bind:unit={selectedUnit}
-			organizationOptions={data.organizationOptions}
-			onSave={saveChanges}
-		/>
-
-	</FormModal>
+{#if actUnit}
+	<OrgUnitModal bind:unit={actUnit} organizationOptions={data.organizationOptions} />
 {/if}

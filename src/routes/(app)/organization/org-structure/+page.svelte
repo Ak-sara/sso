@@ -1,11 +1,10 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import FormModal from '$lib/components/FormModal.svelte';
+	import OrgVersionModal from './OrgVersionModal.svelte';
 
 	let { data }: { data: PageData } = $props();
 
-	let showCreateModal = $state(false);
-	let selectedVersion = $state<any>(null);
+	let actVersion: any = $state(null);
 </script>
 
 <div class="space-y-6">
@@ -33,7 +32,7 @@
 			<p class="text-sm text-gray-500 mt-1">Kelola dan bandingkan versi struktur organisasi dari waktu ke waktu</p>
 		</div>
 		<button
-			onclick={() => showCreateModal = true}
+			onclick={() => (actVersion = {})}
 			class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
 		>
 			+ Buat Versi Baru
@@ -160,59 +159,6 @@
 	</div>
 </div>
 
-{#if showCreateModal}
-	<FormModal
-		onClose={() => showCreateModal = false}
-		title="Buat Versi Struktur Baru"
-		subtitle="Versi baru akan dibuat berdasarkan struktur saat ini">
-
-		<div class="p-6">
-			<p class="text-sm text-gray-600 mb-6">
-				Anda dapat mengedit struktur dan menambahkan informasi SK setelah versi dibuat.
-			</p>
-
-			<form method="POST" action="?/create" class="space-y-4">
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Nama Versi *</label>
-					<input
-						type="text"
-						name="versionName"
-						required
-						placeholder="Contoh: 2025-Q2 Restructure Cargo Division"
-						class="w-full px-3 py-2 border rounded-md"
-					/>
-				</div>
-
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Efektif *</label>
-					<input
-						type="date"
-						name="effectiveDate"
-						required
-						class="w-full px-3 py-2 border rounded-md"
-					/>
-				</div>
-
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Catatan</label>
-					<textarea
-						name="notes"
-						rows="3"
-						placeholder="Alasan pembuatan versi baru, perubahan yang direncanakan, dll."
-						class="w-full px-3 py-2 border rounded-md"
-					></textarea>
-				</div>
-
-				<div class="flex justify-end space-x-3 mt-6">
-					<button
-						type="submit"
-						class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-					>
-						Buat Draft Versi
-					</button>
-				</div>
-			</form>
-		</div>
-
-	</FormModal>
+{#if actVersion}
+	<OrgVersionModal bind:open={actVersion} />
 {/if}

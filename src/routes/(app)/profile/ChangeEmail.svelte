@@ -1,21 +1,9 @@
 <script lang="ts">
-import { enhance } from '$app/forms';
 import FormModal from '$lib/components/FormModal.svelte';
-import { showNotif } from '$lib/stores/notif.svelte';
-import type { PageData, ActionData } from './$types';
+import { formEnhance } from '$lib/utils/form-enhance';
+import type { PageData } from './$types';
 
-let { data, form = $bindable() }: { data: PageData; form?: ActionData } = $props();
-
-$effect(() => {
-	if (form?.success) {
-		showNotif('success', form.message ?? 'Email berhasil diubah!');
-		form = null;
-	} else if (form?.error) {
-		showNotif('error', form.error);
-	} else if (form?.otpSent) {
-		showNotif('info', form.message ?? 'Kode OTP telah dikirim ke email baru Anda.');
-	}
-});
+let { data, form = $bindable() }: { data: PageData; form?: any } = $props();
 </script>
 
 <FormModal wide onClose={() => { form = null; }}
@@ -55,7 +43,7 @@ $effect(() => {
 
 		{#if !form?.otpSent}
 			<!-- Step 1: Enter New Email -->
-			<form method="POST" action="?/sendOTP" use:enhance class="space-y-4">
+			<form method="POST" action="?/sendOTP" use:formEnhance class="space-y-4">
 				<div>
 					<label for="newEmail" class="block text-sm font-medium text-gray-700 mb-1">
 						New Email Address
@@ -78,7 +66,7 @@ $effect(() => {
 			</form>
 		{:else}
 			<!-- Step 2: Verify OTP -->
-			<form method="POST" action="?/verifyAndChange" use:enhance class="space-y-4">
+			<form method="POST" action="?/verifyAndChange" use:formEnhance={{ success: 'Email berhasil diubah!', onSuccess: () => { form = null; } }} class="space-y-4">
 				<input type="hidden" name="newEmail" value={form.newEmail} />
 
 				<div>

@@ -7,11 +7,14 @@
 		placeholder?: string;
         value?: any;
         options?: Record<string,string>;
+		min?: number;
+		max?: number;
+		rows?: number;
 		onClick?: () => void;
         onChange?: () => void;
 	}
 
-	let { type,name,style,label,placeholder,options,value = $bindable(), onClick, onChange }: Props = $props();
+	let { type,name,style,label,placeholder,options,value = $bindable(), min, max, rows = 3, onClick, onChange }: Props = $props();
     let datecols=type=="date"? "3":(type=="datetime"? "6":undefined);
 
     // --- date / datetime reactive parts ---
@@ -154,5 +157,33 @@
             type="checkbox" name={name} bind:checked={value} />
         <span class="ml-2 text-sm text-gray-900">{label}</span>
     </span>
+</div>
+{/if}
+{#if type=="number"}
+<div class="{style}">
+    <label class="block text-xs font-medium text-gray-700 mt-1 ml-1 mb-[-.1em]">{label}</label>
+    <input class="w-full px-2 py-1 border border-gray-300 rounded-md"
+        type="number" name={name} placeholder={placeholder} {min} {max} bind:value={value} onchange={onChange} />
+</div>
+{/if}
+{#if type=="email"}
+<div class="{style}">
+    <label class="block text-xs font-medium text-gray-700 mt-1 ml-1 mb-[-.1em]">{label}</label>
+    <input class="w-full px-2 py-1 border border-gray-300 rounded-md"
+        type="email" name={name} placeholder={placeholder} bind:value={value} />
+</div>
+{/if}
+{#if type=="url"}
+<div class="{style}">
+    <label class="block text-xs font-medium text-gray-700 mt-1 ml-1 mb-[-.1em]">{label}</label>
+    <input class="w-full px-2 py-1 border border-gray-300 rounded-md"
+        type="url" name={name} placeholder={placeholder} bind:value={value} />
+</div>
+{/if}
+{#if type=="textarea"}
+<div class="{style}">
+    <label class="block text-xs font-medium text-gray-700 mt-1 ml-1 mb-[-.1em]">{label}</label>
+    <textarea class="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
+        name={name} placeholder={placeholder} {rows} bind:value={value}></textarea>
 </div>
 {/if}

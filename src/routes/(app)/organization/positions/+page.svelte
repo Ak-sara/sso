@@ -1,21 +1,16 @@
 <script lang="ts">
 	import type { PageData, ActionData } from './$types';
 	import DataTable from '$lib/components/DataTable.svelte';
-	import FormModal from '$lib/components/FormModal.svelte';
-	import PositionForm from './PositionForm.svelte';
-	import { invalidateAll } from '$app/navigation';
+	import PositionModal from './PositionModal.svelte';
+	import { invalidate } from '$app/navigation';
+	import { showNotif } from '$lib/stores/notif.svelte';
 	import { useLogger } from '$lib/logger';
 
 	const log = useLogger({ module: 'app:positions' });
 
-	let { data, form }: { data: PageData; form?: ActionData } = $props();
-	let showEditModal = $state(false);
+	let { data }: { data: PageData } = $props();
 	let showPageHints = $state(false);
-	let selectedPosition: any = $state(null);
-
-	function createDefaultPosition() {
-		return { code: '', name: '', grade: '', level: 0, description: '', isActive: true };
-	}
+	let actPosition: any = $state(null);
 
 	// DataTable columns
 	const columns = [
@@ -23,12 +18,10 @@
 			key: 'name',
 			label: 'Position Name',
 			sortable: true,
-			render: (value: string, row: any) => `
-				<div>
-					<p class="font-medium text-gray-900">${value}</p>
-					<p class="text-sm text-gray-500">Code: ${row.code}</p>
-				</div>
-			`
+			render: (value: string, row: any) => `div>
+				<p class="font-medium text-gray-900">${value}</p>
+				<p class="text-sm text-gray-500">Code: ${row.code}</p>
+			</div>`
 		},
 		{
 			key: 'grade',
@@ -60,113 +53,39 @@
 
 	async function handleEdit(position: any) {
 		try {
-			const response = await fetch(`/api/positions/${position.code}`);
-			if (response.ok) {
-				selectedPosition = await response.json();
-				showEditModal = true;
+			const res = await fetch(`/api/positions/${position.code}`);
+			if (res.ok) {
+				actPosition = await res.json();
 			} else {
-				alert('Failed to load position data');
+				showNotif('error', 'Gagal memuat data posisi');
 			}
 		} catch (err) {
 			log.error('Error loading position', { error: err });
-			alert('Failed to load position data');
+			showNotif('error', 'Gagal memuat data posisi');
 		}
 	}
 
 	async function handleDelete(position: any) {
-		if (!confirm(`Delete position "${position.name}"? This action cannot be undone.`)) {
-			return;
-		}
-
+		if (!confirm(`Hapus posisi "${position.name}"? Tindakan ini tidak dapat dibatalkan.`)) return;
 		try {
-			const formData = new FormData();
-			formData.append('code', position.code);
-
-			const response = await fetch('?/delete', {
-				method: 'POST',
-				body: formData
-			});
-
-			const result = await response.json();
-
+			const fd = new FormData();
+			fd.append('code', position.code);
+			const res = await fetch('?/delete', { method: 'POST', body: fd });
+			const result = await res.json();
 			if (result.type === 'failure') {
-				alert(`Failed to delete position: ${result.data.error}`);
-			} else if (result.type === 'success') {
-				alert('Position deleted successfully');
-				await invalidateAll();
+				showNotif('error', result.data.error ?? 'Gagal menghapus posisi');
+			} else {
+				showNotif('success', 'Posisi berhasil dihapus');
+				await invalidate('app:pagination');
 			}
 		} catch (err) {
 			log.error('Error deleting position', { error: err });
-			alert('Failed to delete position');
+			showNotif('error', 'Gagal menghapus posisi');
 		}
-	}
-
-	async function saveChanges() {
-		if (!selectedPosition) return;
-
-		try {
-			if (!selectedPosition._id) {
-				const formData = new FormData();
-				formData.append('code', selectedPosition.code);
-				formData.append('name', selectedPosition.name);
-				if (selectedPosition.grade) formData.append('grade', selectedPosition.grade);
-				formData.append('level', String(selectedPosition.level || 0));
-				if (selectedPosition.description) formData.append('description', selectedPosition.description);
-
-				const response = await fetch('?/create', { method: 'POST', body: formData });
-				const result = await response.json();
-				if (result.type === 'failure') {
-					alert(`Failed to create position: ${result.data?.error}`);
-					return;
-				}
-				alert('Position created successfully');
-			} else {
-				const response = await fetch(`/api/positions/${selectedPosition.code}`, {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						name: selectedPosition.name,
-						grade: selectedPosition.grade || '',
-						level: selectedPosition.level || 0,
-						description: selectedPosition.description || '',
-						isActive: selectedPosition.isActive
-					})
-				});
-				if (!response.ok) {
-					const error = await response.json();
-					alert(`Failed to update position: ${error.error || 'Unknown error'}`);
-					return;
-				}
-				alert('Position updated successfully');
-			}
-			closeEditModal();
-			await invalidateAll();
-		} catch (err) {
-			log.error('Error saving position', { error: err });
-			alert('Failed to save position');
-		}
-	}
-
-	function closeEditModal() {
-		showEditModal = false;
-		selectedPosition = null;
 	}
 </script>
 
 <div class="space-y-6">
-
-	{#if form?.success}
-		<div class="p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
-			{form.success}
-		</div>
-	{/if}
-
-	{#if form?.error}
-		<div class="p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
-			{form.error}
-		</div>
-	{/if}
-
 	<!-- Positions DataTable -->
 	<DataTable
 		header_before="<p class='text-sm text-gray-500'>Kelola data posisi/jabatan</p>"
@@ -178,9 +97,8 @@
 			},{
 				text:'+ Tambah Posisi',
 				class:'px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors',
-				action:() => { selectedPosition = createDefaultPosition(); showEditModal = true; }
+				action:() => { actPosition = { code: '', name: '', grade: '', level: 0, description: '', isActive: true }; }
 			},
-			
 		]}
 		data={data.positions}
 		{columns}
@@ -193,16 +111,6 @@
 	/>
 </div>
 
-{#if showEditModal && selectedPosition}
-	<FormModal
-		onClose={closeEditModal}
-		title={selectedPosition._id ? selectedPosition.name : 'Tambah Posisi Baru'}
-		subtitle={selectedPosition._id ? `Code: ${selectedPosition.code}` : 'Isi data posisi baru'}>
-
-		<PositionForm
-			bind:position={selectedPosition}
-			onSave={saveChanges}
-		/>
-
-	</FormModal>
+{#if actPosition}
+	<PositionModal bind:position={actPosition} />
 {/if}

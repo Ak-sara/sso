@@ -25,9 +25,9 @@ export const actions: Actions = {
 		}
 	},
 
-	'update-default-email-provider': async ({ request }) => {
-		const fd = await request.formData();
-		const provider = fd.get('settings_email_service_provider') as string;
+	'update-default-email-provider': async ({ locals }) => {
+		const fd = locals.body;
+		const provider = fd.settings_email_service_provider as string;
 		if (!provider) return fail(400, { error: 'Provider is required' });
 
 		const prefix = `settings_email_service_config_${provider}_`;
@@ -44,12 +44,12 @@ export const actions: Actions = {
 		}
 	},
 
-	updateRealmMailer: async ({ request }) => {
+	updateRealmMailer: async ({ locals }) => {
 		// Read raw formData to avoid sanitizeObject mangling the JSON config string
-		const fd = await request.formData();
-		const code = fd.get('code') as string;
-		const provider = fd.get('provider') as string;
-		const configRaw = fd.get('config') as string;
+		const fd = locals.body;
+		const code = fd.code as string;
+		const provider = fd.provider as string;
+		const configRaw = fd.config.replaceAll('&quot;','"') as string;
 
 		if (!code || !provider) return fail(400, { error: 'Code and provider are required' });
 
@@ -64,12 +64,12 @@ export const actions: Actions = {
 		}
 	},
 
-	testEmail: async ({ request }) => {
+	testEmail: async ({ locals }) => {
 		// Read raw formData to avoid sanitizeObject mangling the JSON config string
-		const fd = await request.formData();
-		const provider = fd.get('provider') as string;
-		const configRaw = fd.get('config') as string;
-		const testEmailAddr = fd.get('testEmail') as string;
+		const fd = locals.body;
+		const provider = fd.provider as string;
+		const configRaw = fd.config.replaceAll('&quot;','"') as string;
+		const testEmailAddr = fd.testEmail as string;
 
 		if (!provider || !configRaw || !testEmailAddr)
 			return fail(400, { testError: 'Missing required fields' });

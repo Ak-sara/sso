@@ -1,22 +1,11 @@
 <script lang="ts">
-import { enhance } from '$app/forms';
 import FormModal from '$lib/components/FormModal.svelte';
-import { showNotif } from '$lib/stores/notif.svelte';
-import type { ActionData } from './$types';
+import { formEnhance } from '$lib/utils/form-enhance';
 
-interface Props { form?: ActionData; }
+interface Props { form?: any; }
 let { form = $bindable() }: Props = $props();
 
 let isLoading = $state(false);
-
-$effect(() => {
-	if (form?.success) {
-		showNotif('success', 'Password berhasil diubah!');
-		form = null;
-	} else if (form?.error) {
-		showNotif('error', form.error);
-	}
-});
 </script>
 
 <FormModal wide onClose={() => { form = null; }} title={'Change Password'}
@@ -37,12 +26,11 @@ $effect(() => {
 		</div>
 
 		<!-- Change Password Form -->
-		<form method="POST" use:enhance={() => {
-			isLoading = true;
-			return async ({ update }) => {
-				await update();
-				isLoading = false;
-			};
+		<form method="POST" use:formEnhance={{
+			onSubmit: () => { isLoading = true; },
+			success: 'Password berhasil diubah!',
+			onSuccess: () => { form = null; },
+			onDone: () => { isLoading = false; }
 		}}>
 			<div class="space-y-4">
 				<!-- Current Password -->

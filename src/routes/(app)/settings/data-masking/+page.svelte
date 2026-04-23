@@ -1,17 +1,19 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { maskField } from '$lib/utils/data-masking';
-	import type { PageData, ActionData } from './$types';
+	import type { PageData } from './$types';
 	import type { MaskType, MaskingRule } from '$lib/utils/data-masking';
+	import PageHints from '$lib/components/PageHints.svelte';
 	import { useLogger } from '$lib/logger';
+	import { formEnhance } from '$lib/utils/form-enhance';
 
 	const log = useLogger({ module: 'app:data-masking' });
 
-	let { data, form }: { data: PageData; form?: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	let config = $state(data.config);
 	let isEditing = $state(false);
 	let showAddRule = $state(false);
+	let showPageHints = $state(false);
 
 	// New rule form state
 	let newRule = $state<{
@@ -77,9 +79,7 @@
 		showFieldBrowser = false;
 	}
 
-	function startEditing() {
-		isEditing = true;
-	}
+	function startEditing() { isEditing = true; }
 
 	function cancelEditing() {
 		isEditing = false;
@@ -118,45 +118,15 @@
 				while allowing authorized users to access it.
 			</p>
 		</div>
-		{#if !isEditing}
-			<button
-				onclick={startEditing}
-				class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-			>
-				Edit Configuration
-			</button>
-		{/if}
-	</div>
-
-	<!-- How It Works Info -->
-	<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-		<div class="flex items-start gap-3">
-			<span class="text-2xl">ℹ️</span>
-			<div class="flex-1">
-				<h3 class="text-sm font-semibold text-blue-900 mb-1">How Data Masking Works</h3>
-				<ul class="text-sm text-blue-800 space-y-1">
-					<li>• <strong>Database storage:</strong> Original unmasked data remains intact in the database</li>
-					<li>• <strong>API layer masking:</strong> Data is masked when served through API endpoints (e.g., /api/identities/search)</li>
-					<li>• <strong>Role-based access:</strong> Users with exempt roles (admin, superadmin) always see unmasked data</li>
-					<li>• <strong>No data loss:</strong> Masking is reversible - original data is never modified</li>
-					<li>• <strong>Field discovery:</strong> Click "Browse Available Fields" to see all existing fields in your identities collection</li>
-				</ul>
-			</div>
+		<div>
+			<button class="px-2 py-0 text-2xl inline-block transition-transform duration-200 hover:-rotate-12 cursor-pointer"
+				onclick={() => (showPageHints = true)} > ℹ️ </button>	
+			{#if !isEditing}
+			<button class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+				onclick={startEditing} > Edit Configuration </button>
+			{/if}
 		</div>
 	</div>
-
-	<!-- Success/Error Messages -->
-	{#if form?.success}
-		<div class="p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
-			{form.success}
-		</div>
-	{/if}
-
-	{#if form?.error}
-		<div class="p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
-			{form.error}
-		</div>
-	{/if}
 
 	<!-- Configuration Status -->
 	<div class="bg-white shadow rounded-lg p-6">
@@ -169,19 +139,14 @@
 			</div>
 			{#if isEditing}
 				<label class="flex items-center gap-2">
-					<input
-						type="checkbox"
-						bind:checked={config.enabled}
-						class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-					/>
+					<input class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+						type="checkbox" bind:checked={config.enabled} />
 					<span class="text-sm font-medium text-gray-700">Enable Masking</span>
 				</label>
 			{:else}
-				<span
-					class="px-3 py-1 text-xs font-semibold rounded-full {config.enabled
+				<span class="px-3 py-1 text-xs font-semibold rounded-full {config.enabled
 						? 'bg-green-100 text-green-800'
-						: 'bg-red-100 text-red-800'}"
-				>
+						: 'bg-red-100 text-red-800'}" >
 					{config.enabled ? 'Enabled' : 'Disabled'}
 				</span>
 			{/if}
@@ -194,12 +159,8 @@
 				Users with these roles will see unmasked data. Separate roles with commas.
 			</p>
 			{#if isEditing}
-				<input
-					type="text"
-					bind:value={config.exemptRoles}
-					placeholder="admin, superadmin, auditor"
-					class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
-				/>
+				<input class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+					placeholder="admin, superadmin, auditor" type="text" bind:value={config.exemptRoles} />
 			{:else}
 				<div class="flex flex-wrap gap-2">
 					{#each config.exemptRoles || [] as role}
@@ -220,10 +181,8 @@
 				<p class="text-sm text-gray-500">Define which fields should be masked and how</p>
 			</div>
 			{#if isEditing}
-				<button
-					onclick={() => (showAddRule = !showAddRule)}
-					class="px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700"
-				>
+				<button class="px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700"
+					onclick={() => (showAddRule = !showAddRule)} >
 					{showAddRule ? 'Cancel' : '+ Add Rule'}
 				</button>
 			{/if}
@@ -231,27 +190,19 @@
 
 		<!-- Add Rule Form -->
 		{#if showAddRule}
-			<form method="POST" action="?/addRule" use:enhance class="mb-4 p-4 bg-gray-50 rounded-md">
+			<form method="POST" action="?/addRule" use:formEnhance={{ success: 'Rule berhasil ditambahkan', onSuccess: () => { showAddRule = false; resetNewRule(); } }} class="mb-4 p-4 bg-gray-50 rounded-md">
 				<div class="grid grid-cols-2 gap-4">
 					<div>
 						<div class="flex justify-between items-center mb-1">
 							<label class="block text-sm font-medium text-gray-700">Field Path</label>
-							<button
-								type="button"
-								onclick={toggleFieldBrowser}
-								class="text-xs text-indigo-600 hover:text-indigo-800"
-							>
+							<button class="text-xs text-indigo-600 hover:text-indigo-800"
+								type="button" onclick={toggleFieldBrowser} >
 								{showFieldBrowser ? 'Close Browser' : '🔍 Browse Available Fields'}
 							</button>
 						</div>
-						<input
-							type="text"
-							name="field"
-							bind:value={newRule.field}
-							placeholder="e.g., email, customProperties.ktp"
-							class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
-							required
-						/>
+						<input class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+							type="text" name="field" placeholder="e.g., email, customProperties.ktp"
+							bind:value={newRule.field} required />
 
 						<!-- Field Browser -->
 						{#if showFieldBrowser}
@@ -270,11 +221,8 @@
 											<div class="text-xs font-semibold text-gray-700 mb-1">{category}</div>
 											<div class="space-y-1">
 												{#each fields as field}
-													<button
-														type="button"
-														onclick={() => selectField(field)}
-														class="block w-full text-left px-2 py-1 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 rounded"
-													>
+													<button class="block w-full text-left px-2 py-1 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 rounded"
+														type="button" onclick={() => selectField(field)} >
 														<code class="font-mono">{field}</code>
 													</button>
 												{/each}
@@ -290,11 +238,8 @@
 
 					<div>
 						<label class="block text-sm font-medium text-gray-700 mb-1">Mask Type</label>
-						<select
-							name="type"
-							bind:value={newRule.type}
-							class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
-						>
+						<select class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+							name="type" bind:value={newRule.type} >
 							{#each maskTypes as maskType}
 								<option value={maskType.value}>{maskType.label}</option>
 							{/each}
@@ -304,56 +249,32 @@
 					{#if newRule.type === 'custom' || newRule.type === 'phone' || newRule.type === 'ktp'}
 						<div>
 							<label class="block text-sm font-medium text-gray-700 mb-1">Show First</label>
-							<input
-								type="number"
-								name="showFirst"
-								bind:value={newRule.showFirst}
-								min="0"
-								placeholder="3"
-								class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
-							/>
+							<input class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+								type="number" name="showFirst" min="0" placeholder="3"
+								bind:value={newRule.showFirst} />
 						</div>
 
 						<div>
 							<label class="block text-sm font-medium text-gray-700 mb-1">Show Last</label>
-							<input
-								type="number"
-								name="showLast"
-								bind:value={newRule.showLast}
-								min="0"
-								placeholder="3"
-								class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
-							/>
+							<input class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+								type="number" name="showLast" min="0" placeholder="3"
+								bind:value={newRule.showLast} />
 						</div>
 					{/if}
 
 					<div>
 						<label class="block text-sm font-medium text-gray-700 mb-1">Mask Character</label>
-						<input
-							type="text"
-							name="maskChar"
-							bind:value={newRule.maskChar}
-							maxlength="1"
-							placeholder="*"
-							class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
-						/>
+						<input class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+							type="text" name="maskChar" maxlength="1" placeholder="*"
+							bind:value={newRule.maskChar} />
 					</div>
 				</div>
 
 				<div class="flex justify-end gap-2 mt-4">
-					<button
-						type="button"
-						onclick={resetNewRule}
-						class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-					>
-						Cancel
-					</button>
-					<button
-						type="submit"
-						class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-					>
-						Add Rule
-					</button>
+					<button class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+						type="button" onclick={resetNewRule} > Cancel </button>
+					<button class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+						type="submit" > Add Rule </button>
 				</div>
 			</form>
 		{/if}
@@ -383,14 +304,10 @@
 							</div>
 
 							{#if isEditing}
-								<form method="POST" action="?/deleteRule" use:enhance>
+								<form method="POST" action="?/deleteRule" use:formEnhance={'Rule berhasil dihapus'}>
 									<input type="hidden" name="index" value={index} />
-									<button
-										type="submit"
-										class="text-red-600 hover:text-red-800 text-sm font-medium"
-									>
-										Delete
-									</button>
+									<button class="text-red-600 hover:text-red-800 text-sm font-medium"
+										type="submit" > Delete </button>
 								</form>
 							{/if}
 						</div>
@@ -415,10 +332,8 @@
 		<div class="grid grid-cols-2 gap-4">
 			<div>
 				<label class="block text-sm font-medium text-gray-700 mb-1">Mask Type</label>
-				<select
-					bind:value={previewType}
-					class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
-				>
+				<select class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+					bind:value={previewType} >
 					{#each maskTypes as maskType}
 						<option value={maskType.value}>{maskType.label}</option>
 					{/each}
@@ -427,12 +342,9 @@
 
 			<div>
 				<label class="block text-sm font-medium text-gray-700 mb-1">Test Value</label>
-				<input
-					type="text"
-					bind:value={previewValue}
-					placeholder="Enter value to test..."
-					class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
-				/>
+				<input class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+					type="text" placeholder="Enter value to test..." 
+					bind:value={previewValue} />
 			</div>
 		</div>
 
@@ -454,32 +366,31 @@
 
 	<!-- Save/Cancel Actions -->
 	{#if isEditing}
-		<form method="POST" action="?/update" use:enhance>
-			<input type="hidden" name="enabled" value={config.enabled} />
-			<input type="hidden" name="rules" value={JSON.stringify(config.rules)} />
-			<input
-				type="hidden"
-				name="exemptRoles"
-				value={Array.isArray(config.exemptRoles)
-					? config.exemptRoles.join(', ')
-					: config.exemptRoles}
-			/>
+	<form method="POST" action="?/update" use:formEnhance={{ success: 'Konfigurasi berhasil disimpan', onSuccess: () => { isEditing = false; } }}>
+		<input type="hidden" name="enabled" value={config.enabled} />
+		<input type="hidden" name="rules" value={JSON.stringify(config.rules)} />
+		<input type="hidden"
+			name="exemptRoles"
+			value={Array.isArray(config.exemptRoles)
+				? config.exemptRoles.join(', ')
+				: config.exemptRoles} />
 
-			<div class="flex justify-end gap-3">
-				<button
-					type="button"
-					onclick={cancelEditing}
-					class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-				>
-					Cancel
-				</button>
-				<button
-					type="submit"
-					class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-				>
-					Save Changes
-				</button>
-			</div>
-		</form>
+		<div class="flex justify-end gap-3">
+			<button class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+				type="button" onclick={cancelEditing} > Cancel </button>
+			<button class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+				type="submit" > Save Changes </button>
+		</div>
+	</form>
 	{/if}
 </div>
+
+<PageHints bind:visible={showPageHints}
+	title='How Data Masking Works'
+	paragraph='<ul class="mt-1 text-sm text-blue-700 text-sm text-blue-800 space-y-1">
+		<li>• <strong>Database storage:</strong> Original unmasked data remains intact in the database</li>
+		<li>• <strong>API layer masking:</strong> Data is masked when served through API endpoints (e.g., /api/identities/search)</li>
+		<li>• <strong>Role-based access:</strong> Users with exempt roles (admin, superadmin) always see unmasked data</li>
+		<li>• <strong>No data loss:</strong> Masking is reversible - original data is never modified</li>
+		<li>• <strong>Field discovery:</strong> Click "Browse Available Fields" to see all existing fields in your identities collection</li>
+	</ul>' />

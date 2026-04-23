@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import type { PageData, ActionData } from './$types';
+	import type { PageData } from './$types';
 	import MailerModal from './MailerModal.svelte';
-    import Input from '$lib/components/Input.svelte';
-    
-	let { data, form }: { data: PageData; form?: ActionData } = $props();
+	import Input from '$lib/components/Input.svelte';
+	import { formEnhance } from '$lib/utils/form-enhance';
+
+	let { data }: { data: PageData } = $props();
 	let editedSettings: Record<string, any> = $state({});
 	let actMailer: any = $state(null);
 
@@ -58,7 +58,7 @@
 </script>
 
 <div class="space-y-6">
-	<form method="POST" action="?/update" use:enhance>
+	<form method="POST" action="?/update" use:formEnhance={'Pengaturan berhasil disimpan'}>
 	<!-- Header -->
 		<div class="flex justify-between items-center my-2">
 			<div>
@@ -70,18 +70,8 @@
 			</button>
 		</div>
 
-	{#if form?.success}
-		<div class="p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
-			{form.success}
-		</div>
-	{/if}
-	{#if form?.error}
-		<div class="p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
-			{form.error}
-		</div>
-	{/if}
 
-	{#each Object.entries(settingsByCategory()) as [category, settings]}
+{#each Object.entries(settingsByCategory()) as [category, settings]}
 		<div class="bg-white shadow rounded-lg p-4 my-2">
 			<h3 class="text-lg font-medium text-gray-900 capitalize">{category} Settings</h3>
 			{#each settings as setting}
@@ -146,7 +136,7 @@
 	{/each}
 	</form>
 
-	<form  method="POST" action="?/update-default-email-provider" use:enhance>
+	<form method="POST" action="?/update-default-email-provider" use:formEnhance={'Email settings berhasil disimpan'}>
 		<!-- Email Settings (excluded from generic each, rendered explicitly) -->
 		<div class="bg-white shadow rounded-lg p-4 mb-2">
 			<div class="flex items-center justify-between border-b border-gray-200 p-2 my-2">
@@ -177,7 +167,7 @@
 <div class="bg-white shadow rounded-lg p-4 my-2">
 	<div class="flex items-center justify-between mb-2">
 		<div>
-			<h3 class="text-lg font-medium text-gray-900">📧 Email Transport</h3>
+			<h3 class="text-lg font-medium text-gray-900">Email Transport</h3>
 			<p class="text-xs text-gray-500 mt-0.5">
 				Fallback chain: realm transport → Email Settings above → none.
 			</p>
@@ -186,8 +176,8 @@
 	<table class="w-full text-sm">
 		<thead>
 			<tr class="border-b border-gray-200 text-xs text-gray-500 uppercase">
-				<th class="text-left py-2 pr-4 font-medium">Realm</th>
 				<th class="text-left py-2 pr-4 font-medium">Code</th>
+				<th class="text-left py-2 pr-4 font-medium">Realm</th>
 				<th class="text-left py-2 pr-4 font-medium">Provider</th>
 				<th class="text-left py-2 font-medium">From</th>
 				<th></th>
@@ -198,27 +188,25 @@
 				{@const transport = (realm as any).emailTransport}
 				{@const branding = (realm as any).branding}
 				<tr class="hover:bg-gray-50">
-					<td class="py-2 pr-4 font-medium text-gray-900">{realm.name}</td>
 					<td class="py-2 pr-4">
 						<span class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-mono">{realm.code}</span>
 					</td>
+					<td class="py-2 pr-4 font-medium text-gray-900">{realm.name}</td>
 					<td class="py-2 pr-4">
 						{#if transport?.provider}
 							<span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium capitalize">
 								{transport.provider.replace('_', ' ')}
 							</span>
 						{:else}
-							<span class="text-gray-400 text-xs">— inherits</span>
+							<span class="text-gray-400 text-xs">not Configured</span>
 						{/if}
 					</td>
 					<td class="py-2 text-gray-500 text-xs">
 						{branding?.emailFromAddress || '—'}
 					</td>
 					<td class="py-2 text-right">
-						<button onclick={() => { actMailer = { ...realm }; }}
-							class="text-indigo-600 hover:text-indigo-800 text-xs font-medium">
-							Configure
-						</button>
+						<button class="text-indigo-600 hover:text-indigo-800 text-xs font-medium"
+							onclick={() => { actMailer = { ...realm }; }} > Configure </button>
 					</td>
 				</tr>
 			{/each}

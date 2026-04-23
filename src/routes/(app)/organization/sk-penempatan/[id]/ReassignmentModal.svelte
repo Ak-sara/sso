@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import FormModal from '$lib/components/FormModal.svelte';
 	import Input from '$lib/components/Input.svelte';
 	import { showNotif } from '$lib/stores/notif.svelte';
+	import { formEnhance } from '$lib/utils/form-enhance';
 
 	interface Props {
 		index?: number;
@@ -27,16 +27,11 @@
 <FormModal title="{isNew ? 'Tambah' : 'Edit'} Karyawan Terdampak" onClose={onClose}>
 	<div class="p-4">
 		<form method="POST" action="?/upsertReassignment"
-			use:enhance={() => async ({ result, update }) => {
-				if (result.type === 'success') {
-					showNotif('success', isNew ? 'Karyawan berhasil ditambahkan' : 'Data karyawan diperbarui');
-					await invalidateAll();
-					onClose();
-				} else if (result.type === 'failure') {
-					showNotif('error', (result.data as any)?.error ?? 'Gagal menyimpan');
-				}
-				await update({ reset: false });
-			}}
+			use:formEnhance={{ onSuccess: async () => {
+				showNotif('success', isNew ? 'Karyawan berhasil ditambahkan' : 'Data karyawan diperbarui');
+				await invalidateAll();
+				onClose();
+			} }}
 			class="space-y-4">
 
 			<input type="hidden" name="index" value={index} />

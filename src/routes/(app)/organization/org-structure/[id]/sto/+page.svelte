@@ -6,6 +6,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { StoChart } from '@ak-sara/sto-diagram';
 	import { useLogger } from '$lib/logger';
+	import { showNotif } from '$lib/stores/notif.svelte';
     import type { OrgUnit } from '$lib/db/schemas';
 
 	const log = useLogger({ module: 'app:org-sto' });
@@ -74,12 +75,12 @@
 	async function openNodeEditor(nodeCode: string) {
 		try {
 			const response = await fetch(`/api/org-units/${nodeCode}`);
-			if (!response.ok) { alert('Unit tidak ditemukan'); return; }
+			if (!response.ok) { showNotif('error', 'Unit tidak ditemukan'); return; }
 			selectedNode = await response.json();
 			showNodeEditor = true;
 		} catch (err) {
 			log.error('Error loading node', { error: err });
-			alert('Gagal memuat data unit');
+			showNotif('error', 'Gagal memuat data unit');
 		}
 	}
 
@@ -88,14 +89,14 @@
 		try {
 			const response = await fetch('?/update', { method: 'POST', body: unitToFormData(selectedNode) });
 			const result = await response.json();
-			if (result.type === 'failure') { alert(result.data?.error ?? 'Gagal menyimpan'); return; }
-			alert('Perubahan berhasil disimpan');
+			if (result.type === 'failure') { showNotif('error', result.data?.error ?? 'Gagal menyimpan'); return; }
+			showNotif('success', 'Perubahan berhasil disimpan');
 			showNodeEditor = false;
 			selectedNode = null;
 			await invalidateAll();
 		} catch (err) {
 			log.error('Error saving node', { error: err });
-			alert('Gagal menyimpan perubahan');
+			showNotif('error', 'Gagal menyimpan perubahan');
 		}
 	}
 </script>

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
+	import { formEnhance } from '$lib/utils/form-enhance';
 	import FormModal from '$lib/components/FormModal.svelte';
 	import Input from '$lib/components/Input.svelte';
 	import { showNotif } from '$lib/stores/notif.svelte';
@@ -51,16 +51,10 @@
 <FormModal wide title="Branding — {form?.name}" subtitle={form?.code} onClose={() => { form = null; }}>
 	<div class="p-4 overflow-y-auto max-h-[70vh]">
 		<form method="POST" action="?/updateBranding"
-			use:enhance={() => async ({ result, update }) => {
-				if (result.type === 'success') {
-					showNotif('success', 'Branding berhasil disimpan');
-					await invalidate('app:pagination');
-					form = null;
-				} else if (result.type === 'failure') {
-					showNotif('error', (result.data as any)?.error ?? 'Gagal menyimpan branding');
-				}
-				await update({ reset: false });
-			}}
+			use:formEnhance={{ success: 'Branding berhasil disimpan', onSuccess: async () => {
+				await invalidate('app:pagination');
+				form = null;
+			} }}
 			class="space-y-6">
 
 			<input type="hidden" name="code" value={form?.code} />

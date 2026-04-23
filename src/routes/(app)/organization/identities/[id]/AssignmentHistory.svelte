@@ -1,9 +1,8 @@
 <script lang="ts">
-import { enhance } from '$app/forms';
 import { invalidateAll } from '$app/navigation';
 import FormModal from '$lib/components/FormModal.svelte';
 import Input from '$lib/components/Input.svelte';
-import { showNotif } from '$lib/stores/notif.svelte';
+import { formEnhance } from '$lib/utils/form-enhance';
 
 interface Props {
 	assignment: any;
@@ -15,22 +14,13 @@ interface Props {
 
 let { assignment = $bindable(), orgmap, unitmap, positionmap, onSaved }: Props = $props();
 
-const handleSave = () => () => async ({ result }: any) => {
-	if (result.type === 'failure') {
-		showNotif('error', result.data?.error ?? 'Gagal menyimpan assignment');
-	} else {
-		showNotif('success', 'Assignment disimpan');
-		await invalidateAll();
-		onSaved();
-	}
-};
 </script>
 
 <FormModal wide onClose={() => { assignment = null; }} 
 	title={assignment._id ? assignment.name : 'Tambah Assignment'}
 	subtitle={assignment._id ? `Kode: ${assignment.employeeId} (${assignment._id})` : 'create new Assignment'} >
 
-<form method="POST" action="?/upsertAssignment" use:enhance={handleSave()}>
+<form method="POST" action="?/upsertAssignment" use:formEnhance={{ success: 'Assignment disimpan', onSuccess: async () => { await invalidateAll(); onSaved(); } }}>
 	<input type="hidden" name="_id" value={assignment._id ?? ''} />
 	<div class="p-6 space-y-4">
 		<div class="grid grid-cols-5 gap-4">

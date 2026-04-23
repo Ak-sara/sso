@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
 	import FormModal from '$lib/components/FormModal.svelte';
 	import { showNotif } from '$lib/stores/notif.svelte';
+	import { formEnhance } from '$lib/utils/form-enhance';
 
 	interface Props { form?: any; }
 	let { form = $bindable() }: Props = $props();
@@ -123,13 +123,9 @@
 
 		<!-- Test send -->
 		<form method="POST" action="?/testEmail"
-			use:enhance={() => async ({ result, update }) => {
-				if (result.type === 'success' && (result.data as any)?.testSuccess)
-					showNotif('success', (result.data as any).testSuccess);
-				else if (result.type === 'failure')
-					showNotif('error', (result.data as any)?.testError ?? 'Test failed');
-				await update({ reset: false });
-			}}
+			use:formEnhance={{ onSuccess: (data) => {
+				if (data?.testSuccess) showNotif('success', data.testSuccess);
+			} }}
 			class="flex gap-2 p-3 bg-gray-50 rounded-lg">
 			<input type="hidden" name="provider" value={provider} />
 			<input type="hidden" name="config" value={JSON.stringify(cfg)} />
@@ -142,16 +138,10 @@
 
 		<!-- Save form -->
 		<form method="POST" action="?/updateRealmMailer"
-			use:enhance={() => async ({ result, update }) => {
-				if (result.type === 'success') {
-					showNotif('success', 'Mailer configuration saved');
-					await invalidate('app:pagination');
-					form = null;
-				} else if (result.type === 'failure') {
-					showNotif('error', (result.data as any)?.error ?? 'Failed to save');
-				}
-				await update({ reset: false });
-			}}
+			use:formEnhance={{ success: 'Mailer configuration saved', onSuccess: async () => {
+				await invalidate('app:pagination');
+				form = null;
+			} }}
 			class="flex justify-end gap-3 pt-2 border-t border-gray-200">
 			<input type="hidden" name="code" value={form?.code} />
 			<input type="hidden" name="provider" value={provider} />

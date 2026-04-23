@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import { showNotif } from '$lib/stores/notif.svelte';
 	import { page } from '$app/stores';
 	import PageHints from '$lib/components/PageHints.svelte';
 	import CSVSyncTab from '$lib/components/CSVSyncTab.svelte';
@@ -37,17 +37,17 @@
 		if (form?.success && form?.stats) {
 			preview = null;
 			isApplying = false;
-			alert(form.message);
+			showNotif('success', form.message);
 		}
 		if (form?.success && form?.message) {
 			isTesting = false;
 			isSaving = false;
-			alert(form.message);
+			showNotif('success', form.message);
 		}
 		if (form?.error) {
 			isTesting = false;
 			isSaving = false;
-			alert('Error: ' + form.error);
+			showNotif('error', form.error);
 		}
 	});
 

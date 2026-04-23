@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { invalidateAll } from '$app/navigation';
-	import { enhance } from '$app/forms';
 	import { useLogger } from '$lib/logger';
+	import { formEnhance } from '$lib/utils/form-enhance';
 	import Input from '$lib/components/Input.svelte';
 	import DataTable from '$lib/components/DataTable.svelte';
 	import AssignmentHistory from './AssignmentHistory.svelte';
@@ -40,19 +40,6 @@
 	const positionmap:Record<string,string>=datamap(data.positions,"code","name");	
 
 	let selectedAssignment: any = $state(null);
-
-	const handleSave = () => () => async ({ result, update }: any) => {
-		if (result.type === 'redirect') {
-			showNotif('success', 'Data is saved');
-			await update();
-		} else if (result.type === 'failure') {
-			showNotif('error', result.data?.error ?? 'Failure to save');
-		} else if (result.type === 'error') {
-			showNotif('error', result.error?.message ?? 'Server error');
-		} else {
-			await update();
-		}
-	};
 
 	const columns = [
 		{
@@ -124,7 +111,7 @@
 </div>
 
 <!-- Main Content -->
-<form method="POST" action="?/update" use:enhance={handleSave()}>
+<form method="POST" action="?/update" use:formEnhance={'Data is saved'}>
 	<input type="hidden" name="identityType" value={data.identity?.identityType} />
 
 	<div class="bg-white shadow rounded-lg overflow-hidden">

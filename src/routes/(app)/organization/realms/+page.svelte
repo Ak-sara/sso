@@ -1,13 +1,12 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
 	import { tick } from 'svelte';
 	import DataTable from '$lib/components/DataTable.svelte';
 	import PageHints from '$lib/components/PageHints.svelte';
 	import RealmModal from './RealmModal.svelte';
 	import BrandingModal from './BrandingModal.svelte';
-	import { showNotif } from '$lib/stores/notif.svelte';
+	import { formEnhance } from '$lib/utils/form-enhance';
 
 	let { data }: { data: PageData } = $props();
 
@@ -82,21 +81,11 @@
 	paragraph='<p class="mt-1 text-sm text-blue-700">
 		Realm adalah konsep yang mirip dengan tenant atau workspace. Setiap realm memiliki pengguna,
 		organisasi, dan konfigurasi OAuth yang terisolasi.
-	</p>'
-/>
+	</p>' />
 
 <!-- Hidden delete form -->
-<form bind:this={deleteFormEl} method="POST" action="?/delete"
-	use:enhance={() => async ({ result, update }) => {
-		if (result.type === 'success') {
-			showNotif('success', 'Realm berhasil dihapus');
-			await invalidate('app:pagination');
-		} else if (result.type === 'failure') {
-			showNotif('error', (result.data as any)?.error ?? 'Gagal menghapus realm');
-		}
-		await update({ reset: false });
-	}}
-	class="hidden">
+<form bind:this={deleteFormEl} method="POST" action="?/delete" class="hidden"
+	use:formEnhance={{ success: 'Realm berhasil dihapus', onSuccess: async () => { await invalidate('app:pagination'); } }} >
 	<input type="hidden" name="code" value={pendingDeleteCode} />
 </form>
 

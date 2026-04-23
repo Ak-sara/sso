@@ -1,22 +1,10 @@
 <script lang="ts">
-import { enhance } from '$app/forms';
 import FormModal from '$lib/components/FormModal.svelte';
 import { showNotif } from '$lib/stores/notif.svelte';
-import type { PageData, ActionData } from './$types';
+import { formEnhance } from '$lib/utils/form-enhance';
+import type { PageData } from './$types';
 
-let { data, form = $bindable() }: { data: PageData; form?: ActionData } = $props();
-
-$effect(() => {
-	if (form?.success) {
-		showNotif('success', form.message ?? 'Berhasil');
-		// keep form open when backup codes need to be shown/copied
-		if (!form?.backupCodes) form = null;
-	} else if (form?.error) {
-		showNotif('error', form.error);
-	} else if (form?.otpSent || form?.disableOtpSent) {
-		showNotif('info', form.message ?? 'Kode OTP telah dikirim ke email Anda.');
-	}
-});
+let { data, form = $bindable() }: { data: PageData; form?: any } = $props();
 </script>
 
 <FormModal wide onClose={() => { form = null; }}
@@ -74,7 +62,7 @@ $effect(() => {
 				onclick={() => {
 					const text = form?.backupCodes?.join('\n') || '';
 					navigator.clipboard.writeText(text);
-					alert('Backup codes copied to clipboard!');
+					showNotif('success', 'Backup codes copied to clipboard!');
 				}} > 📋 Copy All Codes
 			</button>
 		</div>
@@ -131,7 +119,10 @@ $effect(() => {
 		<!-- Enable/Disable Forms -->
 		{#if !data.status2FA?.enabled}
 			<!-- Enable 2FA Form -->
-			<form method="POST" action="?/enable" use:enhance class="space-y-4">
+			<form method="POST" action="?/enable" use:formEnhance={{ onSuccess: (data) => {
+				if (data?.otpSent) { showNotif('info', data.message ?? 'Kode OTP telah dikirim ke email Anda.'); }
+				else { showNotif('success', data?.message ?? 'Berhasil'); form = null; }
+			} }} class="space-y-4">
 				{#if form?.otpSent}
 					<div>
 						<label for="otpCode" class="block text-sm font-medium text-gray-700 mb-1">
@@ -155,7 +146,10 @@ $effect(() => {
 			</form>
 		{:else}
 			<!-- Disable 2FA Form -->
-			<form method="POST" action="?/disable" use:enhance class="space-y-4">
+			<form method="POST" action="?/disable" use:formEnhance={{ onSuccess: (data) => {
+					if (data?.disableOtpSent) { showNotif('info', data.message ?? 'Kode OTP telah dikirim ke email Anda.'); }
+					else { showNotif('success', data?.message ?? 'Berhasil'); form = null; }
+				} }} class="space-y-4">
 				{#if form?.disableOtpSent}
 					<div>
 						<label for="otpCode" class="block text-sm font-medium text-gray-700 mb-1">
@@ -175,7 +169,9 @@ $effect(() => {
 			</form>
 
 			<!-- Regenerate Backup Codes -->
-			<form method="POST" action="?/regenerateBackupCodes" use:enhance class="mt-4">
+			<form method="POST" action="?/regenerateBackupCodes" use:formEnhance={{ onSuccess: (data) => {
+					showNotif('success', data?.message ?? 'Backup codes berhasil diperbarui!');
+				} }} class="mt-4">
 				<button class="w-full px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50"
 					type="submit" > 🔄 Regenerate Backup Codes
 				</button>

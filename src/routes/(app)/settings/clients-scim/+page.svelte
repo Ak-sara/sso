@@ -1,23 +1,16 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import type { PageData, ActionData } from './$types';
+	import type { PageData } from './$types';
 	import DataTable from '$lib/components/DataTable.svelte';
-	import FormModal from '$lib/components/FormModal.svelte';
-	import ScimClientForm from './ScimClientForm.svelte';
-	import { invalidateAll } from '$app/navigation';
+	import ScimClientModal from './ScimClientModal.svelte';
+	import { invalidate } from '$app/navigation';
+	import { showNotif } from '$lib/stores/notif.svelte';
 	import { useLogger } from '$lib/logger';
-	import { formatDate } from '$lib/utils/format';
 
 	const log = useLogger({ module: 'app:clients-scim' });
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data, form }: { data: PageData; form?: any } = $props();
 
-	let showCreateModal = $state(false);
-	let showEditModal = $state(false);
-	let selectedClient: any = $state(null);
-	let showSecretModal = $state(false);
-	let newSecret = '';
-	let newClientId = '';
+	let actClient: any = $state(null);
 
 	// formatDate imported from $lib/utils/format — local override kept for datetime format
 	function formatDateTime(date: Date | string) {
@@ -32,7 +25,7 @@
 
 	function copyToClipboard(text: string) {
 		navigator.clipboard.writeText(text);
-		alert('Copied to clipboard!');
+		showNotif('success', 'Copied to clipboard!');
 	}
 
 	// DataTable columns
@@ -108,112 +101,63 @@
 
 	async function handleEdit(client: any) {
 		try {
-			const response = await fetch(`/api/scim-clients/${client.clientId}`);
-			if (response.ok) {
-				selectedClient = await response.json();
-				showEditModal = true;
+			const res = await fetch(`/api/scim-clients/${client.clientId}`);
+			if (res.ok) {
+				actClient = await res.json();
 			} else {
-				alert('Failed to load client data');
+				showNotif('error', 'Gagal memuat data client');
 			}
 		} catch (err) {
 			log.error('Error loading client', { error: err });
-			alert('Failed to load client data');
+			showNotif('error', 'Gagal memuat data client');
 		}
 	}
 
 	async function handleDelete(client: any) {
-		if (!confirm(`⚠️ DELETE client "${client.clientName}" permanently? This action cannot be undone!`)) {
-			return;
-		}
-
+		if (!confirm(`Hapus client "${client.clientName}" secara permanen? Tindakan ini tidak dapat dibatalkan.`)) return;
 		try {
-			const formData = new FormData();
-			formData.append('clientId', client.clientId);
-
-			const response = await fetch('?/delete', {
-				method: 'POST',
-				body: formData
-			});
-
-			const result = await response.json();
-
+			const fd = new FormData();
+			fd.append('clientId', client.clientId);
+			const res = await fetch('?/delete', { method: 'POST', body: fd });
+			const result = await res.json();
 			if (result.type === 'failure') {
-				alert(`Failed to delete client: ${result.data.error}`);
-			} else if (result.type === 'success') {
-				alert('Client deleted successfully');
-				await invalidateAll();
+				showNotif('error', result.data.error ?? 'Gagal menghapus client');
+			} else {
+				showNotif('success', 'Client berhasil dihapus');
+				await invalidate('app:pagination');
 			}
 		} catch (err) {
 			log.error('Error deleting client', { error: err });
-			alert('Failed to delete client');
+			showNotif('error', 'Gagal menghapus client');
 		}
 	}
 
-	async function saveChanges() {
-		if (!selectedClient) return;
-
-		try {
-			const updateData = {
-				clientName: selectedClient.clientName,
-				description: selectedClient.description || '',
-				contactEmail: selectedClient.contactEmail || '',
-				scopes: selectedClient.scopes || [],
-				rateLimit: selectedClient.rateLimit || 100,
-				ipWhitelist: selectedClient.ipWhitelist || [],
-				isActive: selectedClient.isActive
-			};
-
-			const response = await fetch(`/api/scim-clients/${selectedClient.clientId}`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(updateData)
-			});
-
-			if (response.ok) {
-				alert('Client updated successfully');
-				closeEditModal();
-				await invalidateAll();
-			} else {
-				const error = await response.json();
-				alert(`Failed to update client: ${error.error || 'Unknown error'}`);
-			}
-		} catch (err) {
-			log.error('Error updating client', { error: err });
-			alert('Failed to update client');
-		}
-	}
-
-	function closeEditModal() {
-		showEditModal = false;
-		selectedClient = null;
-	}
-
-	// Handle form success - show secret modal
-	$effect(() => {
-		if (form?.success && form?.plainSecret) {
-			showSecretModal = true;
-			newSecret = form.plainSecret;
-			newClientId = form.client?.clientId || '';
-		}
-	});
 </script>
 
 <div class="container mx-auto p-6">
-	<div class="flex justify-between items-center mb-6">
-		<div>
-			<h1 class="text-3xl font-bold">SCIM Client Management</h1>
-			<p class="text-gray-600 mt-1">Manage OAuth 2.0 credentials for SCIM API access</p>
-		</div>
-		<button
-			onclick={() => (showCreateModal = true)}
-			class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-		>
-			+ New SCIM Client
-		</button>
-	</div>
+	<!-- SCIM Clients DataTable -->
+	<DataTable
+		data={data.clients}
+		{columns}
+		header_before="<div>
+			<h1 class='text-xl font-bold'>SCIM Client Management</h1>
+			<p class='text-gray-600 mt-1'>Manage OAuth 2.0 credentials for SCIM API access</p>
+		</div>"
+		header_actions={()=>[
+			{
+				text: '+ Add New Client',
+				class: 'px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors',
+				action: () => { actClient = { clientName: '', description: '', contactEmail: '', scopes: [], rateLimit: 100, ipWhitelist: [], isActive: false }; }
+			}
+		]}
+		searchPlaceholder="Cari SCIM client (nama, client ID)..."
+		onEdit={handleEdit}
+		onDelete={handleDelete}
+		emptyMessage="Belum ada SCIM client. Tambahkan client baru untuk memulai."
+	/>
 
 	<!-- Stats Overview -->
-	<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+	<div class="grid grid-cols-1 md:grid-cols-4 gap-4 my-6">
 		<div class="bg-white p-4 rounded-lg shadow">
 			<p class="text-gray-600 text-sm">Total Clients</p>
 			<p class="text-2xl font-bold">{data.clients.length}</p>
@@ -240,165 +184,22 @@
 			</p>
 		</div>
 	</div>
-
-	<!-- SCIM Clients DataTable -->
-	<DataTable
-		data={data.clients}
-		{columns}
-		searchPlaceholder="Cari SCIM client (nama, client ID)..."
-		onEdit={handleEdit}
-		onDelete={handleDelete}
-		emptyMessage="Belum ada SCIM client. Tambahkan client baru untuk memulai."
-	/>
 </div>
 
-<!-- Create Modal -->
-{#if showCreateModal}
-	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-		<div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-			<h2 class="text-2xl font-bold mb-4">Create SCIM Client</h2>
 
-			<form method="POST" action="?/create" use:enhance class="space-y-4">
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-1">
-						Client Name <span class="text-red-600">*</span>
-					</label>
-					<input
-						type="text"
-						name="clientName"
-						required
-						placeholder="OFM Production"
-						class="w-full px-3 py-2 border border-gray-300 rounded-lg"
-					/>
-				</div>
-
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-					<textarea
-						name="description"
-						rows="2"
-						placeholder="SCIM client for OFM application"
-						class="w-full px-3 py-2 border border-gray-300 rounded-lg"
-					></textarea>
-				</div>
-
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
-					<input
-						type="email"
-						name="contactEmail"
-						placeholder="devops@ias.co.id"
-						class="w-full px-3 py-2 border border-gray-300 rounded-lg"
-					/>
-				</div>
-
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">
-						Scopes <span class="text-red-600">*</span>
-					</label>
-					<div class="space-y-2">
-						<label class="flex items-center">
-							<input type="checkbox" name="scopes" value="read:users" checked class="mr-2" />
-							<span class="text-sm">read:users - Read user data</span>
-						</label>
-						<label class="flex items-center">
-							<input type="checkbox" name="scopes" value="write:users" class="mr-2" />
-							<span class="text-sm">write:users - Create/update users</span>
-						</label>
-						<label class="flex items-center">
-							<input type="checkbox" name="scopes" value="delete:users" class="mr-2" />
-							<span class="text-sm">delete:users - Delete users</span>
-						</label>
-						<label class="flex items-center">
-							<input type="checkbox" name="scopes" value="read:groups" checked class="mr-2" />
-							<span class="text-sm">read:groups - Read group/org unit data</span>
-						</label>
-						<label class="flex items-center">
-							<input type="checkbox" name="scopes" value="write:groups" class="mr-2" />
-							<span class="text-sm">write:groups - Create/update groups</span>
-						</label>
-						<label class="flex items-center">
-							<input type="checkbox" name="scopes" value="delete:groups" class="mr-2" />
-							<span class="text-sm">delete:groups - Delete groups</span>
-						</label>
-						<label class="flex items-center">
-							<input type="checkbox" name="scopes" value="bulk:operations" class="mr-2" />
-							<span class="text-sm">bulk:operations - Bulk operations</span>
-						</label>
-					</div>
-				</div>
-
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-1">
-						Rate Limit (requests/minute)
-					</label>
-					<input
-						type="number"
-						name="rateLimit"
-						value="100"
-						min="1"
-						max="1000"
-						class="w-full px-3 py-2 border border-gray-300 rounded-lg"
-					/>
-				</div>
-
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-1">
-						IP Whitelist (one per line)
-					</label>
-					<textarea
-						name="ipWhitelist"
-						rows="3"
-						placeholder="192.168.1.0/24&#10;10.0.0.5&#10;172.16.0.0/16"
-						class="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
-					></textarea>
-					<p class="text-xs text-gray-500 mt-1">Leave empty to allow all IPs</p>
-				</div>
-
-				<div class="flex justify-end gap-3 pt-4">
-					<button
-						type="button"
-						onclick={() => (showCreateModal = false)}
-						class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-					>
-						Cancel
-					</button>
-					<button
-						type="submit"
-						class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-					>
-						Create Client
-					</button>
-				</div>
-			</form>
-		</div>
-	</div>
-{/if}
-
-{#if showEditModal && selectedClient}
-	<FormModal
-		onClose={closeEditModal}
-		title={selectedClient.clientName}
-		subtitle={`Client ID: ${selectedClient.clientId}`}>
-
-		<ScimClientForm
-			bind:client={selectedClient}
-			onSave={saveChanges}
-		/>
-
-	</FormModal>
+{#if actClient}
+	<ScimClientModal bind:client={actClient} />
 {/if}
 
 <!-- Success Modal (shows client secret) -->
-{#if showSecretModal && form?.success && form?.plainSecret && form?.client}
+{#if form?.plainSecret && form?.client}
 	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 		<div class="bg-white rounded-lg p-6 max-w-xl w-full">
 			<h2 class="text-2xl font-bold mb-4 text-green-600">✓ Client Created Successfully!</h2>
 
 			<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
 				<p class="text-sm text-yellow-800">
-					<strong>⚠️ Important:</strong> Save these credentials now. The client secret will not be shown
-					again!
+					<strong>⚠️ Important:</strong> Save these credentials now. The client secret will not be shown again!
 				</p>
 			</div>
 
@@ -409,12 +210,8 @@
 						<code class="flex-1 px-3 py-2 bg-gray-100 rounded font-mono text-sm">
 							{form.client.clientId}
 						</code>
-						<button
-							onclick={() => copyToClipboard(form.client.clientId)}
-							class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-						>
-							Copy
-						</button>
+						<button class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+							onclick={() => copyToClipboard(form.client.clientId)} > Copy </button>
 					</div>
 				</div>
 
@@ -424,12 +221,8 @@
 						<code class="flex-1 px-3 py-2 bg-gray-100 rounded font-mono text-sm break-all">
 							{form.plainSecret}
 						</code>
-						<button
-							onclick={() => copyToClipboard(form.plainSecret)}
-							class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-						>
-							Copy
-						</button>
+						<button class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+							onclick={() => copyToClipboard(form.plainSecret)} > Copy </button>
 					</div>
 				</div>
 
@@ -446,15 +239,8 @@
 			</div>
 
 			<div class="flex justify-end gap-3 pt-4">
-				<button
-					onclick={() => {
-						showSecretModal = false;
-						window.location.reload();
-					}}
-					class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-				>
-					Done
-				</button>
+				<button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+					onclick={() => window.location.reload()} > Done </button>
 			</div>
 		</div>
 	</div>

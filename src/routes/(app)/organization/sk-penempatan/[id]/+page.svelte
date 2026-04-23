@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import { formEnhance } from '$lib/utils/form-enhance';
 	import { tick } from 'svelte';
 	import DataTable from '$lib/components/DataTable.svelte';
 	import Input from '$lib/components/Input.svelte';
@@ -102,11 +102,7 @@
 {#if activeTab === 'info' || isNew}
 	
 	<form method="POST" action={isNew ? '?/createSK' : '?/updateSK'}
-		use:enhance={() => async ({ result, update }) => {
-			if (result.type === 'success') showNotif('success', isNew ? 'SK berhasil dibuat' : 'SK berhasil diperbarui');
-			else if (result.type === 'failure') showNotif('error', (result.data as any)?.error ?? 'Gagal menyimpan');
-			await update({ reset: false });
-		}}
+		use:formEnhance={{ onSuccess: () => { showNotif('success', isNew ? 'SK berhasil dibuat' : 'SK berhasil diperbarui'); } }}
 		class="space-y-4 bg-white border border-gray-200 rounded-lg p-6">
 
 		<div class="grid grid-cols-2 gap-4">
@@ -163,16 +159,11 @@
 
 		<!-- CSV Import -->
 		<form method="POST" action="?/addReassignmentsCSV" enctype="multipart/form-data"
-			use:enhance={() => async ({ result, update }) => {
-				if (result.type === 'success') {
-					showNotif('success', (result.data as any)?.message ?? 'CSV berhasil diimport');
-					csvFile = null;
-					await invalidateAll();
-				} else if (result.type === 'failure') {
-					showNotif('error', (result.data as any)?.error ?? 'Gagal import');
-				}
-				await update({ reset: false });
-			}}
+			use:formEnhance={{ onSuccess: async (data) => {
+				showNotif('success', data?.message ?? 'CSV berhasil diimport');
+				csvFile = null;
+				await invalidateAll();
+			} }}
 			class="flex items-center gap-3 bg-white border border-gray-200 rounded-lg p-3">
 			<input type="file" name="csvFile" accept=".csv" required
 				onchange={(e) => { csvFile = (e.target as HTMLInputElement).files?.[0] ?? null; }}
@@ -217,15 +208,7 @@
 
 		<!-- Hidden delete form -->
 		<form bind:this={deleteFormEl} method="POST" action="?/deleteReassignment"
-			use:enhance={() => async ({ result, update }) => {
-				if (result.type === 'success') {
-					showNotif('success', 'Data karyawan dihapus');
-					await invalidateAll();
-				} else if (result.type === 'failure') {
-					showNotif('error', (result.data as any)?.error ?? 'Gagal menghapus');
-				}
-				await update({ reset: false });
-			}}
+			use:formEnhance={{ success: 'Data karyawan dihapus', onSuccess: async () => { await invalidateAll(); } }}
 			class="hidden">
 			<input type="hidden" name="index" value={pendingDeleteIndex} />
 		</form>

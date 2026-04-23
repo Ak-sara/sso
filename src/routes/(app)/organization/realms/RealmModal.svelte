@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
 	import FormModal from '$lib/components/FormModal.svelte';
 	import Input from '$lib/components/Input.svelte';
 	import { showNotif } from '$lib/stores/notif.svelte';
+	import { formEnhance } from '$lib/utils/form-enhance';
 
 	interface Props { form?: any; }
 	let { form = $bindable() }: Props = $props();
@@ -23,27 +23,19 @@
 		domains = [...domains, d];
 		newDomain = '';
 	}
-
-	$effect(() => {
-		if (form?.error) showNotif('error', form.error);
-	});
 </script>
 
 <FormModal title={isNew ? 'Buat Realm Baru' : form?.name} subtitle={isNew ? '' : `Code: ${form?.code}`}
 	onClose={() => { form = null; }}>
 	<div class="p-4">
-		<form method="POST" action="?/upsertRealm"
-			use:enhance={() => async ({ result, update }) => {
-				if (result.type === 'success') {
+		<form method="POST" action="?/upsertRealm" class="space-y-4"
+			use:formEnhance={{ 
+				onSuccess: async () => {
 					showNotif('success', isNew ? 'Realm berhasil dibuat' : 'Realm berhasil diperbarui');
 					await invalidate('app:pagination');
 					form = null;
-				} else if (result.type === 'failure') {
-					showNotif('error', (result.data as any)?.error ?? 'Gagal menyimpan');
-				}
-				await update({ reset: false });
-			}}
-			class="space-y-4">
+				} 
+			}} >
 
 			<input type="hidden" name="_id" value={form?._id ?? ''} />
 			<input type="hidden" name="code" value={form?.code ?? ''} />
@@ -59,12 +51,7 @@
 			<Input type="text" name="legalName" label="Nama Legal" bind:value={form.legalName} placeholder={form?.name} />
 			<Input type="select" name="type" label="Tipe" bind:value={form.type}
 				options={{ subsidiary: 'Subsidiary', parent: 'Parent', branch: 'Branch' }} />
-			<div>
-				<label class="block text-xs font-medium text-gray-700 mt-1 ml-1 mb-1">Deskripsi</label>
-				<textarea name="description" rows="2"
-					class="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
-					bind:value={form.description}></textarea>
-			</div>
+			<Input type="textarea" name="description" label="Deskripsi" bind:value={form.description} rows={2} />
 
 			{#if !isNew}
 				<input type="hidden" name="isActive" value={form?.isActive ? 'true' : 'false'} />
