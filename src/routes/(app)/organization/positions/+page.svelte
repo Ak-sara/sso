@@ -18,7 +18,7 @@
 			key: 'name',
 			label: 'Position Name',
 			sortable: true,
-			render: (value: string, row: any) => `div>
+			render: (value: string, row: any) => `<div>
 				<p class="font-medium text-gray-900">${value}</p>
 				<p class="text-sm text-gray-500">Code: ${row.code}</p>
 			</div>`
