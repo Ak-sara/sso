@@ -5,11 +5,13 @@ import { oauthStore } from '$lib/store.js';
 import { generateAuthorizationCode } from '$lib/crypto.js';
 import { verify } from '@node-rs/argon2';
 import { getBrandingForClient } from '$lib/branding.js';
+import { sessionManager } from '$lib/auth/session.js';
+import { findIdentityByEmailOrNIK } from '$lib/db/schemas';
 import { useLogger } from '@ak-sara/fbao/foundation';
 
 const log = useLogger({ module: 'oauth:authorize' });
 
-export const load: PageServerLoad = async ({ url, cookies }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
     const params = Object.fromEntries(url.searchParams.entries());
 
     try {
@@ -29,10 +31,9 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
         // Get branding for this client
         const branding = await getBrandingForClient(validatedParams.client_id);
 
-        // Check if user is logged in
-        const identityId = cookies.get('identity_id') || cookies.get('user_id'); // Support both for migration
-        if (identityId) {
-            const user = await oauthStore.getUserById(identityId);
+        // Check if user is already logged in via session
+        if (locals.user?.userId) {
+            const user = await oauthStore.getUserById(locals.user.userId.toString());
             if (user) {
                 return {
                     params: validatedParams,
@@ -63,7 +64,7 @@ export const actions: Actions = {
     default: async ({ locals, cookies, url }) => {
         const formData = locals.body
         const actionType = formData?.action;
-
+        
         // Login action
         if (actionType === 'login') {
             const username = formData?.email as string; // Can be email or NIK
@@ -73,17 +74,25 @@ export const actions: Actions = {
                 return { error: 'Email/NIK and password are required' };
             }
 
-            const user = await oauthStore.getUserByEmailOrNIK(username);
-            if (!user || !(await verify(user.password, password))) {
+            const identity = await findIdentityByEmailOrNIK(username);
+            if (!identity || !(await verify(identity.password, password))) {
                 return { error: 'Invalid credentials' };
             }
 
-            cookies.set('identity_id', user.id, {
-                path: '/',
-                maxAge: 60 * 60 * 24 * 7, // 7 days
-                httpOnly: true,
-                secure: false // Set to true in production with HTTPS
-            });
+            if (!identity.isActive) {
+                return { error: 'Account is inactive' };
+            }
+
+            const session = await sessionManager.createSession(
+                identity._id!.toString(),
+                identity.email || identity.username,
+                identity.username,
+                identity.roles,
+                identity.firstName,
+                identity.lastName,
+                identity.organizationId
+            );
+            sessionManager.setSessionCookie(cookies, session.sessionId);
 
             // Redirect back to authorize with current params
             throw redirect(302, `/oauth/authorize?${url.searchParams.toString()}`);
@@ -94,8 +103,8 @@ export const actions: Actions = {
             const params = Object.fromEntries(url.searchParams.entries());
             const validatedParams = authorizeSchema.parse(params);
 
-            const identityId = cookies.get('identity_id') || cookies.get('user_id'); // Support both for migration
-            log.debug('Authorize action - Identity ID from cookie', { identityId });
+            const identityId = locals.user?.userId?.toString();
+            log.debug('Authorize action - Identity ID from session', { identityId });
 
             if (!identityId) {
                 return { error: 'Not logged in' };

@@ -38,14 +38,6 @@ const mainHandle: Handle = async ({ event, resolve }) => {
 	const requestMetadata = extractRequestMetadata(event);
 	event.locals.audit = requestMetadata;
 
-	// Disable CSRF protection for OAuth endpoints (they use client credentials instead)
-	if (event.url.pathname.startsWith('/oauth/') || event.url.pathname.startsWith('/.well-known/')) {
-		const response = await resolve(event, {
-			filterSerializedResponseHeaders: (name) => name === 'content-type'
-		});
-		return response;
-	}
-
 	// Check for session
 	const sessionId = sessionManager.getSessionCookie(event.cookies);
 
@@ -99,8 +91,15 @@ const mainHandle: Handle = async ({ event, resolve }) => {
 	};
 	/* end:inputs params */
 
+	// Disable CSRF for machine-to-machine OAuth endpoints (token, userinfo, well-known)
+	const isM2MOAuthPath = event.url.pathname.startsWith('/oauth/token') ||
+		event.url.pathname.startsWith('/oauth/userinfo') ||
+		event.url.pathname.startsWith('/.well-known/');
+
 	// Continue with request
-	const response = await resolve(event);
+	const response = await resolve(event, isM2MOAuthPath ? {
+		filterSerializedResponseHeaders: (name) => name === 'content-type'
+	} : undefined);
 
 	// Audit logging for failed access attempts
 	if (response.status === 401 || response.status === 403) {

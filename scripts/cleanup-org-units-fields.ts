@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
- * Usage:
- *   bun run scripts/cleanup-org-units-fields.ts --check    # Preview changes
+ * Usage: 
+ *   bun --env-file=../.env run cleanup-org-units-fields.ts --check    # Preview changes
  *   bun run scripts/cleanup-org-units-fields.ts              # Execute cleanup
  */
 

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { enhance } from '$app/forms';
 	import { getBrandingCSS } from '$lib/branding-utils';
+	import { formEnhance } from '$lib/utils/form-enhance';
 
 	export let data: PageData;
 
@@ -47,7 +47,7 @@
 	<div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
 		<div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
 			{#if !data.isLoggedIn}
-				<form method="POST" use:enhance class="space-y-6">
+				<form method="POST" use:formEnhance class="space-y-6">
 					<input type="hidden" name="action" value="login" />
 					<div>
 						<label for="email" class="block text-sm font-medium text-gray-700">
@@ -112,7 +112,7 @@
 						</ul>
 					</div>
 
-					<form method="POST" use:enhance class="space-y-4">
+					<form method="POST" use:formEnhance class="space-y-4">
 						<button
 							type="submit"
 							class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white brand-bg-primary brand-bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
