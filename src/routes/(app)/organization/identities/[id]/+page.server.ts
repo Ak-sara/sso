@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/db/db';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect, isRedirect } from '@sveltejs/kit';
 import { hash } from '@node-rs/argon2';
 import { logAudit } from '$lib/audit/logger';
 import { getMaskingConfig } from '$lib/utils/masking-helper';
@@ -57,7 +57,7 @@ export const actions: Actions = {
 				fullName: `${formData.firstName} ${formData.lastName}`,
 				phone: formData.phone || undefined,
 				isActive: formData.isActive === 'true',
-				organizationId: formData.organizationId,
+				organizationId: formData.organizationId || undefined,
 				roles: ['user'],
 				emailVerified: false,
 			};
@@ -81,13 +81,14 @@ export const actions: Actions = {
 			}
 
 			const result = await createIdentity(base);
+			console.debug("create",result)
 			if (!result.ok) return fail(result.status || 500, { error: result.error });
 
 			await logAudit({ action: 'create_identity', resource: 'identities', identityId: performedBy, resourceId: result.data._id, details: { identityType }, ipAddress, userAgent: locals.vars.user_agent });
 
 			throw redirect(303, `/organization/identities/${result.data._id}`);
 		} catch (err) {
-			if (err instanceof Response) throw err;
+			if (isRedirect(err)) throw err;
 			return fail(500, { error: 'Fail to create identity' });
 		}
 	},

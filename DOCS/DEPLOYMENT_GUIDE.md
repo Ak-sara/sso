@@ -52,7 +52,7 @@ kubectl get svc ias-sso-service
 kubectl get hpa ias-sso-hpa
 
 # View logs
-kubectl logs -l app=ias-sso --tail=100 -f
+kubectl logs -l app=ias-sso --tail=100 -f -n development
 
 kubectl rollout restart deployment ias-sso -n development
 ```

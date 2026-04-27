@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import OrgUnitForm from '../../../org-units/OrgUnitForm.svelte';
+	import OrgUnitModal from './../../../org-units/OrgUnitModal.svelte';
 	import FormModal from '$lib/components/FormModal.svelte';
 	import { onMount } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
@@ -42,7 +42,6 @@
 	</div>`;
 
 	// ── UI state ──────────────────────────────────────────────────────────────
-	let showNodeEditor = $state(false);
 	let selectedNode: any = $state(null);
 
 	log.debug('STO chart data loaded', { units: data.orgUnitsEnriched.length });
@@ -77,7 +76,6 @@
 			const response = await fetch(`/api/org-units/${nodeCode}`);
 			if (!response.ok) { showNotif('error', 'Unit tidak ditemukan'); return; }
 			selectedNode = await response.json();
-			showNodeEditor = true;
 		} catch (err) {
 			log.error('Error loading node', { error: err });
 			showNotif('error', 'Gagal memuat data unit');
@@ -91,7 +89,6 @@
 			const result = await response.json();
 			if (result.type === 'failure') { showNotif('error', result.data?.error ?? 'Gagal menyimpan'); return; }
 			showNotif('success', 'Perubahan berhasil disimpan');
-			showNodeEditor = false;
 			selectedNode = null;
 			await invalidateAll();
 		} catch (err) {
@@ -126,17 +123,12 @@
 	</div>
 </div>
 
-{#if showNodeEditor && selectedNode}
-	<FormModal
-		onClose={() => { showNodeEditor = false; selectedNode = null; }}
-		title={selectedNode.name}
-		subtitle={`Kode: ${selectedNode.code}`}>
+{#if selectedNode}
 
-		<OrgUnitForm
-			bind:unit={selectedNode}
-			organizationOptions={data.organizationOptions}
-			onSave={saveNodeChanges}
-		/>
-
-	</FormModal>
+	<OrgUnitModal
+		bind:unit={selectedNode}
+		organizationOptions={data.organizationOptions}
+		// onSave={saveNodeChanges}
+	/>
+	
 {/if}

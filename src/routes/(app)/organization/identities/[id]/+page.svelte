@@ -111,9 +111,7 @@
 </div>
 
 <!-- Main Content -->
-<form method="POST" action="?/update" use:formEnhance={'Data is saved'}>
-	<input type="hidden" name="identityType" value={data.identity?.identityType} />
-
+<form method="POST" action={data.isNew ? '?/create' : '?/update'} use:formEnhance={'Data is saved'}>
 	<div class="bg-white shadow rounded-lg overflow-hidden">
 		<!-- Basic Info -->
 		<div class="flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-200">
@@ -145,6 +143,13 @@
 				
 				<Input type="text" name="idNumber" label="ID Number/Ktp" value={data.identity?.idNumber || ''} />
 				<Input type="text" name="taxId" label="Tax Id/npwp" value={data.identity?.taxId || ''} />
+			{#if data.identity === null}
+				<Input type="select" label="Type" name="identityType" value="employee" options={{employee:"Employee",partner:"Partner"}}/>
+				<div>
+					<label class="block text-xs font-medium text-gray-700 mt-1 ml-1 mb-[-.1em]">Password</label>
+					<input class="w-full px-2 py-1 border border-gray-300 rounded-md" type="password" name="password" value="aksara" />
+				</div>
+			{/if}
 			</div>
 			<div>
 				<div class="grid grid-cols-[1fr_auto_auto]">

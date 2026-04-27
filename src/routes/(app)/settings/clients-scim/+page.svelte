@@ -112,7 +112,23 @@
 			showNotif('error', 'Gagal memuat data client');
 		}
 	}
-
+	async function rotate(Client:any){
+		try {
+			const fd = new FormData();
+			fd.append('clientId', Client.clientId);
+			const result = await fetch('?/rotateSecret', { method: 'POST', body: fd });
+			const res = await result.json();
+			if (res.type === 'failure') {
+				showNotif('error', res.data.error ?? 'fail rotating client');
+			} else {
+				showNotif('success', 'Client secret rotated');
+				await invalidate('app:pagination');
+			}
+		} catch (err) {
+			log.error('Error rotating client', { error: err });
+			showNotif('error', 'Fail to rotate client secret');
+		}
+	}
 	async function handleDelete(client: any) {
 		if (!confirm(`Hapus client "${client.clientName}" secara permanen? Tindakan ini tidak dapat dibatalkan.`)) return;
 		try {
@@ -151,8 +167,13 @@
 			}
 		]}
 		searchPlaceholder="Cari SCIM client (nama, client ID)..."
-		onEdit={handleEdit}
-		onDelete={handleDelete}
+		// onEdit={handleEdit}
+		// onDelete={handleDelete}
+		actions={(row) => [
+			{ label: 'Edit',   onClick: () => handleEdit(row),   class: 'text-indigo-600 hover:text-indigo-800', icon: '✏️ ' },
+			{ label: 'Rotate',   onClick: () => rotate(row),   class: 'text-indigo-600 hover:text-indigo-800', icon: '✏️ ' },
+			{ label: 'Delete', onClick: () => handleDelete(row), class: 'text-red-600 hover:text-red-800',    icon: '🗑️' }
+		]}
 		emptyMessage="Belum ada SCIM client. Tambahkan client baru untuk memulai."
 	/>
 

@@ -137,11 +137,13 @@ export async function createIdentity(
 ): Promise<ServiceResult<{ _id: string }>> {
 	const validation = validateBody(CreateIdentitySchema, input);
 	if (!validation.ok) return validation;
-
+	console.debug("VALID",validation)
 	try {
 		const doc = await db.identities.insertOne(input as any);
+		console.debug("DOC", doc)
 		return { ok: true, data: { _id: doc._id!.toString() } };
 	} catch (err) {
+		console.error("ERR", err)
 		log.error('Failed to create identity', { error: err });
 		return { ok: false, error: 'Gagal membuat identitas', status: 500 };
 	}
@@ -205,6 +207,21 @@ export async function upsertAssignment(
 				{ $push: { assignments: { ...assignment, _id: new ObjectId() } } } as any
 			);
 		}
+
+		// Sync primary identity fields from assignment so realm/org filters work
+		const topLevel: Record<string, any> = { updatedAt: new Date() };
+		if (assignment.organizationId) topLevel.organizationId = assignment.organizationId;
+		if (assignment.orgUnitId) topLevel.orgUnitId = assignment.orgUnitId;
+		if (assignment.positionId) topLevel.positionId = assignment.positionId;
+		if (assignment.employeeId) topLevel.employeeId = assignment.employeeId;
+		if (assignment.employmentType) topLevel.employmentType = assignment.employmentType;
+		if (assignment.employmentStatus) topLevel.employmentStatus = assignment.employmentStatus;
+		if (assignment.region) topLevel.region = assignment.region;
+		if (assignment.workLocation) topLevel.workLocation = assignment.workLocation;
+		if ('isRemote' in assignment) topLevel.isRemote = assignment.isRemote;
+		if (assignment.startDate) topLevel.joinDate = assignment.startDate;
+		if (assignment.endDate) topLevel.endDate = assignment.endDate;
+		await col.updateOne({ _id: oid }, { $set: topLevel });
 
 		return { ok: true, data: null };
 	} catch (err) {

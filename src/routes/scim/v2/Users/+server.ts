@@ -12,6 +12,7 @@ import {
 	employeeToScimUser,
 	createScimError,
 	parseScimFilter,
+	matchesScimFilter,
 	getScimPaginationParams
 } from '$lib/scim/utils';
 import { SCIM_SCHEMAS } from '$lib/scim/schemas';
@@ -28,7 +29,7 @@ export const GET: RequestHandler = async (event) => {
 		// Authenticate with OAuth 2.0
 		await requireScimAuthEnhanced(event, 'read:users');
 
-		const { url,locals } = event;
+		const { url, locals } = event;
 
 		// Get base URL for resource locations
 		const baseUrl = `${url.protocol}//${url.host}`;
@@ -36,13 +37,13 @@ export const GET: RequestHandler = async (event) => {
 		// Parse pagination
 		const { skip, limit, startIndex } = getScimPaginationParams(locals);
 
-		// Parse filter
-		const filterParam = locals.query?.filter;
-		let query: any = {};
+		// Read filter from raw URL — locals.query is HTML-sanitized which corrupts SCIM filter quotes
+		const filterParam = url.searchParams.get('filter') || undefined;
+		let filterConditions: ReturnType<typeof parseScimFilter> | null = null;
 
 		if (filterParam) {
 			try {
-				query = parseScimFilter(filterParam);
+				filterConditions = parseScimFilter(filterParam);
 			} catch (err) {
 				throw error(
 					400,
@@ -53,14 +54,8 @@ export const GET: RequestHandler = async (event) => {
 
 		// Get employee identities only
 		const allIdentities = await db.identities.find({ identityType: 'employee' });
-		const filteredIdentities = filterParam
-			? allIdentities.filter((identity) => {
-					// Apply filter manually (basic implementation)
-					for (const [key, value] of Object.entries(query)) {
-						if ((identity as any)[key] !== value) return false;
-					}
-					return true;
-				})
+		const filteredIdentities = filterConditions
+			? allIdentities.filter((identity) => matchesScimFilter(identity, filterConditions!))
 			: allIdentities;
 
 		const totalResults = filteredIdentities.length;

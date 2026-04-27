@@ -249,36 +249,52 @@ export async function orgUnitToScimGroup(
 	return scimGroup;
 }
 
+export type ScimFilterCondition = { field: string; op: string; value: string };
+
+const SCIM_ATTR_MAP: Record<string, string> = {
+	userName: 'email',
+	'emails.value': 'email',
+	'name.givenName': 'firstName',
+	'name.familyName': 'lastName',
+	displayName: 'fullName',
+	externalId: 'employeeId',
+	active: 'isActive',
+};
+
 /**
- * Parse SCIM filter query (basic implementation)
- * Example: userName eq "john.doe@example.com"
+ * Parse SCIM filter into conditions list.
+ * Supports: eq, co, sw, ew — joined by 'or'.
+ * Examples:
+ *   userName eq "john@example.com"
+ *   displayName co "Smith" or userName co "smith"
  */
-export function parseScimFilter(filter: string): Record<string, any> {
-	// Basic implementation - just handle simple eq filters
-	// For production, use a proper SCIM filter parser
+export function parseScimFilter(filter: string): ScimFilterCondition[] {
+	const parts = filter.split(/\s+or\s+/i);
+	return parts.map((part) => {
+		const match = part.trim().match(/([\w.]+)\s+(eq|co|sw|ew)\s+"([^"]*)"/i);
+		if (!match) throw new Error(`Invalid filter syntax: ${part.trim()}`);
+		const [, attr, op, value] = match;
+		return { field: SCIM_ATTR_MAP[attr] ?? attr, op: op.toLowerCase(), value };
+	});
+}
 
-	const match = filter.match(/(\w+)\s+eq\s+"([^"]+)"/);
-	if (!match) {
-		throw new Error('Invalid filter syntax');
-	}
-
-	const [, attribute, value] = match;
-
-	// Map SCIM attributes to database fields
-	const attributeMap: Record<string, string> = {
-		userName: 'email',
-		externalId: 'employeeId',
-		displayName: 'firstName', // Partial match
-		active: 'status'
-	};
-
-	const dbField = attributeMap[attribute] || attribute;
-
-	if (attribute === 'active') {
-		return { status: value === 'true' ? 'active' : { $ne: 'active' } };
-	}
-
-	return { [dbField]: value };
+/**
+ * Evaluate parsed SCIM filter conditions against a single identity document.
+ * Conditions are ORed together.
+ */
+export function matchesScimFilter(identity: any, conditions: ScimFilterCondition[]): boolean {
+	return conditions.some(({ field, op, value }) => {
+		const raw = identity[field];
+		const fieldVal = raw == null ? '' : String(raw).toLowerCase();
+		const v = value.toLowerCase();
+		switch (op) {
+			case 'eq': return fieldVal === v;
+			case 'co': return fieldVal.includes(v);
+			case 'sw': return fieldVal.startsWith(v);
+			case 'ew': return fieldVal.endsWith(v);
+			default:   return false;
+		}
+	});
 }
 
 /**
