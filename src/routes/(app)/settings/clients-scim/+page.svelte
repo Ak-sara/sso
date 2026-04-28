@@ -8,9 +8,11 @@
 
 	const log = useLogger({ module: 'app:clients-scim' });
 
-	let { data, form }: { data: PageData; form?: any } = $props();
-
+	let { data }: { data: PageData; } = $props();
+	
 	let actClient: any = $state(null);
+	let cli: any = $state(null);
+	let secret: any = $state(null);
 
 	// formatDate imported from $lib/utils/format — local override kept for datetime format
 	function formatDateTime(date: Date | string) {
@@ -24,8 +26,7 @@
 	}
 
 	function copyToClipboard(text: string) {
-		navigator.clipboard.writeText(text);
-		showNotif('success', 'Copied to clipboard!');
+		navigator.clipboard.writeText(text); showNotif('success', 'Copied to clipboard!');
 	}
 
 	// DataTable columns
@@ -118,6 +119,9 @@
 			fd.append('clientId', Client.clientId);
 			const result = await fetch('?/rotateSecret', { method: 'POST', body: fd });
 			const res = await result.json();
+			
+			secret=JSON.parse(res.data)[2]
+			cli=Client.clientId
 			if (res.type === 'failure') {
 				showNotif('error', res.data.error ?? 'fail rotating client');
 			} else {
@@ -147,7 +151,7 @@
 			showNotif('error', 'Gagal menghapus client');
 		}
 	}
-
+	
 </script>
 
 <div class="container mx-auto p-6">
@@ -170,9 +174,9 @@
 		// onEdit={handleEdit}
 		// onDelete={handleDelete}
 		actions={(row) => [
-			{ label: 'Edit',   onClick: () => handleEdit(row),   class: 'text-indigo-600 hover:text-indigo-800', icon: '✏️ ' },
-			{ label: 'Rotate',   onClick: () => rotate(row),   class: 'text-indigo-600 hover:text-indigo-800', icon: '✏️ ' },
-			{ label: 'Delete', onClick: () => handleDelete(row), class: 'text-red-600 hover:text-red-800',    icon: '🗑️' }
+			{ label: '✎ Edit',   onClick: () => handleEdit(row),   class: 'text-indigo-600 hover:text-indigo-800'},
+			{ label: '♲ Rotate',   onClick: () => rotate(row),   class: 'text-indigo-600 hover:text-indigo-800' },
+			{ label: '✕ Delete', onClick: () => handleDelete(row), class: 'text-red-600 hover:text-red-800' }
 		]}
 		emptyMessage="Belum ada SCIM client. Tambahkan client baru untuk memulai."
 	/>
@@ -213,8 +217,8 @@
 {/if}
 
 <!-- Success Modal (shows client secret) -->
-{#if form?.plainSecret && form?.client}
-	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+{#if secret && cli}
+	<div class="fixed inset-0 w-full flex items-center justify-center bg-[rgba(0,0,0,0.5)] z-[50]" role="dialog" tabindex="0">
 		<div class="bg-white rounded-lg p-6 max-w-xl w-full">
 			<h2 class="text-2xl font-bold mb-4 text-green-600">✓ Client Created Successfully!</h2>
 
@@ -229,10 +233,10 @@
 					<label class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
 					<div class="flex gap-2">
 						<code class="flex-1 px-3 py-2 bg-gray-100 rounded font-mono text-sm">
-							{form.client.clientId}
+							{cli}
 						</code>
 						<button class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-							onclick={() => copyToClipboard(form.client.clientId)} > Copy </button>
+							onclick={() => copyToClipboard(cli)} > Copy </button>
 					</div>
 				</div>
 
@@ -240,10 +244,10 @@
 					<label class="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
 					<div class="flex gap-2">
 						<code class="flex-1 px-3 py-2 bg-gray-100 rounded font-mono text-sm break-all">
-							{form.plainSecret}
+							{secret}
 						</code>
 						<button class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-							onclick={() => copyToClipboard(form.plainSecret)} > Copy </button>
+							onclick={() => copyToClipboard(secret)} > Copy </button>
 					</div>
 				</div>
 
@@ -254,14 +258,14 @@
   http://localhost:5173/scim/v2/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=client_credentials" \
-  -d "client_id={form.client.clientId}" \
-  -d "client_secret={form.plainSecret}"</code></pre>
+  -d "client_id={cli}" \
+  -d "client_secret={secret}"</code></pre>
 				</div>
 			</div>
 
 			<div class="flex justify-end gap-3 pt-4">
 				<button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-					onclick={() => window.location.reload()} > Done </button>
+					onclick={() => { cli=null, secret=null }} > Done </button>
 			</div>
 		</div>
 	</div>
