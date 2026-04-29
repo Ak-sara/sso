@@ -17,8 +17,9 @@ export const load: PageServerLoad = async () => {
 		getSetting<boolean>('enable_registration'),
 		listOrganizations(),
 	]);
-
+	const { env } = await import('$env/dynamic/private');
 	return {
+		appName:env.APPNAME,
 		isRegistrationEnabled: isRegistrationEnabled === true,
 		realms: organizations.map(org => ({ code: org.code, name: org.name, type: org.type }))
 	};

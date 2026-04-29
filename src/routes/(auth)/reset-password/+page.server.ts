@@ -5,6 +5,7 @@ import { hashToken } from '$lib/crypto';
 import { hash } from '@node-rs/argon2';
 import { useLogger } from '@ak-sara/fbao/foundation';
 import { logAudit } from '$lib/audit/logger';
+import { APPNAME } from '$env/static/private';
 
 const log = useLogger({ module: 'auth:reset-password' });
 
@@ -15,6 +16,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	if (!token) {
 		return {
+			appName:APPNAME,
 			status: 'error',
 			message: 'Token reset password tidak ditemukan'
 		};
@@ -32,6 +34,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	if (!resetToken) {
 		return {
+			appName:APPNAME,
 			status: 'error',
 			message: 'Token reset password tidak valid atau sudah digunakan'
 		};
@@ -40,12 +43,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// Check if token is expired
 	if (new Date() > new Date(resetToken.expiresAt)) {
 		return {
+			appName:APPNAME,
 			status: 'error',
 			message: 'Token reset password sudah kadaluarsa. Silakan minta token baru.'
 		};
 	}
 
 	return {
+		appName:APPNAME,
 		status: 'valid',
 		token,
 		email: resetToken.email

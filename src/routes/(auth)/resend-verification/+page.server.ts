@@ -6,13 +6,14 @@ import { sendMail } from '$lib/email/email-service';
 import { resolveRealmCode } from '$lib/services/settings-service';
 import { getVerificationEmail } from '$lib/email/templates';
 import { useLogger } from '@ak-sara/fbao/foundation';
+import { APPNAME } from '$env/static/private';
 
 const log = useLogger({ module: 'auth:resend-verification' });
 
 const verificationTokens = new Repository(lazy, 'verification_tokens');
 
 export const load: PageServerLoad = async () => {
-	return {};
+	return {appName:APPNAME};
 };
 
 export const actions: Actions = {

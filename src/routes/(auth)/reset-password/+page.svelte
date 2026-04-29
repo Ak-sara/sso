@@ -9,15 +9,14 @@
 </script>
 
 <svelte:head>
-	<title>Reset Password - Aksara SSO</title>
+	<title>Reset Password - {data.appName}</title>
 </svelte:head>
 
-<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 py-12 px-4 sm:px-6 lg:px-8">
-	<div class="max-w-md w-full">
-		<div class="bg-white shadow-2xl rounded-2xl p-8">
+<div class="w-full max-w-6xl">
+	<div class="bg-white rounded-2xl shadow-2xl overflow-hidden shadow-2xl p-8 lg:p-12">
 			<!-- Logo/Header -->
 			<div class="text-center mb-8">
-				<h1 class="text-3xl font-bold text-gray-900">🔐 Aksara SSO</h1>
+				<h1 class="text-3xl font-bold text-gray-900">🔐 {data.appName}</h1>
 				<p class="mt-2 text-sm text-gray-600">Create New Password</p>
 			</div>
 
@@ -172,6 +171,5 @@
 					</a>
 				</div>
 			{/if}
-		</div>
 	</div>
 </div>

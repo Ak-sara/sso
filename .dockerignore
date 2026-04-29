@@ -44,11 +44,15 @@ test-results/
 .gitignore
 .gitattributes
 
-# Documentation
+# Documentation — exclude all, whitelist only files bundled via ?raw imports
 README.md
 DOCS
-*.md
-!package.json
+!DOCS/AUTHENTICATION_GUIDE.md
+!DOCS/SCIM_COMPLETE_GUIDE.md
+!DOCS/OFM_SCIM_INTEGRATION_GUIDE.md
+!DOCS/KEBIJAKAN_PRIVASI_TEMPLATE.md
+!DOCS/DATA_PRIVACY_COMPLIANCE.md
+!DOCS/SECURITY_IMPLEMENTATION_GUIDE.md
 
 # Docker
 Dockerfile

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { ActionData, PageData } from './$types';
-
+	
 	interface Props {
 		form?: ActionData;
 		data: PageData;
@@ -12,11 +12,11 @@
 </script>
 
 <svelte:head>
-	<title>Daftar Akun - Aksara SSO</title>
+	<title>Daftar Akun - {data.appName}</title>
 </svelte:head>
 
-<div class="w-full max-w-2xl">
-	<div class="bg-white rounded-2xl shadow-2xl p-8 lg:p-12">
+<div class="w-full max-w-6xl">
+	<div class="bg-white rounded-2xl shadow-2xl overflow-hidden shadow-2xl p-8 lg:p-12">
 		<!-- Header -->
 		<div class="mb-8">
 			<h1 class="text-3xl font-bold text-gray-900 mb-2">Daftar Akun Baru</h1>
