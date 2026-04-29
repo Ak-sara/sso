@@ -170,6 +170,7 @@ export function normalizeCSVColumns(row: Record<string, string>): {
 	email?: string;
 	firstName?: string;
 	lastName?: string;
+	org?: string;
 	orgUnit?: string;
 	position?: string;
 	employmentType?: string;
@@ -177,9 +178,10 @@ export function normalizeCSVColumns(row: Record<string, string>): {
 } {
 	return {
 		nik: row.NIK || row.nik || row.employeeId || row.employee_id,
-		email: row.Email || row.email,
+		email: row.Email || row.email || row.EMAIL,
 		firstName: row.FirstName || row.firstName || row.first_name,
 		lastName: row.LastName || row.lastName || row.last_name,
+		org: row.ORG || row.Org || row.org || row.OrgCode || row.orgCode || row.organization,
 		orgUnit: row.OrgUnit || row.orgUnit || row.org_unit,
 		position: row.Position || row.position,
 		employmentType: row.EmploymentType || row.employmentType || row.employment_type,
@@ -228,7 +230,7 @@ export function generateDataWarnings(data: {
 
 	if (!data.email) {
 		warnings.push(
-			`No email provided for ${fullName}${data.nik ? ` (NIK: ${data.nik})` : ''} - NIK will be used as username`
+			`No email provided for ${fullName}${data.nik ? ` (NIK: ${data.nik})` : ''} - login via NIK only`
 		);
 	}
 

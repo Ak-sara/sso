@@ -8,7 +8,6 @@ export const IdentitySchema = z.object({
 	identityType: z.enum(['employee', 'partner', 'external', 'service_account']),
 
 	// Login credentials
-	username: z.string().min(1), // NIK (for employees) or email or custom
 	email: z.string().email().optional(), // Optional (employees may not have email)
 	password: z.string(), // Hashed with argon2
 
@@ -119,10 +118,6 @@ export function findIdentityByEmail(email: string) {
 	return db.identities.findOne({ email });
 }
 
-export function findIdentityByUsername(username: string) {
-	return db.identities.findOne({ username });
-}
-
 export function findIdentityByEmployeeId(nik: string) {
 	return db.identities.findOne({ employeeId: nik, identityType: 'employee' });
 }
@@ -131,8 +126,7 @@ export function findIdentityByEmailOrNIK(identifier: string) {
 	return db.identities.findOne({
 		$or: [
 			{ email: identifier },
-			{ username: identifier },
-			{ employeeId: identifier, identityType: 'employee' }
+			{ employeeId: identifier }
 		]
 	} as any);
 }

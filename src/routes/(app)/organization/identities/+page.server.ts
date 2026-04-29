@@ -71,21 +71,20 @@ export const actions: Actions = {
 	create: async ({ locals }) => {
 		const formData = locals.body;
 		const identityType = formData?.identityType as 'employee' | 'partner' | 'external' | 'service_account';
-		const username = formData?.username;
 		const email = formData?.email;
 		const password = formData?.password;
 		const firstName = formData?.firstName;
 		const lastName = formData?.lastName;
 		const organizationId = formData?.organizationId;
 
-		if (!username || !firstName || !lastName || !organizationId || !password) {
+		if (!firstName || !lastName || !organizationId || !password) {
 			return fail(400, { error: 'Missing required fields' });
 		}
 
 		const hashedPassword = await hash(password, { memoryCost: 19456, timeCost: 2, outputLen: 32, parallelism: 1 });
 
 		const base: any = {
-			identityType, username, email: email || undefined, password: hashedPassword,
+			identityType, email: email || undefined, password: hashedPassword,
 			isActive: true, emailVerified: false, roles: ['user'],
 			firstName, lastName, fullName: `${firstName} ${lastName}`, organizationId
 		};
@@ -100,7 +99,7 @@ export const actions: Actions = {
 				employmentStatus: 'active',
 				joinDate: new Date(),
 				workLocation: formData.workLocation || undefined,
-				secondaryAssignments: [], customProperties: {}
+				assignments: [], customProperties: {}
 			});
 		} else if (identityType === 'partner') {
 			Object.assign(base, {

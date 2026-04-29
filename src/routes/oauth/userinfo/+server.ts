@@ -44,7 +44,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 		if (identity) {
 			// Add identity basic fields
 			userInfo.identityType = identity.identityType;
-			userInfo.username = identity.username;
+			userInfo.employeeId = identity.employeeId;
 			userInfo.firstName = identity.firstName;
 			userInfo.lastName = identity.lastName;
 			userInfo.fullName = identity.fullName;

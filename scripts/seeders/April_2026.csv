@@ -1,0 +1,460 @@
+NIK,FirstName,LastName,OrgUnit,Position,EmploymentType,JoinDate,EMAIL,WorkLocation,ORG
+124700013,Iswanto,,,,permanent,2012-01-01,iswanto@ias.id,PST,IAS
+124700019,Udi,Suprianto,,,permanent,2012-01-01,udi.suprianto@ias.id,PST,IAS
+124710029,Judhi,Kurniawan,,,permanent,2012-01-01,judhi.kurniawan@ias.id,SBU-CARLOG,IAS
+124710031,Endah,Rahmawati,,,permanent,2012-01-01,endah.rahmawati@ias.id,SBU-CARLOG,IAS
+124710032,Edwien Hendrayuwono,ST,,,permanent,2012-01-01,edwien.hendrayuwono@ias.id,SBU-CARLOG,IAS
+124710033,Muhammad,Djamal,,,permanent,2012-01-01,muhammad.djamal@ias.id,SBU-CARLOG,IAS
+124710034,Eddi,Natalianto,,,permanent,2012-01-01,eddi.natalianto@ias.id,PST,IAS
+124720035,Waluyo,,,,permanent,2012-01-01,,PST,IAS
+124720039,Nurul,Huda,,,permanent,2012-01-01,nurul.huda@ias.id,PST,IAS
+124720043,Henky Hindarmin,Indracahya,,,permanent,2012-01-01,henky.hindarmin@ias.id,PST,IAS
+124720045,Shopan,Shopian,,,permanent,2012-01-01,shopan.shopian@ias.id,SBU-CARLOG,IAS
+124720048,Misdi,Rahono,,,permanent,2012-01-01,,PST,IAS
+124720049,Widjanarka Triwinahju,Witjaksana,,,permanent,2012-01-01,widjanarka.tw@ias.id,PST,IAS
+124720050,Roostianty,,,,permanent,2012-01-01,roostianty@ias.id,SBU-CARLOG,IAS
+124730053,Mudi,Duhkitaaji,,,permanent,2012-01-01,mudi.duhkitaaji@ias.id,PST,IAS
+124730054,Muhammad,Safei,,,permanent,2012-01-01,muhammad.safei@ias.id,SBU-CARLOG,IAS
+124730058,Antono,Widiagdo,,,permanent,2012-01-01,antono.widiagdo@ias.id,SBU-CARLOG,IAS
+124730061,Ahmad,Zaki,,,permanent,2012-01-01,ahmad.zaki@ias.id,PST,IAS
+124730062,Rudi,Rahardjanto,,,permanent,2012-01-01,rudi.rahardjanto@ias.id,PST,IAS
+124740067,Tjandra Rengko,Karamoy,,,permanent,2012-01-01,tjandra.rengko@ias.id,SBU-CARLOG,IAS
+124740072,Deny Indra,W.,,,permanent,2012-01-01,deny.indra@ias.id,SBU-CARLOG,IAS
+124740075,Dody Anwar,Nurilhuda,,,permanent,2012-01-01,,PST,IAS
+124740076,Moh. Ali,Rahmat,,,permanent,2012-01-01,ali.rahmat@ias.id,PST,IAS
+124750082,Ardian,Irawan,,,permanent,2012-01-01,ardian.irawan@ias.id,PST,IAS
+124750083,Pramono Adhi,Armanto,,,permanent,2012-01-01,pramono.adhi@ias.id,PST,IAS
+124750085,Miendha E,Risfianthi,,,permanent,2012-01-01,miendha.risfianthi@ias.id,PST,IAS
+124750086,Indra Satria,Mara,,,permanent,2012-01-01,indra.satria@ias.id,PST,IAS
+124750087,Farid,Akbarsyah,,,permanent,2012-01-01,farid.akbarsyah@ias.id,PST,IAS
+124750091,Irzan,Soepriyadi,,,permanent,2012-01-01,,PST,IAS
+124760096,Ronny Marlina,Siringoringo,,,permanent,2012-01-01,ronny.siringoringo@ias.id,PST,IAS
+124760108,Budi,Prasetiyo,,,permanent,2012-01-01,budi.prasetiyo@ias.id,PST,IAS
+124760112,Fathurochman,,,,permanent,2012-01-01,,PST,IAS
+124760113,Muhammad Agung,Hartono,,,permanent,2012-01-01,agung.hartono@ias.id,SBU-CARLOG,IAS
+124760114,Abdul Muchsin,Mewal,,,permanent,2012-01-01,abdul.muchsin@ias.id,SBU-CARLOG,IAS
+124760115,Maralaut,Harahap,,,permanent,2012-01-01,maralaut.harahap@ias.id,SBU-CARLOG,IAS
+124760116,Imam,Subekti,,,permanent,2012-01-01,imam.subekti@ias.id,PST,IAS
+124760118,Eko Rusman,Haqim,,,permanent,2012-01-01,eko.rusman@ias.id,SBU-CARLOG,IAS
+124770121,Fanny,Andri,,,permanent,2012-01-01,fanny.andri@ias.id,PST,IAS
+124770125,Yudhie Satria,Dima,,,permanent,2012-01-01,yudhie.satria@ias.id,SBU-CARLOG,IAS
+124770130,Guntur,Karyanto,,,permanent,2012-01-01,,PST,IAS
+124770141,Sulistyo,Nugroho,,,permanent,2012-01-01,sulistyo.nugroho@ias.id,SBU-CARLOG,IAS
+124780145,Dhani,Lesmana,,,permanent,2012-01-01,dhani.lesmana@ias.id,SBU-CARLOG,IAS
+124780150,Andri,Hidayat,,,permanent,2012-01-01,andri.hidayat@ias.id,SBU-CARLOG,IAS
+124780160,Rahmat,Sutanto,,,permanent,2012-01-01,rahmat.sutanto@ias.id,SBU-CARLOG,IAS
+124780162,Hermansyah,,,,permanent,2012-01-01,hermansyah@ias.id,PST,IAS
+124780163,Reefa Rifani,Herdjan,,,permanent,2012-01-01,reefa.rifani@ias.id,PST,IAS
+124780169,Ruwiyanto,,,,permanent,2012-01-01,ruwiyanto@ias.id,PST,IAS
+124780170,Rory,Rivanov,,,permanent,2012-01-01,,PST,IAS
+124780171,Ndaru Cahyo,Murniawan,,,permanent,2012-01-01,ndaru.cahyo@ias.id,SBU-CARLOG,IAS
+124780172,Paulus Pieter,Siahaya,,,permanent,2012-01-01,paulus.pieter@ias.id,PST,IAS
+124780173,Dwi Hesti,Handayani,,,permanent,2012-01-01,dwi.hesti@ias.id,PST,IAS
+124790181,Andy,Maulana,,,permanent,2012-01-01,andy.maulana@ias.id,PST,IAS
+124790183,Herry,Edison,,,permanent,2012-01-01,herry.edison@ias.id,PST,IAS
+124790186,Syachrul Rachmat,Dany,,,permanent,2012-01-01,syachrul.dany@ias.id,SBU-CARLOG,IAS
+124790190,Endah,Anggraeni,,,permanent,2012-01-01,endah.anggraeni@ias.id,PST,IAS
+124790197,Daniel,Irawan,,,permanent,2012-01-01,daniel.irawan@ias.id,SBU-CARLOG,IAS
+124790200,Budi,Rihadhi,,,permanent,2012-01-01,budi.rihadhi@ias.id,SBU-CARLOG,IAS
+124800213,Denny Ruli,Setiawan,,,permanent,2012-01-01,denny.ruli@ias.id,PST,IAS
+124800215,Rangga,Marhaendra,,,permanent,2012-01-01,rangga.marhaendra@ias.id,PST,IAS
+124800217,Reno Andrea,Aryopurbo,,,permanent,2012-01-01,reno.andrea@ias.id,PST,IAS
+124810228,Ida,Soleha,,,permanent,2012-01-01,ida.soleha@ias.id,SBU-CARLOG,IAS
+124810235,A Chaerati,B,,,permanent,2012-01-01,andi.chaerati@ias.id,PST,IAS
+124810239,R. Hendra,Kurniawijaya,,,permanent,2012-01-01,hendra.kurniawijaya@ias.id,SBU-CARLOG,IAS
+124810244,Marwan,Ali,,,permanent,2012-01-01,marwan.ali@ias.id,PST,IAS
+124810246,Istanto,,,,permanent,2012-01-01,,PST,IAS
+124810249,Fahmi Johar,Lubis,,,permanent,2012-01-01,fahmi.lubis@ias.id,SBU-CARLOG,IAS
+124820261,Indra,Andriansyah,,,permanent,2012-01-01,indra.andriansyah@ias.id,PST,IAS
+124820267,Titik Budi,Utami,,,permanent,2012-01-01,titik.budi@ias.id,PST,IAS
+124820270,M Fauzi,Isputrawan,,,permanent,2012-01-01,mfauzi.isputrawan@ias.id,PST,IAS
+124820276,Nedi,Wijaya,,,permanent,2012-01-01,nedi.wijaya@ias.id,SBU-CARLOG,IAS
+124830287,Nuridin,,,,permanent,2012-01-01,nuridin@ias.id,PST,IAS
+124830291,Bayu,Laksmono,,,permanent,2012-01-01,bayu.laksmono@ias.id,SBU-CARLOG,IAS
+124830300,Ilman,Faizar,,,permanent,2012-01-01,ilman.faizar@ias.id,SBU-CARLOG,IAS
+124830301,Yulianus,Rantetana,,,permanent,2012-01-01,yulianus.rantetana@ias.id,SBU-CARLOG,IAS
+124830305,Dwi Lestari Puspasari,Soerif,,,permanent,2012-01-01,dwi.lestari@ias.id,SBU-CARLOG,IAS
+124830306,Adi,Pramono,,,permanent,2012-01-01,adi.pramono@ias.id,SBU-CARLOG,IAS
+124830313,Shendy,Kurniawan,,,permanent,2012-01-01,shendy.kurniawan@ias.id,PST,IAS
+124830316,Devisa Budi,Sahara,,,permanent,2012-01-01,devisa.sahara@ias.id,PST,IAS
+124840320,Febrio,,,,permanent,2012-01-01,febrio@ias.id,PST,IAS
+124840327,Djamsir,Syahban,,,permanent,2012-01-01,djamsir.syahban@ias.id,SBU-CARLOG,IAS
+124840333,Ellis,Fitriyah,,,permanent,2012-01-01,ellis.fitriyah@ias.id,PST,IAS
+124840335,Heriawan Agung,Purwanto,,,permanent,2012-01-01,heriawan.agung@ias.id,PST,IAS
+124840337,Andhika Eka,Satria,,,permanent,2012-01-01,andhika.eka@ias.id,PST,IAS
+124840344,Ayuningtyas,,,,permanent,2012-01-01,ayuningtyas@ias.id,PST,IAS
+124840346,Nugraha Dentista,Putra,,,permanent,2012-01-01,denta@ias.id,PST,IAS
+124840347,Sherlyana,Vikri,,,permanent,2012-01-01,sherlyana.vikri@ias.id,PST,IAS
+124840348,Aswin,Sumarto,,,permanent,2012-01-01,aswin.sumarto@ias.id,PST,IAS
+124840351,M. Nur,Alam,,,permanent,2012-01-01,nur.alam@ias.id,SBU-CARLOG,IAS
+124850359,Muhammad Didi,Aulianto,,,permanent,2012-01-01,didi.aulianto@ias.id,PST,IAS
+124850360,Akhmad,Firdaus,,,permanent,2012-01-01,akhmad.firdaus@ias.id,PST,IAS
+124850365,Noka,Ampresianto,,,permanent,2012-01-01,noka.ampresianto@ias.id,PST,IAS
+124850368,Evan,Kurniawan,,,permanent,2012-01-01,evan.kurniawan@ias.id,PST,IAS
+124850371,Boyke Suranta,Barus,,,permanent,2012-01-01,boyke.suranta@ias.id,PST,IAS
+124850372,Bayu,Apriyanto,,,permanent,2012-01-01,bayu.apriyanto@ias.id,PST,IAS
+124850376,Dicky,Sonjaya,,,permanent,2012-01-01,dicky.sonjaya@ias.id,PST,IAS
+124850381,Idris,,,,permanent,2012-01-01,idris@ias.id,PST,IAS
+124850382,Akbar,Anzalna,,,permanent,2012-01-01,akbar.anzalna@ias.id,PST,IAS
+124850385,Rustika,,,,permanent,2012-01-01,rustika@ias.id,SBU-CARLOG,IAS
+124850392,Ika Pratiwi Mayasari,MD,,,permanent,2012-01-01,ika.pratiwi@ias.id,PST,IAS
+124850396,Nofi Agung Budi,Pratiwi,,,permanent,2012-01-01,nofi.pratiwi@ias.id,PST,IAS
+124850397,Anton M.,Faisal,,,permanent,2012-01-01,anton.faisal@ias.id,PST,IAS
+124860399,Yusup Andi,Kurniawan,,,permanent,2012-01-01,yusup.andi@ias.id,PST,IAS
+124860403,Richie,Rismy,,,permanent,2012-01-01,richie.rismy@ias.id,PST,IAS
+124860406,Eko,Prasetyo,,,permanent,2012-01-01,ekoprasetyo@ias.id,PST,IAS
+124860410,Irma Dwi,Hartanti,,,permanent,2012-01-01,irma.hartanti@ias.id,SBU-CARLOG,IAS
+124860412,Yudi,Permana,,,permanent,2012-01-01,yudi.permana@ias.id,SBU-CARLOG,IAS
+124860413,Bony,Taurs,,,permanent,2012-01-01,bony.taurs@ias.id,SBU-CARLOG,IAS
+124860418,Wafroni,Frisnandi,,,permanent,2012-01-01,wafroni.frisnandi@ias.id,PST,IAS
+124860420,Viki,Fendik,,,permanent,2012-01-01,viki.fendik@ias.id,PST,IAS
+124860421,Yudi,Wahyudin,,,permanent,2012-01-01,yudi.wahyudin@ias.id,SBU-CARLOG,IAS
+124860422,Sandi Prasetyo Ananta,Somantri,,,permanent,2012-01-01,sandi.prasetyo@ias.id,PST,IAS
+124860423,Kunto,Widyatmoko,,,permanent,2012-01-01,kunto.widyatmoko@ias.id,SBU-CARLOG,IAS
+124860425,Rizky,Ginardy,,,permanent,2012-01-01,rizky.ginardy@ias.id,PST,IAS
+124860426,Michelia,Chrysanti,,,permanent,2012-01-01,michelia.chrysanti@ias.id,SBU-CARLOG,IAS
+124860438,Henry Mesach,Adiprabowo,,,permanent,2012-01-01,henry.adiprabowo@ias.id,PST,IAS
+124860439,Bagus,Priasaputra,,,permanent,2012-01-01,bagus.priasaputra@ias.id,PST,IAS
+124860443,Marino Defonso,Sirait,,,permanent,2012-01-01,marino.defonso@ias.id,PST,IAS
+124870444,Ade,Alimudin,,,permanent,2012-01-01,,PST,IAS
+124870445,Helmi,Hasan,,,permanent,2012-01-01,helmi.hasan@ias.id,SBU-CARLOG,IAS
+124870446,Haryani La'lang Dg,Baji,,,permanent,2012-01-01,haryani@ias.id,PST,IAS
+124870449,Rizki Hario,Seto,,,permanent,2012-01-01,rizki.seto@ias.id,SBU-CARLOG,IAS
+124870451,Yofarina A.Y,Wenas,,,permanent,2012-01-01,yofarina.wenas@ias.id,SBU-CARLOG,IAS
+124870453,Riesta,Suryakusuma,,,permanent,2012-01-01,riesta.suryakusuma@ias.id,PST,IAS
+124870457,Stevan,Endiarsa,,,permanent,2012-01-01,stevan.endiarsa@ias.id,SBU-CARLOG,IAS
+124870463,Githa,Jayanti,,,permanent,2012-01-01,,PST,IAS
+124870465,Nasarius Bachardiyo,Fernandez,,,permanent,2012-01-01,nasarius.bachardiyo@ias.id,SBU-CARLOG,IAS
+124870466,Ria,Anggraeni,,,permanent,2012-01-01,ria.anggraeni@ias.id,SBU-CARLOG,IAS
+124870467,Angga Pratama,Putra,,,permanent,2012-01-01,angga.pratama@ias.id,PST,IAS
+124870472,Ahmad,Adnan,,,permanent,2012-01-01,ahmad.adnan@ias.id,SBU-CARLOG,IAS
+124870473,Achmad,Affandi,,,permanent,2012-01-01,achmad.affandi@ias.id,SBU-CARLOG,IAS
+124870475,Ari,Wibowo,,,permanent,2012-01-01,ari.wibowo@ias.id,PST,IAS
+124870478,Arie Respama,Putra,,,permanent,2012-01-01,arie.respama@ias.id,SBU-CARLOG,IAS
+124870479,Boginanta,Wicaksono,,,permanent,2012-01-01,boginanta.wicaksono@ias.id,SBU-CARLOG,IAS
+124870480,Lucky Perdana,Bintang,,,permanent,2012-01-01,lucky.perdana@ias.id,SBU-CARLOG,IAS
+124870481,Indra,Octavianto,,,permanent,2012-01-01,indra.octavianto@ias.id,PST,IAS
+124870482,Raditya,Prabowo,,,permanent,2012-01-01,raditya.prabowo@ias.id,PST,IAS
+124870486,Sugiarto,,,,permanent,2012-01-01,sugiarto@ias.id,PST,IAS
+124880490,Radite Arandityo,Hermanus,,,permanent,2012-01-01,radite.arandityo@ias.id,PST,IAS
+124880491,Puji,Asmiani,,,permanent,2012-01-01,puji.asmiani@ias.id,SBU-CARLOG,IAS
+124880493,Teddi,Anuary,,,permanent,2012-01-01,teddi.anuary@ias.id,PST,IAS
+124880496,Muhamad,Hasanudin,,,permanent,2012-01-01,muhamad.hasanudin@ias.id,SBU-CARLOG,IAS
+124880497,Nafita,Afrilliyanti,,,permanent,2012-01-01,nafita.afrilliyanti@ias.id,PST,IAS
+124880503,Daniswara Gandana,Putra,,,permanent,2012-01-01,daniswara.gandana@ias.id,PST,IAS
+125881115,Muhamad,Syaiful,,,permanent,2012-01-01,muhamad.syaiful@ias.id,PST,IAS
+124880511,Rizka Agustin,Hendrarto,,,permanent,2012-01-01,rizka.agustin@ias.id,SBU-CARLOG,IAS
+124880512,Erika,Paraminda,,,permanent,2012-01-01,erika.paraminda@ias.id,PST,IAS
+124880513,Siti Azizah,Hamidah,,,permanent,2012-01-01,siti.azizah@ias.id,PST,IAS
+124880515,Dara,Farasita,,,permanent,2012-01-01,dara.farasita@ias.id,PST,IAS
+124880517,Indi,Aisyah,,,permanent,2012-01-01,indi.aisyah@ias.id,PST,IAS
+124880519,Firnanda,,,,permanent,2012-01-01,firnanda@ias.id,PST,IAS
+124880521,Novita,Silvia,,,permanent,2012-01-01,novita.silvia@ias.id,PST,IAS
+124880522,Nopi,Desriyanto,,,permanent,2012-01-01,nopi.desriyanto@ias.id,PST,IAS
+124880523,Sugeng,Suwito,,,permanent,2012-01-01,sugeng.suwito@ias.id,SBUCARLOG,IAS
+124890531,Bayu Indra,Kusuma,,,permanent,2012-01-01,bayu.kusuma@ias.id,PST,IAS
+124890537,Khomsatun Winda,Amalia,,,permanent,2012-01-01,khomsatun.winda@ias.id,PST,IAS
+124890542,Sigit,Fathomy,,,permanent,2012-01-01,sigit.fathomy@ias.id,SBU-CARLOG,IAS
+124890544,Ifah,Syarofina,,,permanent,2012-01-01,ifah.syarofina@ias.id,PST,IAS
+124890549,Putri Marini,Said,,,permanent,2012-01-01,putri.marini@ias.id,PST,IAS
+124890550,Mackiel Bin,Marthen,,,permanent,2012-01-01,mackiel.marthen@ias.id,SBU-CARLOG,IAS
+124890554,Elly,Munawarman,,,permanent,2012-01-01,munawarman.elly@ias.id,PST,IAS
+124890555,Imam,Prasetyo,,,permanent,2012-01-01,imam.prasetyo@ias.id,PST,IAS
+124890560,Kiky Cahyaning,Hertanti,,,permanent,2012-01-01,kiky.cahyaning@ias.id,SBU-CARLOG,IAS
+124890562,Adi,Safriyanto,,,permanent,2012-01-01,adi.safriyanto@ias.id,PST,IAS
+124890564,Nur,Farida,,,permanent,2012-01-01,nur.farida@ias.id,PST,IAS
+124890568,Yumi,Fachriyati,,,permanent,2012-01-01,yumi.fachriyanti@ias.id,PST,IAS
+124890572,Doddy Irfan,Setiawan,,,permanent,2012-01-01,doddy.irfan@ias.id,PST,IAS
+124900576,Abiyoga,,,,permanent,2012-01-01,abiyoga@ias.id,PST,IAS
+124900577,Ria Triska,Handayani,,,permanent,2012-01-01,ria.handayani@ias.id,PST,IAS
+124900580,Rizki,Israhayu,,,permanent,2012-01-01,rizki.israhayu@ias.id,PST,IAS
+124900584,Divo,Widjaya,,,permanent,2012-01-01,divo.widjaya@ias.id,PST,IAS
+124900586,Muhammad Rafi,Sembiring,,,permanent,2012-01-01,muhammad.rafi@ias.id,SBU-CARLOG,IAS
+124900588,Dewi Tsania,Averissiyam,,,permanent,2012-01-01,dewi.tsania@ias.id,PST,IAS
+124900591,Cindy,Juwita,,,permanent,2012-01-01,cindy.juwita@ias.id,PST,IAS
+124900592,Ayudya,Wahyuniar,,,permanent,2012-01-01,ayudya.wahyuniar@ias.id,PST,IAS
+124900594,Bambang Taufik Perdana,Budiman,,,permanent,2012-01-01,bambang.tpb@ias.id,PST,IAS
+124900597,Prawindra,Waren,,,permanent,2012-01-01,prawindra.waren@ias.id,SBU-CARLOG,IAS
+124900599,Antin Putri,Permatasari,,,permanent,2012-01-01,antin.putri@ias.id,PST,IAS
+124900603,Wedar Agus,Satriyo,,,permanent,2012-01-01,wedar.agus@ias.id,PST,IAS
+124900604,Agyl Chandra Kusuma,Feryne,,,permanent,2012-01-01,agyl.kusuma@ias.id,PST,IAS
+124900607,Eva Soviana,Santoso,,,permanent,2012-01-01,eva.soviana@ias.id,SBU-CARLOG,IAS
+124900612,Bagaskoro,Okludtyanto,,,permanent,2012-01-01,bagaskoro.okludtyanto@ias.id,SBU-CARLOG,IAS
+124900613,Ajeng Cipta,Rani,,,permanent,2012-01-01,ajeng.rani@ias.id,PST,IAS
+124900614,Dewanti Mayangsari Putri,Rihardy,,,permanent,2012-01-01,dewanti.mayangsari@ias.id,PST,IAS
+124900616,Adelin,Situmorang,,,permanent,2012-01-01,adelin.situmorang@ias.id,PST,IAS
+124900617,Majid,Albana,,,permanent,2012-01-01,,PST,IAS
+124900620,Wulansari,Chandrakasih,,,permanent,2012-01-01,wulansari.chandrakasih@ias.id,PST,IAS
+124900621,Slamet,Riyadi,,,permanent,2012-01-01,slamet.riyadi@ias.id,PST,IAS
+125901116,Thopan,Mahesa,,,permanent,2012-01-01,thopan.mahesa@ias.id,PST,IAS
+124900624,Rizki Ali,Zulfikar,,,permanent,2012-01-01,rizki.ali@ias.id,PST,IAS
+124910628,Sanris Fajar,Simbolon,,,permanent,2012-01-01,sanris.fajar@ias.id,PST,IAS
+124910633,Putri,Ferira,,,permanent,2012-01-01,putri.ferira@ias.id,PST,IAS
+124910637,Dea,Rizaltin,,,permanent,2012-01-01,dea.rizaltin@ias.id,SBU-CARLOG,IAS
+124910638,Faizal,Bashar,,,permanent,2012-01-01,faizal.bashar@ias.id,SBU-CARLOG,IAS
+124910643,Sulisthia Fitriani,Dewi,,,permanent,2012-01-01,sulisthia.fitriani@ias.id,PST,IAS
+124910644,Arrinda Almadea,Oemar,,,permanent,2012-01-01,arrinda.almadea@ias.id,PST,IAS
+124910653,Fachrizal,,,,permanent,2012-01-01,fachrizal@ias.id,PST,IAS
+124910657,Yuni,Khairunnisa,,,permanent,2012-01-01,yuni.khairunnisa@ias.id,PST,IAS
+124910659,Arsyad Azhari,M,,,permanent,2012-01-01,arsyad.azhari@ias.id,PST,IAS
+124910660,Pricilia,Jeniver,,,permanent,2012-01-01,pricilia.jeniver@ias.id,SBU-CARLOG,IAS
+124910662,Sapta,Hamdani,,,permanent,2012-01-01,sapta.hamdani@ias.id,SBU-CARLOG,IAS
+124910664,Adimas,,,,permanent,2012-01-01,adimas@ias.id,PST,IAS
+124910668,Agus,Sugianto,,,permanent,2012-01-01,agus.sugianto@ias.id,PST,IAS
+124910670,Robby Okto,Rumuat,,,permanent,2012-01-01,robby.okto@ias.id,SBU-CARLOG,IAS
+124910671,Salman,Alfarisi,,,permanent,2012-01-01,salman.alfarisi@ias.id,PST,IAS
+124910672,Ijen,Finisha,,,permanent,2012-01-01,ijen.finisha@ias.id,PST,IAS
+124910676,Andika,Pahlawan,,,permanent,2012-01-01,andika.pahlawan@ias.id,PST,IAS
+124910679,Irwansyah,Bintang,,,permanent,2012-01-01,irwansyah.bintang@ias.id,SBU-CARLOG,IAS
+124910680,Muhamad Sandy,Cresna,,,permanent,2012-01-01,sandy.cresna@ias.id,PST,IAS
+124910682,Fahli,Filyajiz,,,permanent,2012-01-01,fahli.filyajiz@ias.id,PST,IAS
+124910684,Rangga Nanda Adetia,Raisza,,,permanent,2012-01-01,rangga.nanda@ias.id,SBU-CARLOG,IAS
+124920688,Elvrida,Manurung,,,permanent,2012-01-01,elvrida.manurung@ias.id,SBU-CARLOG,IAS
+124920690,Aldythya,Nugraha,,,permanent,2012-01-01,aldyt.nugraha@ias.id,PST,IAS
+124920697,Adi,Aprilianto,,,permanent,2012-01-01,adi.aprilianto@ias.id,SBU-CARLOG,IAS
+124920698,Farahdina Nurul,Saumi,,,permanent,2012-01-01,farahdina.nurul@ias.id,PST,IAS
+124920699,Ruth Angelia,Sidabutar,,,permanent,2012-01-01,ruth.angelia@ias.id,PST,IAS
+124920703,Dimas Triyadi Wahyu,Pranata,,,permanent,2012-01-01,dimas.triyadi@ias.id,PST,IAS
+124920708,Ahmad Yasyir,Fayudhi,,,permanent,2012-01-01,ahmad.yasyir@ias.id,PST,IAS
+124920709,Amal,Tauhid,,,permanent,2012-01-01,amal.tauhid@ias.id,PST,IAS
+124920714,Fajriyah,Nurbaity,,,permanent,2012-01-01,fajriyah.nurbaity@ias.id,PST,IAS
+124920721,Aldyo Rayendra,Secakusuma,,,permanent,2012-01-01,a.rayendra@ias.id,PST,IAS
+124920723,Kartika,Oktaviani,,,permanent,2012-01-01,kartika.oktaviani@ias.id,SBU-CARLOG,IAS
+124920726,Virgiawan,,,,permanent,2012-01-01,virgiawan@ias.id,PST,IAS
+124920727,Sigit Setyo,Wibowo,,,permanent,2012-01-01,sigit.setyo@ias.id,PST,IAS
+124920728,Hari,Oktavyan,,,permanent,2012-01-01,hari.oktavyan@ias.id,SBU-CARLOG,IAS
+124920729,Firda,Kadir,,,permanent,2012-01-01,firda.kadir@ias.id,PST,IAS
+124920730,Frengky,Henuk,,,permanent,2012-01-01,frengky.henuk@ias.id,SBU-CARLOG,IAS
+124920731,Muhammad Hosen,Abrari,,,permanent,2012-01-01,hosen.abrari@ias.id,PST,IAS
+124920732,Novrizal Riady,Boer,,,permanent,2012-01-01,novrizal.riady@ias.id,PST,IAS
+124920734,Irvindha Sella Novelyna,Handayani,,,permanent,2012-01-01,irvindha.sella@ias.id,SBU-CARLOG,IAS
+124920735,Ramian Agnes Tamara,Sirait,,,permanent,2012-01-01,ramian.agnes@ias.id,PST,IAS
+124920738,Devita Karlina,Putri,,,permanent,2012-01-01,devita.karlina@ias.id,PST,IAS
+124930740,Nela,Belina,,,permanent,2012-01-01,nela.belina@ias.id,PST,IAS
+124930742,Irwin,Atmariga,,,permanent,2012-01-01,irwin.atmariga@ias.id,PST,IAS
+124930744,Aulia Putra Rachmandani,Santoso,,,permanent,2012-01-01,aulia.putra@ias.id,SBU-CARLOG,IAS
+124930746,Kadek Yutika Marheni,Lestari,,,permanent,2012-01-01,kadek.yutika@ias.id,PST,IAS
+124930747,Pangeran Iman Sakti Ramadhan,Hutagalung,,,permanent,2012-01-01,pangeran.iman@ias.id,PST,IAS
+124930749,Putri,Saraswati,,,permanent,2012-01-01,putri.saraswati@ias.id,PST,IAS
+124930754,Adriandi,,,,permanent,2012-01-01,adriandi@ias.id,PST,IAS
+124930756,Haerudin,Fauzi,,,permanent,2012-01-01,haerudin.fauzi@ias.id,SBU-CARLOG,IAS
+124930758,Sukarno,,,,permanent,2012-01-01,sukarno@ias.id,SBU-CARLOG,IAS
+124930763,Aditya Wisnu,Wardana,,,permanent,2012-01-01,aditya.wisnu@ias.id,SBU-CARLOG,IAS
+124930764,Asri Shinta,Larasati,,,permanent,2012-01-01,asri.shinta@ias.id,PST,IAS
+124930766,Taufiq,Almasyhur,,,permanent,2012-01-01,taufiq.almasyhur@ias.id,SBU-CARLOG,IAS
+124930770,Muhammad,Reza,,,permanent,2012-01-01,muhammad.reza@ias.id,SBU-CARLOG,IAS
+124930772,Andryanto Putrandanu,Sodikin,,,permanent,2012-01-01,andryanto.putrandanu@ias.id,PST,IAS
+124930774,Werry,Handayani,,,permanent,2012-01-01,werry.handayani@ias.id,SBU-CARLOG,IAS
+124930775,Citra,Oktavianis,,,permanent,2012-01-01,citra.oktavianis@ias.id,PST,IAS
+124930776,Fazriyansyah,,,,permanent,2012-01-01,fazriyansyah@ias.id,PST,IAS
+124930777,Annisa,Noviani,,,permanent,2012-01-01,annisa.noviani@ias.id,SBU-CARLOG,IAS
+124930778,Olfath,Thoriq,,,permanent,2012-01-01,olfath.thoriq@ias.id,PST,IAS
+124930779,Dimas Shella,Satria,,,permanent,2012-01-01,dimas.shella@ias.id,PST,IAS
+124930783,R. Kripayana,WK,,,permanent,2012-01-01,raden.kripayana@ias.id,PST,IAS
+124930784,Made Alan,Dharmasaputra,,,permanent,2012-01-01,made.alan@ias.id,PST,IAS
+124930786,Krisan Felicia,Naomi,,,permanent,2012-01-01,krisan.naomi@ias.id,SBU-CARLOG,IAS
+124940787,Aditya Putra,Armansyah,,,permanent,2012-01-01,aditya.putra@ias.id,PST,IAS
+124940789,Hamdy,Febrian,,,permanent,2012-01-01,hamdy.febrian@ias.id,PST,IAS
+124940791,Gizka Anindya,Putri,,,permanent,2012-01-01,gizka.anindya@ias.id,PST,IAS
+124940792,Indra,Korneawan,,,permanent,2012-01-01,indra.korneawan@ias.id,SBU-CARLOG,IAS
+124940793,Nuryanti,Fitriani,,,permanent,2012-01-01,nuryanti.fitriani@ias.id,PST,IAS
+124940795,Fajri,Putra,,,permanent,2012-01-01,fajri.putra@ias.id,PST,IAS
+124940797,Rozalia,Aprima,,,permanent,2012-01-01,rozalia.aprima@ias.id,PST,IAS
+124940801,Nurul Andriana,Badriah,,,permanent,2012-01-01,nurul.andriana@ias.id,SBU-CARLOG,IAS
+124940803,Cahyaning Indah,Palupi,,,permanent,2012-01-01,cahyaning.indah@ias.id,PST,IAS
+124940804,Agnesia Putri,Fajarini,,,permanent,2012-01-01,agnesia.fajarini@ias.id,PST,IAS
+124940811,Roro Lufita,Adinda,,,permanent,2012-01-01,lufita.adinda@ias.id,PST,IAS
+124940813,Aminudin,,,,permanent,2012-01-01,aminudin@ias.id,PST,IAS
+124940816,Tham,Pardede,,,permanent,2012-01-01,tham.pardede@ias.id,SBU-CARLOG,IAS
+124940817,Vebrian Agus Ari,Widiarta,,,permanent,2012-01-01,vebrian.agus@ias.id,SBU-CARLOG,IAS
+124940820,Hafizhuddin,Ali,,,permanent,2012-01-01,hafizhuddin.ali@ias.id,PST,IAS
+124940821,Devyana Oktaviani,Saputri,,,permanent,2012-01-01,devyana.oktaviani@ias.id,PST,IAS
+124940822,Redi,Setiadi,,,permanent,2012-01-01,redi.setiadi@ias.id,PST,IAS
+124940824,Khesti Wahyulis,Tanjung,,,permanent,2012-01-01,khesti.wahyulis@ias.id,SBU-CARLOG,IAS
+124940825,Bimo Kukuh,Wicaksono,,,permanent,2012-01-01,bimo.kukuh@ias.id,PST,IAS
+124950826,Mochamad Rizkhy,Deandra,,,permanent,2012-01-01,rizkhy.deandra@ias.id,PST,IAS
+124950827,Fajria,Amala,,,permanent,2012-01-01,fajria.amala@ias.id,PST,IAS
+124950829,Cici,Wulandari,,,permanent,2012-01-01,cici.wulandari@ias.id,SBU-CARLOG,IAS
+124950832,Harifan,Akbar,,,permanent,2012-01-01,harifan.akbar@ias.id,PST,IAS
+124950835,Zahid,Ahmad,,,permanent,2012-01-01,zahid.ahmad@ias.id,SBU-CARLOG,IAS
+124950836,Arisyi Pamilie,Tantry,,,permanent,2012-01-01,arisyi.pamilie@ias.id,PST,IAS
+124950837,Rike Ajeng,Maulani,,,permanent,2012-01-01,rike.ajeng@ias.id,PST,IAS
+124950839,Isti Sari,Dewi,,,permanent,2012-01-01,isti.dewi@ias.id,PST,IAS
+124950841,Maulana Wildan,Firdaus,,,permanent,2012-01-01,wildan.firdaus@ias.id,PST,IAS
+124950843,A.Dhiky Dwi,Saputro,,,permanent,2012-01-01,dhiky.dwisaputro@ias.id,PST,IAS
+124950844,Gabriella Citra Putri,Bauty,,,permanent,2012-01-01,gabriella.bauty@ias.id,PST,IAS
+124950845,Windaru Enggar,Pratama,,,permanent,2012-01-01,enggar.pratama@ias.id,SBU-CARLOG,IAS
+124950846,Filna Dania,Savaros,,,permanent,2012-01-01,filna.dania@ias.id,PST,IAS
+124950847,Muhamad Agus,Saipudin,,,permanent,2012-01-01,agus.saipudin@ias.id,SBU-CARLOG,IAS
+124950849,Farah Ayu,Anisa,,,permanent,2012-01-01,farah.anisa@ias.id,SBU-CARLOG,IAS
+124950851,Ekky,Kurniawan,,,permanent,2012-01-01,ekky.kurniawan@ias.id,PST,IAS
+124950855,Muhammad Raihan,Lufti,,,permanent,2012-01-01,raihan.firnadi@ias.id,PST,IAS
+124950856,Nur,Khaerunnisa,,,permanent,2012-01-01,nur.khaerunnisa@ias.id,PST,IAS
+124950857,Irene Kusumadewi,Praditya,,,permanent,2012-01-01,irene.praditya@ias.id,PST,IAS
+124950861,Yonatan,Andersen,,,permanent,2012-01-01,yonatan.andersen@ias.id,PST,IAS
+124950864,Mardyansa,Pratama,,,permanent,2012-01-01,mardyansa.pratama@ias.id,PST,IAS
+124950867,Panji,Sakti,,,permanent,2012-01-01,panji.sakti@ias.id,PST,IAS
+124950868,Mochamad Iqbal,Pratama,,,permanent,2012-01-01,iqbal.pratama@ias.id,SBU-CARLOG,IAS
+124960870,Rizki Imam,Munandar,,,permanent,2012-01-01,rizki.imam@ias.id,SBU-CARLOG,IAS
+124960872,Muthia Mirsya,Ali,,,permanent,2012-01-01,muthia.mirsya@ias.id,PST,IAS
+124960875,Luthfiany,,,,permanent,2012-01-01,luthfiany@ias.id,PST,IAS
+124960876,M Gilang,Ramadhan,,,permanent,2012-01-01,gilang.ramadhan@ias.id,PST,IAS
+124960877,Nopi,Purnamasari,,,permanent,2012-01-01,nopi.purnamasari@ias.id,SBU-CARLOG,IAS
+124960878,Muhammad Raihan,Rizqullah,,,permanent,2012-01-01,raihan.rizqullah@ias.id,PST,IAS
+124960879,Raka Rulistyanto Prakoso,Putra,,,permanent,2012-01-01,raka.rulistyanto@ias.id,PST,IAS
+124960880,Giffa Satria,Pamungkas,,,permanent,2012-01-01,giffa.satria@ias.id,SBU-CARLOG,IAS
+124960882,Maria Cindy,Dewinda,,,permanent,2012-01-01,cindy.dewinda@ias.id,PST,IAS
+124960889,Aninda,Afifah,,,permanent,2012-01-01,aninda.afifah@ias.id,PST,IAS
+124960893,Sarifatus,Sa'Diyah,,,permanent,2012-01-01,sarifatus.sadiyah@ias.id,PST,IAS
+124960895,Putri Rafizha Pratidina,Sikado,,,permanent,2012-01-01,putri.rafizha@ias.id,PST,IAS
+124960897,Nindi,Aulianty,,,permanent,2012-01-01,nindi.aulianty@ias.id,PST,IAS
+124960898,Mohamad Irvan Maulana,Yusuf,,,permanent,2012-01-01,irvan.maulana@ias.id,PST,IAS
+124960899,Kevin Muhamad,Wijaya,,,permanent,2012-01-01,kevin.wijaya@ias.id,SBU-CARLOG,IAS
+124960900,Zefanya Agles,Kakisina,,,permanent,2012-01-01,zefanya.agles@ias.id,PST,IAS
+124960901,Baby,Vannesa,,,permanent,2012-01-01,baby.vannesa@ias.id,PST,IAS
+124960903,Devina,Falensy,,,permanent,2012-01-01,devina.falensy@ias.id,PST,IAS
+124960905,Venni,,,,permanent,2012-01-01,venni.sardja@ias.id,PST,IAS
+124960908,Elis,Nurzanah,,,permanent,2012-01-01,elis.nurzanah@ias.id,SBU-CARLOG,IAS
+124960910,Rinjani,Ekatari,,,permanent,2012-01-01,rinjani.tari@ias.id,SBU-CARLOG,IAS
+124970912,Nanda Ayu Rahmadan,Sari,,,permanent,2012-01-01,nanda.ayu@ias.id,PST,IAS
+124970914,Kennia,Mariska,,,permanent,2012-01-01,kennia.mariska@ias.id,PST,IAS
+124970915,Ibnu,Faruqi,,,permanent,2012-01-01,ibnu.faruqi@ias.id,PST,IAS
+124970916,Rury Chamaria,Aqrany,,,permanent,2012-01-01,rury.chamaria@ias.id,SBU-CARLOG,IAS
+124970917,Roro Naresyawari Zetkasyah,Paramandhana,,,permanent,2012-01-01,roro.naresywari@ias.id,PST,IAS
+124970920,Filza Alifah,Hasny,,,permanent,2012-01-01,filza.alifah@ias.id,PST,IAS
+124970922,Kenya Cahya Regita,Putri,,,permanent,2012-01-01,kenya.cahya@ias.id,SBU-CARLOG,IAS
+124970924,M Fiqih,Zulfikar,,,permanent,2012-01-01,m.zulfikar@ias.id,PST,IAS
+124970925,Haniva Lutfiani,Suganda,,,permanent,2012-01-01,haniva.suganda@ias.id,SBU-CARLOG,IAS
+124970926,Putri,Herfayati,,,permanent,2012-01-01,putri.herfayati@ias.id,PST,IAS
+124970927,Faathirrajaf,Trisnawan,,,permanent,2012-01-01,rajaf.trisnawan@ias.id,PST,IAS
+124970928,Vicky Prasetya,Adipratama,,,permanent,2012-01-01,vicky.prasetya@ias.id,PST,IAS
+124970929,Fatika,Aldiliyani,,,permanent,2012-01-01,fatika.aldiliyani@ias.id,SBU-CARLOG,IAS
+124970930,Alinda Ayu,Septiani,,,permanent,2012-01-01,alinda.septiani@ias.id,PST,IAS
+124970933,Samuel,Reinaldi,,,permanent,2012-01-01,samuel.reinaldi@ias.id,SBU-CARLOG,IAS
+124970934,Pritania,Dwitasari,,,permanent,2012-01-01,pritania.dwitasari@ias.id,PST,IAS
+124970936,Leilya Rahmi,Wulandari,,,permanent,2012-01-01,leilya.rahmi@ias.id,SBU-CARLOG,IAS
+124970939,Yulia,Safitri,,,permanent,2012-01-01,yulia.safitri@ias.id,PST,IAS
+124980940,Wahyu,Arianto,,,permanent,2012-01-01,wahyu.arianto@ias.id,SBU-CARLOG,IAS
+124980942,Muhammad Mukhlis,Ramadhan,,,permanent,2012-01-01,mukhlis.ramadhan@ias.id,PST,IAS
+124980943,Tursina Miftahul,Adnani,,,permanent,2012-01-01,tursina.miftahul@ias.id,SBU-CARLOG,IAS
+124980944,Yogi,Yunendi,,,permanent,2012-01-01,yogi.yunendi@ias.id,PST,IAS
+124980945,Frimungga Terry,Pangesta,,,permanent,2012-01-01,frimungga.terry@ias.id,PST,IAS
+124980948,Naufal Muhammad,Mughni,,,permanent,2012-01-01,naufal.mughni@ias.id,PST,IAS
+124980949,Afrilya Aura,Putri,,,permanent,2012-01-01,afrilya.aura@ias.id,PST,IAS
+124980951,Putri,Maharani,,,permanent,2012-01-01,putri.maharani@ias.id,SBU-CARLOG,IAS
+124980952,Fauwzi,Rahardiansyah,,,permanent,2012-01-01,fauwzi.rahardiansyah@ias.id,SBU-CARLOG,IAS
+124980954,Nadhif,Zufar,,,permanent,2012-01-01,nadhif.zufar@ias.id,PST,IAS
+124980956,Safira Vidya,Sarafina,,,permanent,2012-01-01,safira.vidya@ias.id,PST,IAS
+124980957,Ahmadi,Solihin,,,permanent,2012-01-01,ahmadi.solihin@ias.id,PST,IAS
+124980959,Arniza Yulia,Citra,,,permanent,2012-01-01,arniza.citra@ias.id,PST,IAS
+124980961,Cindiana,Dewi,,,permanent,2012-01-01,cindiana.dewi@ias.id,PST,IAS
+124980962,Andita,Yolanda,,,permanent,2012-01-01,andita.yolanda@ias.id,PST,IAS
+124980963,Tasya Lonika,Aritonang,,,permanent,2012-01-01,tasya.lonika@ias.id,SBU-CARLOG,IAS
+124980964,Raihandini,Andrianty,,,permanent,2012-01-01,raihandini.andrianty@ias.id,SBU-CARLOG,IAS
+124980965,Diah Ayu,Gandasari,,,permanent,2012-01-01,diah.ayu@ias.id,PST,IAS
+124980966,Retnaningsih Nur,Hidayati,,,permanent,2012-01-01,retnaningsih@ias.id,PST,IAS
+124980967,Siti Danisa,Risandra,,,permanent,2012-01-01,danisa.risandra@ias.id,PST,IAS
+124980969,Asri Ainun,Putri,,,permanent,2012-01-01,asri.ainun@ias.id,PST,IAS
+124980970,Bryan Haga Talenta,Zebua,,,permanent,2012-01-01,bryan.haga@ias.id,SBU-CARLOG,IAS
+124990972,Ni Komang Trisna,Dayanti,,,permanent,2012-01-01,trisna.dayanti@ias.id,PST,IAS
+124990973,M. Chaeratul,Aulia,,,permanent,2012-01-01,chaerul.aulia@ias.id,PST,IAS
+124990974,Lesta,Febrianti,,,permanent,2012-01-01,lesta.febrianti@ias.id,PST,IAS
+124990975,Nur,Aini,,,permanent,2012-01-01,nur.aini@ias.id,PST,IAS
+124990976,Annisa,Mareta,,,permanent,2012-01-01,annisa.mareta@ias.id,SBU-CARLOG,IAS
+124990978,Fathur Maulana Rachman,Sikado,,,permanent,2012-01-01,fathur.maulana@ias.id,PST,IAS
+124990979,Wismiko Putra,Perdana,,,permanent,2012-01-01,wismiko.putra@ias.id,PST,IAS
+124990980,Dwi,Rosamelia,,,permanent,2012-01-01,dwi.rosamelia@ias.id,PST,IAS
+124990981,Puti Salsabil,Az-Zahra,,,permanent,2012-01-01,puti.salsabil@ias.id,SBU-CARLOG,IAS
+124990982,Eveline Blesky,Claurida,,,permanent,2012-01-01,eveline.blesky@ias.id,PST,IAS
+124990986,Titania Putri,Mardayanti,,,permanent,2012-01-01,titania.putri@ias.id,PST,IAS
+124990988,Agastya,Pramadya,,,permanent,2012-01-01,agastya.pramadya@ias.id,PST,IAS
+124990989,Fakhri,Halim,,,permanent,2012-01-01,fakhri.halim@ias.id,SBU-CARLOG,IAS
+124000990,Siti Alisa,Zafira,,,permanent,2012-01-01,alisa.zafira@ias.id,PST,IAS
+124000994,Erwin,Yuliansyah,,,permanent,2012-01-01,erwin.yuliansyah@ias.id,PST,IAS
+124010996,Made Maura Rizki,Avinia,,,permanent,2012-01-01,made.maura@ias.id,PST,IAS
+124010997,Firda,Hasnabila,,,permanent,2012-01-01,firda.hasnabila@ias.id,SBU-CARLOG,IAS
+124010998,Angelia,Wijaya,,,permanent,2012-01-01,angelia.wijaya@ias.id,PST,IAS
+124010999,Anggita Putri,Kezia,,,permanent,2012-01-01,anggita.kezia@ias.id,PST,IAS
+124891000,Dedi,Norwahyuliadi,,,permanent,2012-01-01,dedi.norwahyuliadi@ias.id,PST,IAS
+124961021,Imron Maulana,Ma'arif,,,permanent,2012-01-01,imron.maulana@ias.id,PST,IAS
+124931022,Adlina Rahmadini,Adzhani,,,permanent,2012-01-01,adlina.rahmadini@ias.id,SBU-CARLOG,IAS
+124921023,Firdha Munnawarah,,,,permanent,2012-01-01,firdha.munnawarah@ias.id,PST,IAS
+124941024,Niken Faranisya,Restiputri,,,permanent,2012-01-01,niken.faranisya@ias.id,PST,IAS
+124941025,Kala,Giantpati,,,permanent,2012-01-01,kala.giantpati@ias.id,PST,IAS
+124951028,Muhammad Rifqi Al,Hakim,,,permanent,2012-01-01,muhammad.rifqi@ias.id,PST,IAS
+124971029,Nurul Aisyah Patuppu,Solo,,,permanent,2012-01-01,nurul.aisyah@ias.id,PST,IAS
+124881030,Joko,Prastiyo,,,permanent,2012-01-01,joko.prastiyo@ias.id,PST,IAS
+124931031,Ardhian Dewagupta,P,,,permanent,2012-01-01,ardhian.dewagupta@ias.id,PST,IAS
+124711032,Nani,Rochaeni,,,permanent,2012-01-01,,PST,IAS
+124810227,Joko,Junaedi,,,permanent,2012-01-01,joko.junaedi@ias.id,PST,IAS
+124920701,Alodia,Fernanda,,,permanent,2012-01-01,,PST,IAS
+124840349,Muhammad,Khadik,,,permanent,2012-01-01,,PST,IAS
+124951034,Raden Bayu,Andrean,,,permanent,2012-01-01,raden.bayu@ias.id,PST,IAS
+124961035,Abdul,Rahman,,,permanent,2012-01-01,abdul.rahman@ias.id,PST,IAS
+124791037,Bima Tri Utama,Boediman,,,permanent,2012-01-01,bima.boediman@ias.id,PST,IAS
+124961039,Alif,Kurniansyah,,,permanent,2012-01-01,alif.kurniansyah@ias.id,PST,IAS
+124921053,Muhammad L,Bahfen,,,permanent,2012-01-01,,PST,IAS
+124821054,Ferri,Febrian,,,permanent,2012-01-01,,PST,IAS
+124731050,Jon,Hendri,,,permanent,2012-01-01,,PST,IAS
+124721051,Elin,Herlina,,,permanent,2012-01-01,,PST,IAS
+124001055,Salwa Salsabila,Deliananda,,,permanent,2012-01-01,salwa.salsabila@ias.id,SBU-CARLOG,IAS
+124001056,Ni Made Dewi Budastri,Pratiwi,,,permanent,2012-01-01,dewi.budastri@ias.id,PST,IAS
+124011057,Arwini Aprianti,Beu,,,permanent,2012-01-01,arwini.aprianti@ias.id,PST,IAS
+124041058,Shania Putri,Sahara,,,permanent,2012-01-01,shania.putri@ias.id,SBU-CARLOG,IAS
+124961061,Selviana,,,,permanent,2012-01-01,selviana@ias.id,PST,IAS
+124981062,Romieldes Y.P.,Noach,,,permanent,2012-01-01,romieldes@ias.id,PST,IAS
+125791065,Faizal Maulana Mukti,Handoyo,,,permanent,2012-01-01,faizal.maulana@ias.id,PST,IAS
+125811068,Gunardi,,,,permanent,2012-01-01,gunardi@ias.id,PST,IAS
+125921066,Muhammad Ryan,Hazmi,,,permanent,2012-01-01,muhammad.ryan@ias.id,PST,IAS
+125991069,Muhammad Alfin,Nurwana,,,permanent,2012-01-01,alfin.nurwana@ias.id,PST,IAS
+125011070,Kurnia,Yuliani,,,permanent,2012-01-01,kurnia.yuliani@ias.id,PST,IAS
+125931074,Gigih Pratama Widia,Saputra,,,permanent,2012-01-01,gigih.pratama@ias.id,PST,IAS
+125971073,Widyasari,,,,permanent,2012-01-01,widyasari@ias.id,PST,IAS
+125871076,Roy Liston,Panjaitan,,,permanent,2012-01-01,roy.liston@ias.id,PST,IAS
+125931085,Fanny,Prawaka,,,permanent,2012-01-01,fanny.prawaka@ias.id,PST,IAS
+125911087,Anindita,Noviandari,,,permanent,2012-01-01,anindita.noviandari@ias.id,PST,IAS
+125961088,Ahmad Fida,Abdullah,,,permanent,2012-01-01,ahmad.fida@ias.id,PST,IAS
+125911086,Ridwan Noor,Setiawan,,,permanent,2012-01-01,ridwan.noor@ias.id,PST,IAS
+125991117,Hanaan Ridho,A,,,permanent,2012-01-01,hanaan.ridho@ias.id,PST,IAS
+125881118,Cyntara,,,,permanent,2012-01-01,cyntara@ias.id,PST,IAS
+125921089,"Adityia Wibisono Suwardie, ST.,",M.Sc,,,permanent,2012-01-01,adityia.wibisono@ias.id,PST,IAS
+125991090,Aqilla Octavania,Premillewina,,,permanent,2012-01-01,aqilla.octavania@ias.id,PST,IAS
+125991099,Ethika Suri,Marefsi,,,permanent,2012-01-01,ethika.suri@ias.id,SBU-CARLOG,IAS
+125011101,Afkar Dhiya,Ulhaq,,,permanent,2012-01-01,afkar.dhiya@ias.id,PST,IAS
+125971107,Bagas Adi,Prakoso,,,permanent,2012-01-01,bagas.adi@ias.id,PST,IAS
+125011105,Annisa Shafa,Regina,,,permanent,2012-01-01,annisa.shafa@ias.id,PST,IAS
+125011098,Farah Ristana,Haifa,,,permanent,2012-01-01,farah.ristana@ias.id,PST,IAS
+125001106,Muhammad Naufal,Hakim,,,permanent,2012-01-01,muhammad.naufal@ias.id,PST,IAS
+125981094,Ade Bunga,Putri,,,permanent,2012-01-01,ade.bunga@ias.id,PST,IAS
+125021103,Firlana Ghifara Rahmi,Arsy,,,permanent,2012-01-01,firlana.ghifara@ias.id,PST,IAS
+125011096,Shafira Jessenia,Jasmine,,,permanent,2012-01-01,shafira.jessenia@ias.id,PST,IAS
+125011102,Syafika Syifa,Maulidah,,,permanent,2012-01-01,syafika.syifa@ias.id,PST,IAS
+125001100,Amalia Suhaila,Mumtaz,,,permanent,2012-01-01,amalia.suhaila@ias.id,PST,IAS
+125021095,Tsabita Najmi Cazandea,Sifara,,,permanent,2012-01-01,tsabita.najmi@ias.id,SBU-CARLOG,IAS
+125011093,Haekal,Mahdania,,,permanent,2012-01-01,haekal.mahdania@ias.id,SBU-CARLOG,IAS
+125021092,Alya Itrah,Fatimah,,,permanent,2012-01-01,alya.itrah@ias.id,SBU-CARLOG,IAS
+125991097,Annisa,Laraswati,,,permanent,2012-01-01,annisa.laraswati@ias.id,PST,IAS
+125011104,Sekar Afrila Miftakhul,Jannah,,,permanent,2012-01-01,sekar.afrila@ias.id,PST,IAS
+125031108,Sifa,Irfani,,,permanent,2012-01-01,sifa.irfani@ias.id,PST,IAS
+125951110,Teguh Prakoso,Nurhari,,,permanent,2012-01-01,teguh.prakoso@ias.id,PST,IAS
+126961123,Ratih Sarah,Fadila,,,permanent,2012-01-01,ratih.sarah@ias.id,PST,IAS
+125961112,Mahardhika Tatyana,Paramastri,,,permanent,2012-01-01,mahardhika.tatyana@ias.id,PST,IAS
+125971113,Abdul Aziz,Laisa,,,permanent,2012-01-01,abdul.aziz@ias.id,PST,IAS
+125991071,Alya,Salsabila,,,permanent,2012-01-01,alya.salsabila@ias.id,PST,IAS
+125881119,Reka,Masa,,,permanent,2012-01-01,reka.masa@ias.id,PST,IAS
+126881122,Rika,Adhistarina,,,permanent,2012-01-01,rika.adhiastarina@ias.id,PST,IAS
+126001123,Muhammad Fauzi,Rahmad,,,permanent,2012-01-01,muhammad.fauzi@ias.id,PST,IAS
+126011124,Chiffia Hana,Syabina,,,permanent,2012-01-01,chiffia.hana@ias.id,PST,IAS
+126011125,Muhammad Raihan Bintang,Abhista,,,permanent,2012-01-01,raihan.abhista@ias.id,PST,IAS
+126761126,Boby Lukman,Suardi,,,permanent,2012-01-01,boby.lukman@injourney.id,PST,IAS
+126891127,Hanif,Safar,,,permanent,2012-01-01,hanif.safar@ias.id,PST,IAS
+126771128,Ade,Chandra,,,permanent,2012-01-01,ade.chandra@ias.id,PST,IAS
+126701129,"Didik Catur Prasetya, SH",MH,,,permanent,2012-01-01,didik.catur@ias.id,PST,IAS
+126961130,Annisa Sekar,Savitri,,,permanent,2012-01-01,annisa.sekar@ias.id,PST,IAS
+126881131,Turah Ajiari,TN,,,permanent,2012-01-01,turah.ajiari@ias.id,SBU-CARLOG,IAS
+126931132,Yuni Kartika,Lorenza,,,permanent,2012-01-01,yuni.kartika@ias.id,PST,IAS
+126851133,Nina,Mayasari,,,permanent,2012-01-01,nina.mayasari@ias.id,PST,IAS
+124850375,Otong,Sutiawan,,,permanent,2012-01-01,otong.sutiawan@ias.id,SBU-CARLOG,IAS
+124930782,Panji Mario,Leksono,,,permanent,2012-01-01,panji.mario@ias.id,SBU-CARLOG,IAS
+124920692,Faisal Mufadlis,Dalimunthe,,,permanent,2012-01-01,faisal.mufadlis@ias.id,SBU-CARLOG,IAS
+124920694,Muhammad Iqbal,Pulungan,,,permanent,2012-01-01,muhammad.iqbal@ias.id,SBU-CARLOG,IAS

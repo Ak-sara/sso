@@ -49,7 +49,6 @@ export const actions: Actions = {
 			const hashedPassword = await hash(password, { memoryCost: 19456, timeCost: 2, outputLen: 32, parallelism: 1 });
 			const base: any = {
 				identityType,
-				username: formData.username,
 				email: formData.email || undefined,
 				password: hashedPassword,
 				firstName: formData.firstName,

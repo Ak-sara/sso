@@ -88,7 +88,7 @@
 					</button>
 				</div>
 				<p class="mt-2 text-sm text-gray-500">
-					Supported columns: NIK, FirstName, LastName, Email, OrgUnit, Position, EmploymentType, JoinDate, WorkLocation
+					Supported columns: NIK, FirstName, LastName, Email, ORG, OrgUnit, Position, EmploymentType, JoinDate, WorkLocation
 				</p>
 			</div>
 		</div>
@@ -114,18 +114,18 @@
 			{#if preview.errors.length > 0}
 				<div class="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
 					<h4 class="text-sm font-medium text-red-800 mb-2">
-						❌ {preview.errors.length} Error{preview.errors.length > 1 ? 's' : ''} Found
+						❌ {preview.errors.length} Row{preview.errors.length > 1 ? 's' : ''} Skipped
 					</h4>
 					<ul class="list-disc list-inside text-sm text-red-700 space-y-1">
 						{#each preview.errors.slice(0, 5) as error}
 							<li>{error.error}</li>
 						{/each}
 						{#if preview.errors.length > 5}
-							<li class="text-red-600">... and {preview.errors.length - 5} more errors</li>
+							<li class="text-red-600">... and {preview.errors.length - 5} more</li>
 						{/if}
 					</ul>
 					<p class="mt-2 text-sm text-red-600">
-						Please fix these errors in your CSV file before proceeding.
+						These rows will be skipped. Valid rows can still be imported.
 					</p>
 				</div>
 			{/if}
@@ -183,10 +183,7 @@
 						</table>
 					</div>
 					<p class="mt-2 text-sm text-gray-600">
-						→ These employees will receive welcome emails with temporary passwords
-					</p>
-					<p class="text-sm text-gray-600">
-						→ They can login immediately after import
+						→ Default password: <code class="bg-gray-100 px-1 rounded">Aksara@2025</code> — employees must change on first login
 					</p>
 				</div>
 			{/if}
@@ -242,7 +239,7 @@
 			{/if}
 
 			<!-- Apply Button -->
-			{#if preview.errors.length === 0}
+			{#if preview.toCreate.length + preview.toUpdate.length > 0}
 				<div class="flex justify-end space-x-4">
 					<button
 						type="button"

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { deserialize } from '$app/forms';
 	import { showNotif } from '$lib/stores/notif.svelte';
 	import { page } from '$app/stores';
 	import PageHints from '$lib/components/PageHints.svelte';
@@ -27,22 +28,14 @@
 	let isTesting = $state(false);
 	let isSaving = $state(false);
 	let preview = $state<any>(null);
+	let previewId = $state<string | null>(null);
 
-	// Handle form result
+	// Handle Entra form results (still use native forms)
 	$effect(() => {
-		if (form?.success && form?.preview) {
-			preview = form.preview;
-			isUploading = false;
-		}
-		if (form?.success && form?.stats) {
-			preview = null;
-			isApplying = false;
-			showNotif('success', form.message);
-		}
-		if (form?.success && form?.message) {
+		if (form?.success && form?.message && !('preview' in (form as any))) {
 			isTesting = false;
 			isSaving = false;
-			showNotif('success', form.message);
+			showNotif('success', (form as any).message);
 		}
 		if (form?.error) {
 			isTesting = false;
@@ -55,7 +48,8 @@
 		const currentOrg = new URLSearchParams($page.url.search).get('org');
 		const url = currentOrg ? `?tab=${tabId}&org=${currentOrg}` : `?tab=${tabId}`;
 		goto(url);
-		preview = null; // Clear preview when switching tabs
+		preview = null;
+		previewId = null;
 	}
 
 	function handleOrgChange(event: Event) {
@@ -67,36 +61,32 @@
 
 	async function handleUpload(file: File) {
 		isUploading = true;
-		const formData = new FormData();
-		formData.append('file', file);
-
-		// Submit form programmatically
-		const form = document.createElement('form');
-		form.method = 'POST';
-		form.action = '?/uploadCSV';
-		form.enctype = 'multipart/form-data';
-
-		const input = document.createElement('input');
-		input.type = 'file';
-		input.name = 'file';
-		const dataTransfer = new DataTransfer();
-		dataTransfer.items.add(file);
-		input.files = dataTransfer.files;
-
-		form.appendChild(input);
-		document.body.appendChild(form);
-		form.requestSubmit();
-		document.body.removeChild(form);
+		preview = null;
+		previewId = null;
+		try {
+			const body = new FormData();
+			body.append('file', file);
+			const res = await fetch('?/uploadCSV', { method: 'POST', body });
+			const result = deserialize(await res.text()) as any;
+			if (result.type === 'success') {
+				preview = result.data?.preview ?? null;
+				previewId = result.data?.previewId ?? null;
+			} else {
+				showNotif('error', result.data?.error ?? 'Upload failed');
+			}
+		} catch (e: any) {
+			showNotif('error', e.message ?? 'Upload failed');
+		} finally {
+			isUploading = false;
+		}
 	}
 
 	function handleDownloadTemplate() {
-		// Generate CSV template
 		const template = [
-			'NIK,FirstName,LastName,Email,OrgUnit,Position,EmploymentType,JoinDate,WorkLocation',
-			'IAS00001,John,Doe,john.doe@ias.co.id,IT-DEV,Software Engineer,permanent,2024-01-15,CGK',
-			'IAS00002,Jane,Smith,,HR-REC,Recruiter,pkwt,2024-02-01,DPS',
+			'NIK,FirstName,LastName,Email,ORG,OrgUnit,Position,EmploymentType,JoinDate,WorkLocation',
+			'IAS00001,John,Doe,john.doe@ias.co.id,IAS,IT-DEV,Software Engineer,permanent,2024-01-15,CGK',
+			'IAS00002,Jane,Smith,,IAS,HR-REC,Recruiter,pkwt,2024-02-01,DPS',
 		].join('\n');
-
 		const blob = new Blob([template], { type: 'text/csv' });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
@@ -107,25 +97,28 @@
 	}
 
 	async function handleApplyImport() {
-		if (!preview) return;
-
+		if (!previewId) return;
 		isApplying = true;
-		const formData = new FormData();
-		formData.append('previewData', JSON.stringify(preview));
-
-		const form = document.createElement('form');
-		form.method = 'POST';
-		form.action = '?/applyImport';
-
-		const input = document.createElement('input');
-		input.type = 'hidden';
-		input.name = 'previewData';
-		input.value = JSON.stringify(preview);
-		form.appendChild(input);
-
-		document.body.appendChild(form);
-		form.requestSubmit();
-		document.body.removeChild(form);
+		try {
+			const body = new URLSearchParams({ previewId });
+			const res = await fetch('?/applyImport', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				body
+			});
+			const result = deserialize(await res.text()) as any;
+			if (result.type === 'success') {
+				preview = null;
+				previewId = null;
+				showNotif('success', result.data?.message ?? 'Import complete');
+			} else {
+				showNotif('error', result.data?.error ?? 'Import failed');
+			}
+		} catch (e: any) {
+			showNotif('error', e.message ?? 'Import failed');
+		} finally {
+			isApplying = false;
+		}
 	}
 </script>
 

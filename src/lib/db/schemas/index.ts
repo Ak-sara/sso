@@ -1,6 +1,6 @@
 // Barrel re-export — all existing `import { X } from '$lib/db/schemas'` keeps working
 export { IdentitySchema, type Identity } from './identity';
-export { findIdentityByEmail, findIdentityByUsername, findIdentityByEmployeeId, findIdentityByEmailOrNIK, findIdentitiesByOrgUnit, updateLastLogin, bulkUpsertIdentities, getIdentityStats } from './identity';
+export { findIdentityByEmail, findIdentityByEmployeeId, findIdentityByEmailOrNIK, findIdentitiesByOrgUnit, updateLastLogin, bulkUpsertIdentities, getIdentityStats } from './identity';
 
 export { OAuthClientSchema, type OAuthClient } from './oauth-client';
 export { verifyClientSecret } from './oauth-client';

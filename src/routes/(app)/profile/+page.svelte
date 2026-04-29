@@ -35,7 +35,7 @@
 					<h3 class="text-xl font-semibold text-gray-900">
 						{user?.firstName && user?.lastName
 							? `${user?.firstName} ${user?.lastName}`
-							: user?.username}
+							: user?.email || 'User'}
 					</h3>
 					<p class="text-gray-600">{user?.email}</p>
 					<div class="flex gap-2 mt-2">
@@ -62,9 +62,9 @@
 		
 		<!-- Information Grid -->
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-			<!-- Username -->
+			<!-- Login ID -->
 			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+				<label class="block text-sm font-medium text-gray-700 mb-2">Login ID (NIK / Email)</label>
 				<div class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
 					{user?.username}
 				</div>

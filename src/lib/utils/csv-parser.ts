@@ -142,7 +142,7 @@ export async function parseReassignmentCSV(fileContent: string): Promise<CSVPars
 /**
  * Parse a CSV line handling quoted values and commas
  */
-function parseCSVLine(line: string): string[] {
+export function parseCSVLine(line: string): string[] {
 	const cells: string[] = [];
 	let current = '';
 	let inQuotes = false;

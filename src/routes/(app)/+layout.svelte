@@ -46,7 +46,7 @@
 	const userName = $derived(
 		user?.firstName && user?.lastName
 			? `${user.firstName} ${user.lastName}`
-			: user?.firstName || user?.username || 'User'
+			: user?.firstName || user?.email || 'User'
 	);
 
 	interface NavItem {

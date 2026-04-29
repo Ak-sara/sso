@@ -125,8 +125,6 @@
 				<div class="grid grid-cols-[auto_1fr] gap-4 mb-2">
 					<Input type="avatar" label="" style="self-center" value={data.identity?.avatar}  />
 					<div>
-						<!-- Username -->
-						<Input type="text" label="Username" name="username" value={data.identity?.username}  />
 						<!-- Name -->
 						<div class="grid grid-cols-2 gap-4">
 							<Input type="text" label="First Name" name="firstName" value={data.identity?.firstName}  />

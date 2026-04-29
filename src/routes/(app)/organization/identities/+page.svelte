@@ -108,12 +108,10 @@
 				},
 				{
 					key: 'email',
-					label: 'Email / Username',
+					label: 'Email',
 					sortable: true,
 					render: (value: string | undefined, row: Identity) =>
-						value
-							? value
-							: `${row.username}<span class="text-xs text-gray-500 ml-1">(NIK as username)</span>`
+						value || `<span class="text-xs text-gray-400">(no email)</span>`
 				},
 				{
 					key: 'employmentType',
@@ -202,9 +200,9 @@
 				},
 				{
 					key: 'email',
-					label: 'Email / Username',
+					label: 'Email',
 					sortable: true,
-					render: (value: string | undefined, row: Identity) => value || row.username
+					render: (value: string | undefined, row: Identity) => value || ''
 				},
 				{
 					key: 'roles',
@@ -274,7 +272,7 @@
 			]}
 			searchable={true}
 			searchPlaceholder="Cari identitas (nama, email, NIK)..."
-			searchKeys={['fullName', 'email', 'username', 'employeeId', 'phone', 'companyName', 'partnerType']}
+			searchKeys={['fullName', 'email', 'employeeId', 'phone', 'companyName', 'partnerType']}
 			onPageChange={handlePageChange}
 			onPageSizeChange={handlePageSizeChange}
 			onSort={handleSort}

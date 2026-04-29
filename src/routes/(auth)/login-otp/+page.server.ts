@@ -94,8 +94,8 @@ export const actions: Actions = {
 			// Create session
 			const session = await sessionManager.createSession(
 				identity._id?.toString() as string,
-				identity.email as string,
-				identity.username,
+				identity.email || identity.employeeId || '',
+				identity.employeeId || identity.email || '',
 				identity.roles || ['user'],
 				identity.firstName,
 				identity.lastName,

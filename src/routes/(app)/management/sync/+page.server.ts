@@ -1,4 +1,19 @@
 import type { PageServerLoad, Actions } from './$types';
+
+// Short-lived server-side preview cache — avoids sending large JSON through the form sanitizer
+const previewCache = new Map<string, { data: any; expiresAt: number }>();
+function cachePreview(data: any): string {
+	const id = crypto.randomUUID();
+	previewCache.set(id, { data, expiresAt: Date.now() + 30 * 60_000 }); // 30 min TTL
+	for (const [k, v] of previewCache) if (v.expiresAt < Date.now()) previewCache.delete(k);
+	return id;
+}
+function consumePreview(id: string): any | null {
+	const entry = previewCache.get(id);
+	if (!entry || entry.expiresAt < Date.now()) return null;
+	previewCache.delete(id);
+	return entry.data;
+}
 import { fail } from '@sveltejs/kit';
 import { db } from '$lib/db/db';
 import { listAuditLogs } from '$lib/services/audit-service';
@@ -14,6 +29,10 @@ import {
 	validateIdentityFields,
 	generateDataWarnings
 } from '$lib/utils/identity-import';
+import { serializeObjectIds } from '$lib/utils/serialize';
+import { parseCSVLine } from '$lib/utils/csv-parser';
+import { passwordService } from '$lib/auth/password';
+import { ObjectId } from 'mongodb';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const tab = locals.query?.tab || 'csv';
@@ -51,20 +70,19 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	uploadCSV: async ({ locals }) => {
-		const formData = locals.body
-		const file = formData?.file as File;
-		if (!file) return fail(400, { error: 'No file uploaded' });
+		const file = locals.body?.file as File;
+		if (!file || typeof file.text !== 'function') return fail(400, { error: 'No file uploaded' });
 
 		try {
 			const content = await file.text();
-			const lines = content.split('\n').filter(line => line.trim());
+			const lines = content.split(/\r?\n/).filter(line => line.trim());
 			if (lines.length === 0) return fail(400, { error: 'CSV file is empty' });
 
-			const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+			const headers = parseCSVLine(lines[0]).map(h => h.trim());
 			const rows = lines.slice(1).map(line => {
-				const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+				const values = parseCSVLine(line);
 				const row: Record<string, string> = {};
-				headers.forEach((header, index) => { row[header] = values[index] || ''; });
+				headers.forEach((header, index) => { row[header] = values[index]?.trim() || ''; });
 				return row;
 			});
 
@@ -77,12 +95,33 @@ export const actions: Actions = {
 
 			for (const row of rows) {
 				const normalized = normalizeCSVColumns(row);
-				const { nik, email, firstName, lastName, employmentType, workLocation } = normalized;
+				const { nik, email, firstName, lastName, employmentType, workLocation, org, orgUnit, position } = normalized;
 
 				const validation = validateIdentityFields({ nik, email, firstName, lastName });
 				if (!validation.valid) {
 					validation.errors.forEach(error => preview.errors.push({ row, error }));
 					continue;
+				}
+
+				// Resolve ORG code/name → organizationId
+				let resolvedOrgId: string | undefined;
+				if (org) {
+					const orgDoc = await db.organizations.findOne({ $or: [{ code: org }, { name: org }] } as any) as any;
+					resolvedOrgId = orgDoc?._id?.toString();
+				}
+
+				// Resolve orgUnit code/name → ObjectId string
+				let orgUnitId: string | undefined;
+				if (orgUnit) {
+					const unit = await db.orgUnits.findOne({ $or: [{ code: orgUnit }, { name: orgUnit }] } as any) as any;
+					orgUnitId = unit?._id?.toString();
+				}
+
+				// Resolve position title → ObjectId string
+				let positionId: string | undefined;
+				if (position) {
+					const pos = await db.positions.findOne({ title: position } as any) as any;
+					positionId = pos?._id?.toString();
 				}
 
 				let existing = null;
@@ -96,19 +135,28 @@ export const actions: Actions = {
 					if (firstName !== existing.firstName) changes.firstName = firstName;
 					if (lastName !== existing.lastName) changes.lastName = lastName;
 					changes.fullName = `${firstName} ${lastName || ''}`.trim();
+					if (orgUnitId) changes.orgUnitId = orgUnitId;
+					if (positionId) changes.positionId = positionId;
+					if (workLocation) changes.workLocation = workLocation;
+					if (resolvedOrgId) changes.organizationId = resolvedOrgId;
 					if (Object.keys(changes).length > 1) preview.toUpdate.push({ identity: existing, changes });
 				} else {
+					const joinDate = row.JoinDate ? new Date(row.JoinDate) : new Date();
 					preview.toCreate.push({
 						identityType: 'employee',
-						username: email || nik,
 						email: email || undefined,
 						employeeId: nik || undefined,
 						firstName, lastName,
 						fullName: `${firstName} ${lastName || ''}`.trim(),
-						employmentType: (employmentType || 'permanent') as Identity['employmentType'], employmentStatus: 'active', isActive: true,
-						roles: ['user'], joinDate: new Date(), workLocation,
-						secondaryAssignments: [], customProperties: {}
-					});
+						employmentType: (employmentType || 'permanent') as Identity['employmentType'],
+						employmentStatus: 'active', isActive: true,
+						roles: ['user'], joinDate,
+						workLocation, orgUnitId, positionId,
+						organizationId: resolvedOrgId,
+						assignments: [], customProperties: {},
+						// _assignmentSeed carries data to build the first assignment in applyImport
+						_assignmentSeed: { nik, resolvedOrgId, workLocation, orgUnitId, positionId, employmentType, joinDate }
+					} as any);
 					generateDataWarnings({ nik, email, firstName: firstName!, lastName: lastName || '' })
 						.forEach(warning => preview.warnings.push({ row, warning }));
 				}
@@ -119,28 +167,49 @@ export const actions: Actions = {
 				preview.warnings.push({ row: {}, warning: `⚠️ ${conflict.message}` });
 			});
 
-			return { success: true, preview };
+			const serialized = serializeObjectIds(preview);
+			const previewId = cachePreview(serialized);
+			return { success: true, previewId, preview: serialized };
 		} catch (err: any) {
 			return fail(500, { error: err.message });
 		}
 	},
 
 	applyImport: async ({ locals }) => {
-		const formData = locals.body
-		const previewData = formData?.previewData;
-		if (!previewData) return fail(400, { error: 'No preview data provided' });
+		const previewId = locals.body?.previewId as string;
+		if (!previewId) return fail(400, { error: 'No preview ID provided' });
+		const preview = consumePreview(previewId);
+		if (!preview) return fail(400, { error: 'Preview expired or not found — please re-upload the CSV' });
 
 		try {
-			const preview = JSON.parse(previewData as string);
 			let created = 0, updated = 0;
 			const errors: string[] = [];
 
+			const defaultPassword = await passwordService.hashPassword('Aksara@2025');
+
 			for (const identity of preview.toCreate) {
+				const seed = identity._assignmentSeed;
+				const firstAssignment = seed ? {
+					_id: new ObjectId(),
+					organizationId: seed.resolvedOrgId || identity.organizationId || locals.user?.organizationId || '',
+					employeeId: seed.nik || undefined,
+					workLocation: seed.workLocation || undefined,
+					orgUnitId: seed.orgUnitId || undefined,
+					positionId: seed.positionId || undefined,
+					employmentType: seed.employmentType || 'permanent',
+					employmentStatus: 'active',
+					startDate: seed.joinDate ? new Date(seed.joinDate) : new Date(),
+					createdAt: new Date(),
+					createdBy: 'csv-import'
+				} : null;
+
+				const { _assignmentSeed: _, ...identityData } = identity;
 				const result = await createIdentity({
-					...identity,
-					organizationId: identity.organizationId || 'default-org-id',
-					password: 'temp-password-hash',
+					...identityData,
+					organizationId: identity.organizationId || locals.user?.organizationId || '',
+					password: defaultPassword,
 					isActive: true, emailVerified: false,
+					assignments: firstAssignment ? [firstAssignment] : [],
 				} as any);
 				if (result.ok) created++;
 				else errors.push(`Failed to create ${identity.fullName}: ${result.error}`);

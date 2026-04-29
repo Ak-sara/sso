@@ -69,19 +69,23 @@ const mainHandle: Handle = async ({ event, resolve }) => {
 		Object.fromEntries(event.url.searchParams.entries()),
 	];
 	let bodyParams: Record<string, unknown> = {};
+	const fileEntries: Record<string, File> = {};
 	if (!['GET', 'HEAD'].includes(Method)) {
 		if (contentType.includes('application/json')) {
 			bodyParams = await event.request.json();
 		} else if (contentType.includes('form')) {
 			const formData = await event.request.formData();
-			bodyParams = Object.fromEntries(formData.entries());
+			for (const [key, value] of formData.entries()) {
+				if (value instanceof File) fileEntries[key] = value;
+				else bodyParams[key] = value;
+			}
 		}
 	}
 	event.locals.headers= Headers;
 	event.locals.method= Method;
 	event.locals.routes= sanitizeObject(event.params, { html: true });
 	event.locals.query= sanitizeObject(query, { html: true });
-	event.locals.body= sanitizeObject(bodyParams, { html: true }) ?? {};
+	event.locals.body= { ...(sanitizeObject(bodyParams, { html: true }) ?? {}), ...fileEntries };
 
 	event.locals.vars = {
 		content_type:contentType,

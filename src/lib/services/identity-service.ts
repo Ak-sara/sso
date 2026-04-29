@@ -70,7 +70,7 @@ export async function listIdentities(
 	maskingConfig: MaskingConfig,
 	userRoles: string[]
 ) {
-	const SEARCH_FIELDS = ['fullName', 'email', 'username', 'employeeId', 'phone', 'companyName', 'partnerType'];
+	const SEARCH_FIELDS = ['fullName', 'email', 'employeeId', 'phone', 'companyName', 'partnerType'];
 	const result = await db.identities.findPaginated(params, filter, SEARCH_FIELDS);
 	const serialized = result.items.map(serializeIdentity);
 	return {
@@ -110,7 +110,6 @@ export async function getIdentityById(
 
 const CreateIdentitySchema = z.object({
 	identityType: z.enum(['employee', 'partner', 'external', 'service_account']),
-	username: nonEmptyString,
 	password: nonEmptyString,
 	firstName: nonEmptyString,
 	lastName: optionalString,
@@ -121,7 +120,6 @@ const CreateIdentitySchema = z.object({
 });
 
 const UpdateIdentitySchema = z.object({
-	username: nonEmptyString,
 	firstName: nonEmptyString,
 	lastName: optionalString,
 	email: emailField,

@@ -97,11 +97,10 @@ export const actions: Actions = {
 		const requiresEmailVerification = (await getSetting<boolean>('enable_email_verification')) === true;
 
 		const fullName = `${firstName} ${lastName}`;
-		const username = email.split('@')[0];
 
 		await createIdentity({
 			identityType: 'external',
-			username, email, password: hashedPassword,
+			email, password: hashedPassword,
 			isActive: !requiresEmailVerification,
 			emailVerified: false, roles: ['user'],
 			firstName, lastName, fullName,
