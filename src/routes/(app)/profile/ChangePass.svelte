@@ -1,11 +1,13 @@
 <script lang="ts">
 import FormModal from '$lib/components/FormModal.svelte';
 import { formEnhance } from '$lib/utils/form-enhance';
+import ShowPass from '$lib/components/ShowPass.svelte';
 
 interface Props { form?: any; }
 let { form = $bindable() }: Props = $props();
 
 let isLoading = $state(false);
+let showPassword=$state(false);
 </script>
 
 <FormModal wide onClose={() => { form = null; }} title={'Change Password'}
@@ -26,9 +28,9 @@ let isLoading = $state(false);
 		</div>
 
 		<!-- Change Password Form -->
-		<form method="POST" use:formEnhance={{
+		<form method="POST" action="?/defPass" use:formEnhance={{
 			onSubmit: () => { isLoading = true; },
-			success: 'Password berhasil diubah!',
+			success: 'Password is updated, try to re-login',
 			onSuccess: () => { form = null; },
 			onDone: () => { isLoading = false; }
 		}}>
@@ -38,11 +40,12 @@ let isLoading = $state(false);
 					<label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-2">
 						Password Saat Ini
 					</label>
-					<input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
-						type="password" id="currentPassword" name="currentPassword"
-						required
-						disabled={isLoading}
-						placeholder="••••••••" />
+					<div class="relative">
+						<input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+							type={showPassword ?"text":"password"}  id="currentPassword" name="currentPassword"
+							placeholder="••••••••" disabled={isLoading} required />
+						<ShowPass bind:showpass={showPassword}/>
+					</div>
 				</div>
 
 				<!-- New Password -->
@@ -50,11 +53,12 @@ let isLoading = $state(false);
 					<label for="newPassword" class="block text-sm font-medium text-gray-700 mb-2">
 						Password Baru
 					</label>
-					<input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
-						type="password" id="newPassword" name="newPassword"
-						required
-						disabled={isLoading}
-						placeholder="••••••••" />
+					<div class="relative">
+						<input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+							type={showPassword ?"text":"password"}  id="newPassword" name="newPassword"
+							placeholder="••••••••" disabled={isLoading} required />
+						<ShowPass bind:showpass={showPassword}/>
+					</div>
 				</div>
 
 				<!-- Confirm New Password -->
@@ -62,11 +66,12 @@ let isLoading = $state(false);
 					<label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">
 						Konfirmasi Password Baru
 					</label>
-					<input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
-						type="password" id="confirmPassword" name="confirmPassword"
-						required
-						disabled={isLoading}
-						placeholder="••••••••" />
+					<div class="relative">
+						<input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+							type={showPassword ?"text":"password"} id="confirmPassword" name="confirmPassword"
+							placeholder="••••••••" disabled={isLoading} required />
+						<ShowPass bind:showpass={showPassword} />
+					</div>
 				</div>
 			</div>
 
@@ -76,14 +81,11 @@ let isLoading = $state(false);
 					type="submit" disabled={isLoading} >
 					{#if isLoading}
 						<span class="inline-block animate-spin mr-2">⏳</span>
-						Memproses...
+						Wait...
 					{:else}
-						Ubah Password
+						Change Password
 					{/if}
 				</button>
-				<a class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-					onclick={()=>{form=null}} > Cancel
-				</a>
 			</div>
 		</form>
 	</div>

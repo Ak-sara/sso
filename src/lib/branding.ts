@@ -20,10 +20,10 @@ export interface Branding {
 	supportEmail?: string;
 	supportUrl?: string;
 }
-import { APPNAME } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 const DEFAULT_BRANDING: Branding = {
-	appName: APPNAME || 'Aksara SSO',
+	appName: env.APPNAME || 'Aksara SSO',
 	primaryColor: '#4f46e5', // indigo-600
 	secondaryColor: '#7c3aed', // violet-600
 	accentColor: '#06b6d4', // cyan-500

@@ -77,8 +77,7 @@ export async function resolveRealmCode(orgId: string | undefined): Promise<strin
 }
 
 export async function getEmailConfig(realmCode: string | undefined): Promise<EmailSystemConfig> {
-	if (!realmCode) {
-		log.info('Email config resolved', { source: 'system' });
+	if (!realmCode) { // log.info('Email config resolved', { source: 'system' });
 		return getEmailSystemConfig();
 	}
 
@@ -87,8 +86,8 @@ export async function getEmailConfig(realmCode: string | undefined): Promise<Ema
 	const transport: { provider?: string; [key: string]: any } | undefined =
 		realm?.emailTransport?.provider ? realm.emailTransport : undefined;
 
-	if (transport) log.info('Email config resolved', { source: `realm(${code})`, provider: transport.provider });
-	else log.info('Email config resolved', { source: 'system', realmCode: code });
+	// if (transport) log.info('Email config resolved', { source: `realm(${code})`, provider: transport.provider });
+	// else log.info('Email config resolved', { source: 'system', realmCode: code });
 
 	const resolved: EmailSystemConfig = transport
 		? { provider: transport.provider!, config: transport[transport.provider!] ?? {} }

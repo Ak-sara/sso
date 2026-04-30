@@ -4,7 +4,7 @@ import { hashToken } from '$lib/crypto';
 import { queueEmail } from '$lib/email/email-service';
 import { getWelcomeEmail } from '$lib/email/templates';
 import { useLogger } from '@ak-sara/fbao/foundation';
-import { APPNAME } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 const log = useLogger({ module: 'auth:verify-email' });
 
@@ -15,7 +15,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	if (!token) {
 		return {
-			appName:APPNAME,
+			appName:env.APPNAME,
 			status: 'error',
 			message: 'Token verifikasi tidak ditemukan'
 		};
@@ -33,7 +33,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	if (!verificationToken) {
 		return {
-			appName:APPNAME,
+			appName:env.APPNAME,
 			status: 'error',
 			message: 'Token verifikasi tidak valid atau sudah digunakan'
 		};
@@ -42,7 +42,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// Check if token is expired
 	if (new Date() > new Date(verificationToken.expiresAt)) {
 		return {
-			appName:APPNAME,
+			appName:env.APPNAME,
 			status: 'error',
 			message: 'Token verifikasi sudah kadaluarsa. Silakan minta token baru.'
 		};
@@ -64,7 +64,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 		if (updateResult.matchedCount === 0) {
 			return {
-				appName:APPNAME,
+				appName:env.APPNAME,
 				status: 'error',
 				message: 'Akun tidak ditemukan'
 			};
@@ -97,7 +97,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		}
 
 		return {
-			appName:APPNAME,
+			appName:env.APPNAME,
 			status: 'success',
 			message: 'Email berhasil diverifikasi! Akun Anda sekarang aktif.'
 		};

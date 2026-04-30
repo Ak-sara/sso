@@ -5,12 +5,12 @@ import { sendOTP, validateOTP } from '$lib/auth/otp';
 import { sessionManager } from '$lib/auth/session';
 import { logAudit } from '$lib/audit/logger';
 import { useLogger } from '@ak-sara/fbao/foundation';
-import { APPNAME } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 const log = useLogger({ module: 'auth:login-otp' });
 
 export const load: PageServerLoad = async () => {
-	return {appName:APPNAME};
+	return {appName:env.APPNAME};
 };
 
 export const actions: Actions = {

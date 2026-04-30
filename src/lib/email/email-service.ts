@@ -7,8 +7,8 @@ const log = useLogger({ module: 'email:service' });
 // ── Provider implementations ───────────────────────────────────────────────
 
 async function sendViaResend(config: any, to: string, subject: string, html: string, text?: string, from?: EmailFrom) {
-	const fromEmail = from?.fromEmail || config.fromEmail;
-	const fromName  = from?.fromName  || config.fromName;
+	const fromEmail = config.fromEmail || from?.fromEmail;
+	const fromName  = config.fromName || from?.fromName;
 	const fromStr   = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
 
 	const res = await fetch('https://api.resend.com/emails', {
@@ -68,7 +68,7 @@ export type EmailResult = { ok: true } | { ok: false; reason: string };
 
 async function dispatchEmail(resolved: EmailSystemConfig, to: string, subject: string, html: string, text?: string) {
 	const { provider, config, from } = resolved;
-	log.info('Dispatching email', { provider, to, subject });
+	// log.info('Dispatching email', { provider, to, subject });
 	try {
 		if (provider === 'resend')          return await sendViaResend(config, to, subject, html, text, from);
 		if (provider === 'microsoft_graph') return await sendViaMicrosoftGraph(config, to, subject, html, text, from);
@@ -89,7 +89,7 @@ async function dispatchEmail(resolved: EmailSystemConfig, to: string, subject: s
  * Never throws — returns EmailResult so callers handle failure explicitly.
  */
 export async function sendMail(realmCode: string | undefined, to: string, subject: string, html: string, text?: string): Promise<EmailResult> {
-	log.info('sendMail called', { realmCode: realmCode ?? 'system', to, subject });
+	// log.info('sendMail called', { realmCode: realmCode ?? 'system', to, subject });
 	try {
 		const resolved = await getEmailConfig(realmCode);
 		if (!resolved.provider) {
@@ -97,6 +97,7 @@ export async function sendMail(realmCode: string | undefined, to: string, subjec
 			return { ok: false, reason: 'no_provider' };
 		}
 		await dispatchEmail(resolved, to, subject, html, text);
+		log.info('sendMail success', { resolved, to, subject });
 		return { ok: true };
 	} catch (err: any) {
 		const reason: string = err?.message ?? 'send_failed';

@@ -7,6 +7,7 @@ import { useLogger } from '@ak-sara/fbao/foundation';
 import { getSetting } from '$lib/services/settings-service';
 import { listOrganizations, getOrganizationByCode } from '$lib/services/organization-service';
 import { createIdentity } from '$lib/services/identity-service';
+import { env } from '$env/dynamic/private';
 
 const log = useLogger({ module: 'auth:register' });
 
@@ -17,7 +18,6 @@ export const load: PageServerLoad = async () => {
 		getSetting<boolean>('enable_registration'),
 		listOrganizations(),
 	]);
-	const { env } = await import('$env/dynamic/private');
 	return {
 		appName:env.APPNAME,
 		isRegistrationEnabled: isRegistrationEnabled === true,
@@ -97,10 +97,11 @@ export const actions: Actions = {
 		const requiresEmailVerification = (await getSetting<boolean>('enable_email_verification')) === true;
 
 		const fullName = `${firstName} ${lastName}`;
+		const username = email.split('@')[0];
 
 		await createIdentity({
 			identityType: 'external',
-			email, password: hashedPassword,
+			username, email, password: hashedPassword,
 			isActive: !requiresEmailVerification,
 			emailVerified: false, roles: ['user'],
 			firstName, lastName, fullName,

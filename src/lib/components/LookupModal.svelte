@@ -20,7 +20,8 @@
 	interface Props {
 		value: string | null; // Selected ID
 		displayValue?: string; // Display text for selected item
-		fetchEndpoint: string; // API endpoint to fetch all items (with pagination)
+		fetchEndpoint?: string; // API endpoint (mutually exclusive with localItems)
+		localItems?: LookupItem[]; // Local data source (no API call needed)
 		columns: Column[]; // DataTable columns
 		placeholder?: string;
 		label?: string;
@@ -32,7 +33,8 @@
 	let {
 		value = $bindable(null),
 		displayValue = '',
-		fetchEndpoint,
+		fetchEndpoint = '',
+		localItems,
 		columns,
 		placeholder = 'Click to select...',
 		label = '',
@@ -42,14 +44,34 @@
 	}: Props = $props();
 
 	let showModal = $state(false);
-	let items = $state<LookupItem[]>([]);
+	let fetchedItems = $state<LookupItem[]>([]);
 	let isLoading = $state(false);
 	let searchQuery = $state('');
 	let currentPage = $state(1);
 	let pageSize = $state(10);
-	let totalItems = $state(0);
+	let totalFetched = $state(0);
 
-	// Fetch items when modal opens
+	// Local filtering + pagination when localItems provided
+	const filteredLocal = $derived.by(() => {
+		if (!localItems) return [];
+		const q = searchQuery.toLowerCase();
+		if (!q) return localItems;
+		return localItems.filter(item =>
+			Object.values(item).some(v => String(v ?? '').toLowerCase().includes(q))
+		);
+	});
+
+	const displayItems = $derived.by(() => {
+		if (localItems) {
+			const start = (currentPage - 1) * pageSize;
+			return filteredLocal.slice(start, start + pageSize);
+		}
+		return fetchedItems;
+	});
+
+	const totalItems = $derived(localItems ? filteredLocal.length : totalFetched);
+
+	// Fetch items from API
 	async function fetchItems() {
 		isLoading = true;
 		try {
@@ -57,20 +79,13 @@
 				page: currentPage.toString(),
 				pageSize: pageSize.toString()
 			});
-
-			if (searchQuery) {
-				params.set('search', searchQuery);
-			}
-
-			// Check if fetchEndpoint already has query parameters
+			if (searchQuery) params.set('search', searchQuery);
 			const separator = fetchEndpoint.includes('?') ? '&' : '?';
-			const url = `${fetchEndpoint}${separator}${params}`;
-
-			const response = await fetch(url);
+			const response = await fetch(`${fetchEndpoint}${separator}${params}`);
 			if (response.ok) {
 				const data = await response.json();
-				items = data.items || data;
-				totalItems = data.total || items.length;
+				fetchedItems = data.items || data;
+				totalFetched = data.total || fetchedItems.length;
 			}
 		} catch (err) {
 			log.error('Lookup fetch error', { error: err });
@@ -84,12 +99,12 @@
 		showModal = true;
 		currentPage = 1;
 		searchQuery = '';
-		fetchItems();
+		if (!localItems) fetchItems();
 	}
 
 	function closeModal() {
 		showModal = false;
-		items = [];
+		if (!localItems) fetchedItems = [];
 	}
 
 	function selectItem(item: LookupItem) {
@@ -105,19 +120,19 @@
 
 	async function handlePageChange(page: number) {
 		currentPage = page;
-		await fetchItems();
+		if (!localItems) await fetchItems();
 	}
 
 	async function handlePageSizeChange(size: number) {
 		pageSize = size;
 		currentPage = 1;
-		await fetchItems();
+		if (!localItems) await fetchItems();
 	}
 
 	async function handleSearch(query: string) {
 		searchQuery = query;
 		currentPage = 1;
-		await fetchItems();
+		if (!localItems) await fetchItems();
 	}
 </script>
 
@@ -186,7 +201,7 @@
 		wide>
 		<!-- Modal Content (DataTable) -->
 		<div class="flex-1 overflow-auto p-6">
-			{#if isLoading && items.length === 0}
+			{#if isLoading && displayItems.length === 0}
 				<div class="flex items-center justify-center py-12">
 					<svg class="animate-spin h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24">
 						<circle class="opacity-25"
@@ -202,7 +217,7 @@
 				</div>
 			{:else}
 				<DataTable
-					data={items}
+					data={displayItems}
 					{columns}
 					page={currentPage}
 					pageSize={pageSize}

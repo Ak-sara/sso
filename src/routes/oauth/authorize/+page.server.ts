@@ -8,6 +8,7 @@ import { getBrandingForClient } from '$lib/branding.js';
 import { sessionManager } from '$lib/auth/session.js';
 import { findIdentityByEmailOrNIK } from '$lib/db/schemas';
 import { useLogger } from '@ak-sara/fbao/foundation';
+import { logAudit } from '$lib/audit/logger';
 
 const log = useLogger({ module: 'oauth:authorize' });
 
@@ -65,6 +66,18 @@ export const actions: Actions = {
         const formData = locals.body
         const actionType = formData?.action;
         
+        // Clear session ("Not you?") action
+        if (actionType === 'clearSession') {
+            if (locals.session) {
+                await sessionManager.deleteSession(locals.session.sessionId);
+                if (locals.user?.userId) {
+                    await logAudit({ action: 'logout', resource: 'sessions', identityId: locals.user.userId.toString(), details: { trigger: 'not_you' } });
+                }
+            }
+            sessionManager.clearSessionCookie(cookies);
+            throw redirect(302, `/oauth/authorize?${url.searchParams.toString()}`);
+        }
+
         // Login action
         if (actionType === 'login') {
             const username = formData?.email as string; // Can be email or NIK

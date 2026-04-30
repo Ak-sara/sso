@@ -1,5 +1,5 @@
 import type { PageServerLoad, Actions } from './$types';
-import { getIdentityById, updateIdentity} from '$lib/services/identity-service';
+import { getIdentityById, updateIdentity, upsertAssignment, deleteAssignment } from '$lib/services/identity-service';
 import { listOrganizations } from '$lib/services/organization-service';
 import { listOrgUnits } from '$lib/services/org-unit-service';
 import { listPositions } from '$lib/services/position-service';
@@ -14,6 +14,7 @@ import { sendOTP, validateOTP } from '$lib/auth/otp';
 import { useLogger } from '@ak-sara/fbao/foundation';
 import { logAudit } from '$lib/audit/logger';
 import { get2FAStatus, enable2FA, disable2FA, verify2FAOTP, generateBackupCodes } from '$lib/auth/two-factor';
+import { env } from '$env/dynamic/private';
 
 const log = useLogger({ module: 'app:change-email' });
 
@@ -32,12 +33,15 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	return {
 		user: identityResult && identityResult.ok ? identityResult.data : null,
-		orgs: datamap(organizations), 
+		orgs: datamap(organizations),
 		ous: datamap(orgUnits),
-		pos: datamap(positions),
-
+		pos: datamap(positions, 'code', 'name'),
+		organizations: organizations.map(o => ({ _id: String(o._id), name: o.name, code: o.code })),
+		orgUnits: orgUnits.map(u => ({ _id: String(u._id), name: u.name, code: u.code })),
+		positions: positions.map(p => ({ _id: String(p._id), name: p.name, code: p.code })),
+		appName: env.APPNAME,
 		currentEmail: !session ? null : session.email,
-		status2FA: !session ? null : status2FA 
+		status2FA: !session ? null : status2FA
 	};
 };
 
@@ -177,7 +181,7 @@ export const actions: Actions = {
 		}
 
 		if (newPassword !== confirmPassword) {
-			return fail(400, { error: 'Password baru dan konfirmasi tidak cocok' });
+			return fail(400, { error: 'New Password confirmation isnt match' });
 		}
 
 		const passwordValidation = passwordService.validatePassword(newPassword);
@@ -322,6 +326,41 @@ export const actions: Actions = {
 			message: 'Backup codes berhasil di-generate ulang.',
 			backupCodes
 		};
-	}
+	},
+
+	updateProfile: async ({ locals }) => {
+		if (!locals.user) return fail(401, { error: 'Unauthorized' });
+		const body = locals.body;
+		const updates: Record<string, any> = {};
+		for (const field of ['firstName', 'lastName', 'gender', 'dateOfBirth', 'personalEmail', 'phone', 'idNumber', 'taxId']) {
+			if (body[field] !== undefined) updates[field] = body[field] || undefined;
+		}
+		if (updates.firstName || updates.lastName) {
+			const first = updates.firstName ?? locals.user.firstName ?? '';
+			const last  = updates.lastName  ?? locals.user.lastName  ?? '';
+			updates.fullName = `${first} ${last}`.trim();
+		}
+		const result = await updateIdentity(locals.user.userId, updates);
+		if (!result.ok) return fail(result.status || 500, { error: result.error });
+		return { success: true };
+	},
+
+	upsertAssignment: async ({ locals }) => {
+		if (!locals.user) return fail(401, { error: 'Unauthorized' });
+		const body = locals.body;
+		body.startDate = String(body.startDate);
+		const result = await upsertAssignment(locals.user.userId, body);
+		if (!result.ok) return fail(result.status || 500, { error: result.error });
+		return {};
+	},
+
+	deleteAssignment: async ({ locals }) => {
+		if (!locals.user) return fail(401, { error: 'Unauthorized' });
+		const assignmentId = locals.body?.assignmentId as string;
+		if (!assignmentId) return fail(400, { error: 'Missing assignmentId' });
+		const result = await deleteAssignment(locals.user.userId, assignmentId);
+		if (!result.ok) return fail(result.status || 500, { error: result.error });
+		return {};
+	},
 
 };

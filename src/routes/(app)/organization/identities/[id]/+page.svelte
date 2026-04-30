@@ -5,7 +5,7 @@
 	import { formEnhance } from '$lib/utils/form-enhance';
 	import Input from '$lib/components/Input.svelte';
 	import DataTable from '$lib/components/DataTable.svelte';
-	import AssignmentHistory from './AssignmentHistory.svelte';
+	import AssignmentHistory from '$lib/components/AssignmentHistory.svelte';
 	import { formatDate, datamap } from '$lib/utils/format';
 	import { navigateWithParams } from '$lib/utils/navigate';
 	import { showNotif } from '$lib/stores/notif.svelte';
@@ -240,5 +240,8 @@
 {#if selectedAssignment}
 	<AssignmentHistory bind:assignment={selectedAssignment}
 		orgmap={orgmap} unitmap={unitmap} positionmap={positionmap}
+		organizations={data.organizations}
+		orgUnits={data.orgUnits}
+		positions={data.positions}
 		onSaved={() => { selectedAssignment = null; }} />
 {/if}

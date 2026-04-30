@@ -6,14 +6,14 @@ import { sendMail } from '$lib/email/email-service';
 import { resolveRealmCode } from '$lib/services/settings-service';
 import { getVerificationEmail } from '$lib/email/templates';
 import { useLogger } from '@ak-sara/fbao/foundation';
-import { APPNAME } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 const log = useLogger({ module: 'auth:resend-verification' });
 
 const verificationTokens = new Repository(lazy, 'verification_tokens');
 
 export const load: PageServerLoad = async () => {
-	return {appName:APPNAME};
+	return {appName:env.APPNAME};
 };
 
 export const actions: Actions = {
@@ -53,7 +53,7 @@ export const actions: Actions = {
 
 		if (recentToken) {
 			return fail(429, {
-				error: 'Terlalu banyak permintaan. Silakan tunggu 5 menit sebelum meminta ulang.',
+				error: 'Too many request. wait for 5 minute before each retry.',
 				email
 			});
 		}

@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import type { ActionData, PageData } from './$types';
 	import { getBrandingCSS } from '$lib/branding-utils';
+    import ShowPass from '$lib/components/ShowPass.svelte';
 
 	interface Props {
 		form?: ActionData;
@@ -10,7 +11,7 @@
 
 	let { form, data }: Props = $props();
 	let isLoading = $state(false);
-
+	let showPassword=$state(false);
 	// Get branding from server-loaded data
 	const branding = $derived(data.branding);
 	const brandingCSS = $derived(branding ? getBrandingCSS(branding) : '');
@@ -129,18 +130,14 @@
 				<label for="email" class="block text-sm font-medium text-gray-700 mb-2">
 					Email / NIK
 				</label>
-				<input
-					type="text"
-					id="email"
-					name="email"
+				<input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+					style="--tw-ring-color: {branding?.primaryColor || '#4f46e5'};"
+					type="text" id="email" name="email"
 					value={form?.email ?? ''}
 					required
 					disabled={isLoading}
-					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
-					style="--tw-ring-color: {branding?.primaryColor || '#4f46e5'};"
 					placeholder="email@company.com or NIK123456"
-					autocomplete="username"
-				/>
+					autocomplete="username" />
 				<p class="mt-1 text-xs text-gray-500">
 					You can use either your email address or NIK (Employee ID)
 				</p>
@@ -151,28 +148,23 @@
 				<label for="password" class="block text-sm font-medium text-gray-700 mb-2">
 					Password
 				</label>
-				<input
-					type="password"
-					id="password"
-					name="password"
-					required
-					disabled={isLoading}
-					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
-					style="--tw-ring-color: {branding?.primaryColor || '#4f46e5'};"
-					placeholder="••••••••"
-				/>
+				<div class="mt-1 relative">
+					<input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+						style="--tw-ring-color: {branding?.primaryColor || '#4f46e5'};"
+						type={showPassword ? 'text' : "password"} id="password" name="password"
+						placeholder="••••••••" disabled={isLoading} required />
+					<ShowPass showpass={showPassword} />
+				</div>
 			</div>
 
 			<!-- Remember Me & Forgot Password -->
 			<div class="flex items-center justify-between mb-6">
 				<label class="flex items-center">
-					<input
+					<input class="w-4 h-4 border-gray-300 rounded focus:ring-2 focus:outline-none disabled:cursor-not-allowed"
+						style="color: {branding?.primaryColor || '#4f46e5'}; --tw-ring-color: {branding?.primaryColor || '#4f46e5'};"
 						type="checkbox"
 						name="remember"
-						disabled={isLoading}
-						class="w-4 h-4 border-gray-300 rounded focus:ring-2 focus:outline-none disabled:cursor-not-allowed"
-						style="color: {branding?.primaryColor || '#4f46e5'}; --tw-ring-color: {branding?.primaryColor || '#4f46e5'};"
-					/>
+						disabled={isLoading} />
 					<span class="ml-2 text-sm text-gray-600">Ingat saya</span>
 				</label>
 				<a href="/forgot-password" class="text-sm brand-text-primary font-medium hover:opacity-80 transition-opacity">
@@ -181,16 +173,13 @@
 			</div>
 
 			<!-- Submit Button -->
-			<button
-				type="submit"
-				disabled={isLoading}
-				class="w-full brand-bg-primary brand-bg-primary-hover text-white font-medium py-3 px-4 rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center"
-			>
+			<button class="w-full brand-bg-primary brand-bg-primary-hover text-white font-medium py-3 px-4 rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center"
+				type="submit" disabled={isLoading} >
 				{#if isLoading}
 					<span class="inline-block animate-spin mr-2">⏳</span>
 					Memproses...
 				{:else}
-					Masuk
+					Sign in
 				{/if}
 			</button>
 		</form>

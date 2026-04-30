@@ -6,14 +6,14 @@ import { sendMail } from '$lib/email/email-service';
 import { resolveRealmCode } from '$lib/services/settings-service';
 import { getPasswordResetEmail } from '$lib/email/templates';
 import { useLogger } from '@ak-sara/fbao/foundation';
-import { APPNAME } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 const log = useLogger({ module: 'auth:forgot-password' });
 
 const verificationTokens = new Repository(lazy, 'verification_tokens');
 
 export const load: PageServerLoad = async () => {
-	return { appName: APPNAME || 'Aksara SSO' };
+	return { appName: env.APPNAME || 'Aksara SSO' };
 };
 
 export const actions: Actions = {
@@ -39,16 +39,12 @@ export const actions: Actions = {
 
 		// Rate limiting: prevent sending too many reset emails
 		const recentToken = await verificationTokens.findOne({
-			email,
-			type: 'password_reset',
-			createdAt: { $gte: new Date(Date.now() - 5 * 60 * 1000) } // Last 5 minutes
+			email, type: 'password_reset',
+			createdAt: { $gte: new Date(Date.now() - 1 * 60 * 1000) } // Last 5 minutes
 		});
 
 		if (recentToken) {
-			return fail(429, {
-				error: 'Terlalu banyak permintaan. Silakan tunggu 5 menit sebelum meminta ulang.',
-				email
-			});
+			return fail(429, { error: 'Too many request. wait for 5 minute before each retry..', email });
 		}
 
 		try {
@@ -89,12 +85,12 @@ export const actions: Actions = {
 
 			return {
 				success: true,
-				message: 'Link reset password telah dikirim ke email Anda. Silakan cek inbox Anda.'
+				message: 'Password reset link already send to your email. Please check your inbox or spam.'
 			};
 		} catch (error: any) {
 			log.error('Error sending password reset email', { error });
 			return fail(500, {
-				error: 'Gagal mengirim email reset password. Silakan coba lagi nanti.',
+				error: 'Failed sending password reset email. try again later.',
 				email
 			});
 		}

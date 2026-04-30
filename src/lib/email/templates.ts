@@ -4,6 +4,7 @@
  */
 
 const BASE_URL = process.env.PUBLIC_BASE_URL || 'http://localhost:5173';
+const APPNAME = process.env.APPNAME || 'Aksara SSO';
 
 interface EmailTemplate {
 	subject: string;
@@ -15,10 +16,10 @@ interface EmailTemplate {
  * Email verification template
  */
 export function getVerificationEmail(token: string, firstName: string): EmailTemplate {
-	const verifyUrl = `${BASE_URL}/auth/verify-email?token=${token}`;
+	const verifyUrl = `${BASE_URL}/verify-email?token=${token}`;
 
 	return {
-		subject: 'Verify Your Email - Aksara SSO',
+		subject: `Verify Your Email - ${APPNAME}`,
 		html: `
 <!DOCTYPE html>
 <html>
@@ -39,11 +40,11 @@ export function getVerificationEmail(token: string, firstName: string): EmailTem
 <body>
 	<div class="container">
 		<div class="header">
-			<h1 style="margin: 0; font-size: 28px;">🔐 Aksara SSO</h1>
+			<h1 style="margin: 0; font-size: 28px;">🔐 ${APPNAME}</h1>
 		</div>
 		<div class="content">
 			<h2 style="color: #1f2937; margin-top: 0;">Welcome, ${firstName}!</h2>
-			<p>Thank you for registering with Aksara SSO. Please verify your email address to activate your account.</p>
+			<p>Thank you for registering with ${APPNAME}. Please verify your email address to activate your account.</p>
 
 			<div style="text-align: center;">
 				<a href="${verifyUrl}" class="button">Verify Email Address</a>
@@ -59,7 +60,7 @@ export function getVerificationEmail(token: string, firstName: string): EmailTem
 			</p>
 		</div>
 		<div class="footer">
-			<p>Aksara SSO - Secure Single Sign-On</p>
+			<p>${APPNAME} - Secure Single Sign-On</p>
 			<p>This is an automated message, please do not reply.</p>
 		</div>
 	</div>
@@ -69,7 +70,7 @@ export function getVerificationEmail(token: string, firstName: string): EmailTem
 		text: `
 Welcome, ${firstName}!
 
-Thank you for registering with Aksara SSO. Please verify your email address to activate your account.
+Thank you for registering with ${APPNAME}. Please verify your email address to activate your account.
 
 Verify your email by clicking this link:
 ${verifyUrl}
@@ -77,7 +78,7 @@ ${verifyUrl}
 This link will expire in 24 hours. If you didn't register for an account, you can safely ignore this email.
 
 ---
-Aksara SSO - Secure Single Sign-On
+${APPNAME} - Secure Single Sign-On
 This is an automated message, please do not reply.
 		`
 	};
@@ -88,7 +89,7 @@ This is an automated message, please do not reply.
  */
 export function getOTPEmail(otp: string, firstName: string, purpose: string = 'authentication'): EmailTemplate {
 	return {
-		subject: `Your OTP Code - Aksara SSO`,
+		subject: `Your OTP Code - ${APPNAME}`,
 		html: `
 <!DOCTYPE html>
 <html>
@@ -109,7 +110,7 @@ export function getOTPEmail(otp: string, firstName: string, purpose: string = 'a
 <body>
 	<div class="container">
 		<div class="header">
-			<h1 style="margin: 0; font-size: 28px;">🔐 Aksara SSO</h1>
+			<h1 style="margin: 0; font-size: 28px;">🔐 ${APPNAME}</h1>
 		</div>
 		<div class="content">
 			<h2 style="color: #1f2937; margin-top: 0;">Hello, ${firstName}!</h2>
@@ -122,7 +123,7 @@ export function getOTPEmail(otp: string, firstName: string, purpose: string = 'a
 			</div>
 
 			<div class="warning">
-				<strong>⚠️ Security Warning:</strong> Never share this code with anyone. Aksara SSO staff will never ask for your OTP code.
+				<strong>⚠️ Security Warning:</strong> Never share this code with anyone. ${APPNAME} staff will never ask for your OTP code.
 			</div>
 
 			<p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
@@ -130,7 +131,7 @@ export function getOTPEmail(otp: string, firstName: string, purpose: string = 'a
 			</p>
 		</div>
 		<div class="footer">
-			<p>Aksara SSO - Secure Single Sign-On</p>
+			<p>${APPNAME} - Secure Single Sign-On</p>
 			<p>This is an automated message, please do not reply.</p>
 		</div>
 	</div>
@@ -145,12 +146,12 @@ You requested a one-time password (OTP) for ${purpose}. Please use the code belo
 OTP CODE: ${otp}
 Valid for 10 minutes
 
-⚠️ Security Warning: Never share this code with anyone. Aksara SSO staff will never ask for your OTP code.
+⚠️ Security Warning: Never share this code with anyone. ${APPNAME} staff will never ask for your OTP code.
 
 If you didn't request this code, please ignore this email or contact support if you're concerned about your account security.
 
 ---
-Aksara SSO - Secure Single Sign-On
+${APPNAME} - Secure Single Sign-On
 This is an automated message, please do not reply.
 		`
 	};
@@ -160,10 +161,10 @@ This is an automated message, please do not reply.
  * Password reset email template
  */
 export function getPasswordResetEmail(token: string, firstName: string): EmailTemplate {
-	const resetUrl = `${BASE_URL}/auth/reset-password?token=${token}`;
+	const resetUrl = `${BASE_URL}/reset-password?token=${token}`;
 
 	return {
-		subject: 'Reset Your Password - Aksara SSO',
+		subject: 'Reset Your Password - ${APPNAME}',
 		html: `
 <!DOCTYPE html>
 <html>
@@ -184,7 +185,7 @@ export function getPasswordResetEmail(token: string, firstName: string): EmailTe
 <body>
 	<div class="container">
 		<div class="header">
-			<h1 style="margin: 0; font-size: 28px;">🔐 Aksara SSO</h1>
+			<h1 style="margin: 0; font-size: 28px;">🔐 ${APPNAME}</h1>
 		</div>
 		<div class="content">
 			<h2 style="color: #1f2937; margin-top: 0;">Password Reset Request</h2>
@@ -205,7 +206,7 @@ export function getPasswordResetEmail(token: string, firstName: string): EmailTe
 			</div>
 		</div>
 		<div class="footer">
-			<p>Aksara SSO - Secure Single Sign-On</p>
+			<p>${APPNAME} - Secure Single Sign-On</p>
 			<p>This is an automated message, please do not reply.</p>
 		</div>
 	</div>
@@ -224,7 +225,7 @@ ${resetUrl}
 ⚠️ Security Notice: This link will expire in 1 hour. If you didn't request a password reset, please ignore this email - your password will remain unchanged.
 
 ---
-Aksara SSO - Secure Single Sign-On
+${APPNAME} - Secure Single Sign-On
 This is an automated message, please do not reply.
 		`
 	};
@@ -237,7 +238,7 @@ export function getWelcomeEmail(firstName: string, organizationName: string): Em
 	const loginUrl = `${BASE_URL}/login`;
 
 	return {
-		subject: 'Welcome to Aksara SSO! 🎉',
+		subject: `Welcome to ${APPNAME}! 🎉`,
 		html: `
 <!DOCTYPE html>
 <html>
@@ -261,7 +262,7 @@ export function getWelcomeEmail(firstName: string, organizationName: string): Em
 		</div>
 		<div class="content">
 			<h2 style="color: #1f2937; margin-top: 0;">Your account is now active, ${firstName}!</h2>
-			<p>Thank you for verifying your email. Your Aksara SSO account for <strong>${organizationName}</strong> is ready to use.</p>
+			<p>Thank you for verifying your email. Your ${APPNAME} account for <strong>${organizationName}</strong> is ready to use.</p>
 
 			<div style="text-align: center;">
 				<a href="${loginUrl}" class="button">Sign In Now</a>
@@ -286,7 +287,7 @@ export function getWelcomeEmail(firstName: string, organizationName: string): Em
 			</p>
 		</div>
 		<div class="footer">
-			<p>Aksara SSO - Secure Single Sign-On</p>
+			<p>${APPNAME} - Secure Single Sign-On</p>
 			<p>This is an automated message, please do not reply.</p>
 		</div>
 	</div>
@@ -298,7 +299,7 @@ export function getWelcomeEmail(firstName: string, organizationName: string): Em
 
 Your account is now active, ${firstName}!
 
-Thank you for verifying your email. Your Aksara SSO account for ${organizationName} is ready to use.
+Thank you for verifying your email. Your ${APPNAME} account for ${organizationName} is ready to use.
 
 Sign in now: ${loginUrl}
 
@@ -310,7 +311,7 @@ What's Next?
 Need help? Contact your organization's administrator or visit our help center.
 
 ---
-Aksara SSO - Secure Single Sign-On
+${APPNAME} - Secure Single Sign-On
 This is an automated message, please do not reply.
 		`
 	};
