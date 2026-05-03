@@ -41,15 +41,15 @@
 				})
 			});
 			if (res.ok) {
-				showNotif('success', 'Client berhasil diperbarui');
+				showNotif('success', 'Client updated');
 				await invalidate('app:pagination');
 				client = null;
 			} else {
-				showNotif('error', (await res.json()).error ?? 'Gagal memperbarui client');
+				showNotif('error', (await res.json()).error ?? 'Failed to update client');
 			}
 		} catch (err) {
 			log.error('Error updating client', { error: err });
-			showNotif('error', 'Gagal memperbarui client');
+			showNotif('error', 'Failed to update client');
 		}
 	}
 </script>
@@ -91,7 +91,7 @@
 
 	<div class="sticky bottom-0 bg-gray-50 border-t px-6 py-4 flex justify-end gap-3">
 		<button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-			type="button" onclick={() => (client = null)}>Batal</button>
+			type="button" onclick={() => (client = null)}>Cancel</button>
 		<button class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
 			type="button" onclick={save}>Save Changes</button>
 	</div>

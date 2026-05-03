@@ -106,11 +106,11 @@
 			if (res.ok) {
 				actClient = await res.json();
 			} else {
-				showNotif('error', 'Gagal memuat data client');
+				showNotif('error', 'Failed to load client');
 			}
 		} catch (err) {
 			log.error('Error loading client', { error: err });
-			showNotif('error', 'Gagal memuat data client');
+			showNotif('error', 'Failed to load client');
 		}
 	}
 	async function rotate(Client:any){
@@ -134,21 +134,21 @@
 		}
 	}
 	async function handleDelete(client: any) {
-		if (!confirm(`Hapus client "${client.clientName}" secara permanen? Tindakan ini tidak dapat dibatalkan.`)) return;
+		if (!confirm(`Permanently delete client "${client.clientName}"? This action cannot be undone.`)) return;
 		try {
 			const fd = new FormData();
 			fd.append('clientId', client.clientId);
 			const res = await fetch('?/delete', { method: 'POST', body: fd });
 			const result = await res.json();
 			if (result.type === 'failure') {
-				showNotif('error', result.data.error ?? 'Gagal menghapus client');
+				showNotif('error', result.data.error ?? 'Failed to delete client');
 			} else {
-				showNotif('success', 'Client berhasil dihapus');
+				showNotif('success', 'Client deleted');
 				await invalidate('app:pagination');
 			}
 		} catch (err) {
 			log.error('Error deleting client', { error: err });
-			showNotif('error', 'Gagal menghapus client');
+			showNotif('error', 'Failed to delete client');
 		}
 	}
 	
@@ -170,7 +170,7 @@
 				action: () => { actClient = { clientName: '', description: '', contactEmail: '', scopes: [], rateLimit: 100, ipWhitelist: [], isActive: false }; }
 			}
 		]}
-		searchPlaceholder="Cari SCIM client (nama, client ID)..."
+		searchPlaceholder="Search SCIM client (name, client ID)..."
 		// onEdit={handleEdit}
 		// onDelete={handleDelete}
 		actions={(row) => [
@@ -178,7 +178,7 @@
 			{ label: '♲ Rotate',   onClick: () => rotate(row),   class: 'text-indigo-600 hover:text-indigo-800' },
 			{ label: '✕ Delete', onClick: () => handleDelete(row), class: 'text-red-600 hover:text-red-800' }
 		]}
-		emptyMessage="Belum ada SCIM client. Tambahkan client baru untuk memulai."
+		emptyMessage="No SCIM clients yet. Add a new client to get started."
 	/>
 
 	<!-- Stats Overview -->

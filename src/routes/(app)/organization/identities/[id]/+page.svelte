@@ -16,7 +16,7 @@
 	
 	const getIdentityTypeBadge = (type: string) => {
 		const badges: Record<string, { color: string; label: string }> = {
-			employee: { color: 'bg-blue-100 text-blue-800', label: 'Karyawan' },
+			employee: { color: 'bg-blue-100 text-blue-800', label: 'Employee' },
 			partner: { color: 'bg-purple-100 text-purple-800', label: 'Partner' },
 			external: { color: 'bg-green-100 text-green-800', label: 'External' },
 			service_account: { color: 'bg-gray-100 text-gray-800', label: 'Service Account' }
@@ -75,14 +75,14 @@
 		} catch (err) { log.error('Error loading unit', { error: err }); }
 	}
 	async function deleteAssignment(aaa: any){
-		if (!confirm(`Apakah Anda yakin ingin menghapus assignment "${aaa.employeeId}"? Tindakan ini tidak dapat dibatalkan.`)) return;
+		if (!confirm(`Delete assignment for employee "${aaa.employeeId}"? This action cannot be undone.`)) return;
 		try {
 			const f = new FormData();
 			f.append('assignmentId', aaa._id?.toString() as string);
 			const response = await fetch('?/deleteAssignment', { method: 'POST', body: f });
 			const result = await response.json();
-			if (result.type === 'failure') { showNotif('error', result.data?.error ?? 'Gagal menghapus'); return; }
-			showNotif('success', 'Assignment berhasil dihapus');
+			if (result.type === 'failure') { showNotif('error', result.data?.error ?? 'Failed to delete'); return; }
+			showNotif('success', 'Assignment deleted');
 			await invalidateAll();
 		} catch (err) { log.error('Error deleting assignment', { error: err }); }
 	}
@@ -117,7 +117,7 @@
 		<div class="flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-200">
 			<h2 class="text-lg font-semibold text-gray-900">Personal</h2>
 			<button class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-				type="submit"> 💾 Simpan
+				type="submit"> 💾 Save
 			</button>
 		</div>
 		<div class="grid grid-cols-2 gap-4 px-6 py-4 space-y-4">

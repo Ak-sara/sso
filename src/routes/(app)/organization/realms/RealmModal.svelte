@@ -18,20 +18,20 @@
 	function addDomain() {
 		const d = newDomain.trim().toLowerCase();
 		if (!d) return;
-		if (!domainRegex.test(d)) { showNotif('error', 'Format domain tidak valid. Gunakan: example.com atau *.com'); return; }
-		if (domains.includes(d)) { showNotif('error', 'Domain sudah ada dalam daftar'); return; }
+		if (!domainRegex.test(d)) { showNotif('error', 'Invalid domain format. Use: example.com or *.com'); return; }
+		if (domains.includes(d)) { showNotif('error', 'Domain already in list'); return; }
 		domains = [...domains, d];
 		newDomain = '';
 	}
 </script>
 
-<FormModal title={isNew ? 'Buat Realm Baru' : form?.name} subtitle={isNew ? '' : `Code: ${form?.code}`}
+<FormModal title={isNew ? 'Create New Realm' : form?.name} subtitle={isNew ? '' : `Code: ${form?.code}`}
 	onClose={() => { form = null; }}>
 	<div class="p-4">
 		<form method="POST" action="?/upsertRealm" class="space-y-4"
 			use:formEnhance={{ 
 				onSuccess: async () => {
-					showNotif('success', isNew ? 'Realm berhasil dibuat' : 'Realm berhasil diperbarui');
+					showNotif('success', isNew ? 'Realm created' : 'Realm updated');
 					await invalidate('app:pagination');
 					form = null;
 				} 
@@ -42,27 +42,27 @@
 			<input type="hidden" name="allowedEmailDomains" value={JSON.stringify(domains)} />
 
 			{#if isNew}
-				<Input type="text" name="code" label="Kode *" bind:value={form.code} placeholder="CONTOH" />
+				<Input type="text" name="code" label="Code *" bind:value={form.code} placeholder="EXAMPLE" />
 			{:else}
-				<Input type="info" label="Kode" value={form?.code} />
+				<Input type="info" label="Code" value={form?.code} />
 			{/if}
 
-			<Input type="text" name="name" label="Nama Realm *" bind:value={form.name} />
-			<Input type="text" name="legalName" label="Nama Legal" bind:value={form.legalName} placeholder={form?.name} />
-			<Input type="select" name="type" label="Tipe" bind:value={form.type}
+			<Input type="text" name="name" label="Realm Name *" bind:value={form.name} />
+			<Input type="text" name="legalName" label="Legal Name" bind:value={form.legalName} placeholder={form?.name} />
+			<Input type="select" name="type" label="Type" bind:value={form.type}
 				options={{ subsidiary: 'Subsidiary', parent: 'Parent', branch: 'Branch' }} />
-			<Input type="textarea" name="description" label="Deskripsi" bind:value={form.description} rows={2} />
+			<Input type="textarea" name="description" label="Description" bind:value={form.description} rows={2} />
 
 			{#if !isNew}
 				<input type="hidden" name="isActive" value={form?.isActive ? 'true' : 'false'} />
-				<Input type="checkbox" name="isActive_check" label="Realm Aktif" bind:value={form.isActive}
+				<Input type="checkbox" name="isActive_check" label="Active Realm" bind:value={form.isActive}
 					onChange={() => { form.isActive = !form.isActive; }} />
 			{/if}
 
 			<!-- Domain Whitelist -->
 			<div class="border-t pt-4">
 				<p class="text-xs font-medium text-gray-700 mb-1">Email Domain Whitelist</p>
-				<p class="text-xs text-gray-500 mb-2">Kosongkan untuk izinkan semua domain.</p>
+				<p class="text-xs text-gray-500 mb-2">Leave empty to allow all domains.</p>
 
 				{#if domains.length > 0}
 					<div class="space-y-1 mb-2">
@@ -77,12 +77,12 @@
 				{/if}
 
 				<div class="flex gap-2">
-					<input type="text" bind:value={newDomain} placeholder="contoh: ias.co.id"
+					<input type="text" bind:value={newDomain} placeholder="e.g. ias.co.id"
 						class="flex-1 px-2 py-1 border border-gray-300 rounded-md text-sm"
 						onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addDomain(); } }} />
 					<button type="button" onclick={addDomain}
 						class="px-3 py-1 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700">
-						Tambah
+						Add
 					</button>
 				</div>
 			</div>
@@ -90,10 +90,10 @@
 			<div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
 				<button type="button" onclick={() => { form = null; }}
 					class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-					Batal
+					Cancel
 				</button>
 				<button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-					{isNew ? 'Buat Realm' : 'Simpan'}
+					{isNew ? 'Create Realm' : 'Save'}
 				</button>
 			</div>
 		</form>

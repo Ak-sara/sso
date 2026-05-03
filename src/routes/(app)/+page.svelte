@@ -40,7 +40,7 @@
 	<!-- Recent Activity -->
 	<div class="bg-white shadow rounded-lg">
 		<div class="px-6 py-4 border-b border-gray-200">
-			<h3 class="text-lg font-medium text-gray-900">Aktivitas Terbaru</h3>
+			<h3 class="text-lg font-medium text-gray-900">Recent Activity</h3>
 		</div>
 		<div class="px-6 py-4">
 			<div class="flow-root">
@@ -86,8 +86,8 @@
 				<div class="flex items-center">
 					<div class="text-3xl mr-4">👥</div>
 					<div>
-						<h3 class="text-lg font-medium text-gray-900">Kelola Pengguna</h3>
-						<p class="text-sm text-gray-500">Tambah, edit, atau hapus pengguna</p>
+						<h3 class="text-lg font-medium text-gray-900">Manage Users</h3>
+						<p class="text-sm text-gray-500">Add, edit, or delete users</p>
 					</div>
 				</div>
 			</div>
@@ -101,8 +101,8 @@
 				<div class="flex items-center">
 					<div class="text-3xl mr-4">🌳</div>
 					<div>
-						<h3 class="text-lg font-medium text-gray-900">Struktur Organisasi</h3>
-						<p class="text-sm text-gray-500">Lihat dan kelola struktur</p>
+						<h3 class="text-lg font-medium text-gray-900">Org Structure</h3>
+						<p class="text-sm text-gray-500">View and manage structure</p>
 					</div>
 				</div>
 			</div>

@@ -13,7 +13,7 @@ export const actions: Actions = {
 		const name = formData?.name;
 		const code = formData?.code;
 
-		if (!name) return fail(400, { error: 'Nama realm wajib diisi' });
+		if (!name) return fail(400, { error: 'Realm name is required' });
 
 		const allowedEmailDomains = formData?.allowedEmailDomains
 			? JSON.parse(formData.allowedEmailDomains)
@@ -33,7 +33,7 @@ export const actions: Actions = {
 			return { success: true };
 		} else {
 			// Create new
-			if (!code) return fail(400, { error: 'Kode realm wajib diisi' });
+			if (!code) return fail(400, { error: 'Realm code is required' });
 			const result = await createOrganization({ name, code, type: formData?.type as any, description: formData?.description || '' });
 			if (!result.ok) return fail(result.status || 400, { error: result.error });
 			return { success: true };
@@ -43,7 +43,7 @@ export const actions: Actions = {
 	updateBranding: async ({ locals }) => {
 		const formData = locals.body;
 		const code = formData?.code;
-		if (!code) return fail(400, { error: 'Kode realm wajib diisi' });
+		if (!code) return fail(400, { error: 'Realm code is required' });
 
 		const branding: any = {
 			appName: formData?.appName || '',
@@ -67,7 +67,7 @@ export const actions: Actions = {
 	delete: async ({ locals }) => {
 		const formData = locals.body;
 		const code = formData?.code;
-		if (!code) return fail(400, { error: 'Kode realm wajib diisi' });
+		if (!code) return fail(400, { error: 'Realm code is required' });
 		const result = await deleteOrganization(code);
 		if (!result.ok) return fail(result.status || 400, { error: result.error });
 		return { success: true };

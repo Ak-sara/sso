@@ -66,7 +66,7 @@ let { data, form = $bindable() }: { data: PageData; form?: any } = $props();
 			</form>
 		{:else}
 			<!-- Step 2: Verify OTP -->
-			<form method="POST" action="?/verifyAndChange" use:formEnhance={{ success: 'Email berhasil diubah!', onSuccess: () => { form = null; } }} class="space-y-4">
+			<form method="POST" action="?/verifyAndChange" use:formEnhance={{ success: 'Email changed successfully!', onSuccess: () => { form = null; } }} class="space-y-4">
 				<input type="hidden" name="newEmail" value={form.newEmail} />
 
 				<div>

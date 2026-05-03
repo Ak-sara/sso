@@ -64,15 +64,15 @@
 	const navigation: (NavItem | NavGroup)[] = [
 		{ name: 'Dashboard', href: '/', icon: '📊' },
 		{
-			name: 'Organisasi',
+			name: 'Organization',
 			icon: '🏢',
 			items: [
-				{ name: 'Identitas', href: '/organization/identities', icon: '👥' },
-				{ name: 'SK Penempatan', href: '/organization/sk-penempatan', icon: '📋' },
-				{ name: 'Realm/Entitas', href: '/organization/realms', icon: '🌐' },
-				{ name: 'Unit Kerja/Divisi', href: '/organization/org-units', icon: '🏛️' },
-				{ name: 'Posisi/Jabatan', href: '/organization/positions', icon: '💼' },
-				{ name: 'Struktur Organisasi', href: '/organization/org-structure', icon: '🌳' }
+				{ name: 'Identities', href: '/organization/identities', icon: '👥' },
+				{ name: 'Placement Decrees', href: '/organization/sk-penempatan', icon: '📋' },
+				{ name: 'Realm/Entity', href: '/organization/realms', icon: '🌐' },
+				{ name: 'Work Unit/Division', href: '/organization/org-units', icon: '🏛️' },
+				{ name: 'Position/Title', href: '/organization/positions', icon: '💼' },
+				{ name: 'Org Structure', href: '/organization/org-structure', icon: '🌳' }
 			],
 		},
 		{
@@ -301,7 +301,7 @@
 					<button
 						onclick={toggleSidebar}
 						class="p-2 rounded-md hover:bg-gray-100 transition-colors"
-						title={isSidebarOpen ? 'Tutup Menu' : 'Buka Menu'}
+						title={isSidebarOpen ? 'Close Menu' : 'Open Menu'}
 					>
 						<span class="text-2xl">{isSidebarOpen ? '◀' : '☰'}</span>
 					</button>
@@ -310,19 +310,19 @@
 						{#if $page.url.pathname === '/'}
 							Dashboard
 						{:else if $page.url.pathname === '/identities' || $page.url.pathname.startsWith('/identities')}
-							Identitas (SSO Accounts)
+							Identities (SSO Accounts)
 						{:else if $page.url.pathname === '/sync'}
 							Sync & Import
 						{:else if $page.url.pathname === '/realms'}
-							Realm/Entitas
+							Realm/Entity
 						{:else if $page.url.pathname === '/org-units'}
-							Unit Kerja/Divisi
+							Work Unit/Division
 						{:else if $page.url.pathname === '/org-structure'}
-							Struktur Organisasi
+							Org Structure
 						{:else if $page.url.pathname.startsWith('/org-structure/versions')}
-							Versi Struktur
+							Structure Versions
 						{:else if $page.url.pathname === '/positions'}
-							Posisi/Jabatan
+							Position/Title
 						{:else if $page.url.pathname === '/clients'}
 							OAuth Clients
 						{:else if $page.url.pathname === '/clients-scim' || $page.url.pathname.startsWith('/clients-scim')}
@@ -356,7 +356,7 @@
 						</div>
 					{/if}
 
-					<button class="p-2 rounded-md hover:bg-gray-100 transition-colors" title="Notifikasi">
+					<button class="p-2 rounded-md hover:bg-gray-100 transition-colors" title="Notifications">
 						<span class="text-xl">🔔</span>
 					</button>
 
@@ -378,10 +378,10 @@
 						{#if showUserMenu}
 							<div class="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 border border-gray-200 z-50">
 								<a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-									👤 Profil Saya
+									👤 My Profile
 								</a>
 								<a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-									⚙️ Pengaturan
+									⚙️ Settings
 								</a>
 								<a href="/docs" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
 									📒 Documentation
@@ -389,7 +389,7 @@
 								<hr class="my-1" />
 								<form method="POST" action="/logout">
 									<button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
-										🚪 Keluar
+										🚪 Sign Out
 									</button>
 								</form>
 							</div>

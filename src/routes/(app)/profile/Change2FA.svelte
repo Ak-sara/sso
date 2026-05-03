@@ -120,8 +120,8 @@ let { data, form = $bindable() }: { data: PageData; form?: any } = $props();
 		{#if !data.status2FA?.enabled}
 			<!-- Enable 2FA Form -->
 			<form method="POST" action="?/enable" use:formEnhance={{ onSuccess: (data) => {
-				if (data?.otpSent) { showNotif('info', data.message ?? 'Kode OTP telah dikirim ke email Anda.'); }
-				else { showNotif('success', data?.message ?? 'Berhasil'); form = null; }
+				if (data?.otpSent) { showNotif('info', data.message ?? 'OTP code sent to your email.'); }
+				else { showNotif('success', data?.message ?? 'Success'); form = null; }
 			} }} class="space-y-4">
 				{#if form?.otpSent}
 					<div>
@@ -147,8 +147,8 @@ let { data, form = $bindable() }: { data: PageData; form?: any } = $props();
 		{:else}
 			<!-- Disable 2FA Form -->
 			<form method="POST" action="?/disable" use:formEnhance={{ onSuccess: (data) => {
-					if (data?.disableOtpSent) { showNotif('info', data.message ?? 'Kode OTP telah dikirim ke email Anda.'); }
-					else { showNotif('success', data?.message ?? 'Berhasil'); form = null; }
+					if (data?.disableOtpSent) { showNotif('info', data.message ?? 'OTP code sent to your email.'); }
+					else { showNotif('success', data?.message ?? 'Success'); form = null; }
 				} }} class="space-y-4">
 				{#if form?.disableOtpSent}
 					<div>
@@ -170,7 +170,7 @@ let { data, form = $bindable() }: { data: PageData; form?: any } = $props();
 
 			<!-- Regenerate Backup Codes -->
 			<form method="POST" action="?/regenerateBackupCodes" use:formEnhance={{ onSuccess: (data) => {
-					showNotif('success', data?.message ?? 'Backup codes berhasil diperbarui!');
+					showNotif('success', data?.message ?? 'Backup codes updated!');
 				} }} class="mt-4">
 				<button class="w-full px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50"
 					type="submit" > 🔄 Regenerate Backup Codes

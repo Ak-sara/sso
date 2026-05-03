@@ -14,10 +14,11 @@ class NotifStore {
 	value: Notif | null = $state(null);
 	private timer: ReturnType<typeof setTimeout> | null = null;
 
-	show(type: NotifType, message: string, durationMs = 3500): void {
+	show(type: NotifType, message: string, durationMs?: number): void {
 		if (this.timer) clearTimeout(this.timer);
 		this.value = { type, message };
-		this.timer = setTimeout(() => { this.value = null; }, durationMs);
+		const ms = durationMs ?? (type === 'error' ? 0 : 3500);
+		if (ms > 0) this.timer = setTimeout(() => { this.value = null; }, ms);
 	}
 
 	dismiss(): void {
@@ -28,7 +29,7 @@ class NotifStore {
 
 export const notif = new NotifStore();
 
-/** Convenience shorthand — same as notif.show() */
-export function showNotif(type: NotifType, message: string, durationMs = 3500): void {
+/** Convenience shorthand — same as notif.show(). Errors are persistent until dismissed. */
+export function showNotif(type: NotifType, message: string, durationMs?: number): void {
 	notif.show(type, message, durationMs);
 }

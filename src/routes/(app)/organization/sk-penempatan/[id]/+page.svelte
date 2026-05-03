@@ -32,7 +32,7 @@
 	let description = $state(sk?.description ?? '');
 
 	async function handleDelete(index: number) {
-		if (!confirm('Hapus data karyawan ini dari SK?')) return;
+		if (!confirm('Remove this employee from the decree?')) return;
 		pendingDeleteIndex = index;
 		await tick();
 		deleteFormEl.requestSubmit();
@@ -40,21 +40,21 @@
 
 	const reassignmentColumns = [
 		{ key: 'employeeId', label: 'NIK', sortable: false },
-		{ key: 'employeeName', label: 'Nama', sortable: false },
+		{ key: 'employeeName', label: 'Name', sortable: false },
 		{
-			key: 'previousOrgUnitName', label: 'Dari Unit', sortable: false,
+			key: 'previousOrgUnitName', label: 'From Unit', sortable: false,
 			render: (v: any) => `<span class="text-xs text-gray-600">${v ?? '-'}</span>`
 		},
 		{
-			key: 'newOrgUnitName', label: 'Ke Unit', sortable: false,
+			key: 'newOrgUnitName', label: 'To Unit', sortable: false,
 			render: (v: any) => `<span class="text-xs font-medium">${v ?? '-'}</span>`
 		},
 		{
-			key: 'newPositionName', label: 'Posisi Baru', sortable: false,
+			key: 'newPositionName', label: 'New Position', sortable: false,
 			render: (v: any) => `<span class="text-xs">${v ?? '-'}</span>`
 		},
 		{
-			key: 'reason', label: 'Alasan', sortable: false,
+			key: 'reason', label: 'Reason', sortable: false,
 			render: (v: any) => `<span class="text-xs text-gray-500">${v ?? '-'}</span>`
 		},
 		{
@@ -71,7 +71,7 @@
 	<div class="flex items-center gap-3">
 		<a href="/organization/sk-penempatan" class="text-gray-400 hover:text-gray-600 text-sm">← SK Penempatan</a>
 		<span class="text-gray-300">/</span>
-		<h1 class="text-lg font-semibold text-gray-900">{isNew ? 'Buat SK Baru' : sk.skNumber}</h1>
+		<h1 class="text-lg font-semibold text-gray-900">{isNew ? 'Create New Decree' : sk.skNumber}</h1>
 		{#if !isNew && sk.skTitle}
 			<span class="text-sm text-gray-500">{sk.skTitle}</span>
 		{/if}
@@ -87,7 +87,7 @@
 {#if !isNew}
 <div class="border-b border-gray-200 mb-6">
 	<nav class="-mb-px flex space-x-6">
-		{#each [['info','📋 Informasi SK'],['employees','👥 Karyawan Terdampak']] as [id, label]}
+		{#each [['info','📋 Decree Info'],['employees','👥 Affected Employees']] as [id, label]}
 			<button type="button" onclick={() => activeTab = id as any}
 				class="py-2 px-1 border-b-2 text-sm font-medium whitespace-nowrap
 					{activeTab === id ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}">
@@ -102,21 +102,21 @@
 {#if activeTab === 'info' || isNew}
 	
 	<form method="POST" action={isNew ? '?/createSK' : '?/updateSK'}
-		use:formEnhance={{ onSuccess: () => { showNotif('success', isNew ? 'SK berhasil dibuat' : 'SK berhasil diperbarui'); } }}
+		use:formEnhance={{ onSuccess: () => { showNotif('success', isNew ? 'Decree created' : 'Decree updated'); } }}
 		class="space-y-4 bg-white border border-gray-200 rounded-lg p-6">
 
 		<div class="grid grid-cols-2 gap-4">
-			<Input type="text" name="skNumber" label="Nomor SK *" bind:value={skNumber} />
-			<Input type="date" name="skDate" label="Tanggal SK *" bind:value={skDate} />
+			<Input type="text" name="skNumber" label="Decree No. *" bind:value={skNumber} />
+			<Input type="date" name="skDate" label="Decree Date *" bind:value={skDate} />
 		</div>
-		<Input type="text" name="skTitle" label="Judul SK" bind:value={skTitle} />
+		<Input type="text" name="skTitle" label="Decree Title" bind:value={skTitle} />
 		<div class="grid grid-cols-2 gap-4">
-			<Input type="date" name="effectiveDate" label="Tanggal Efektif *" bind:value={effectiveDate} />
-			<Input type="select" name="signedBy" label="Ditandatangani Oleh *"
+			<Input type="date" name="effectiveDate" label="Effective Date *" bind:value={effectiveDate} />
+			<Input type="select" name="signedBy" label="Signed By *"
 				bind:value={signedBy} options={directorOptions} />
 		</div>
 		<div>
-			<label class="block text-xs font-medium text-gray-700 mt-1 ml-1 mb-1">Deskripsi</label>
+			<label class="block text-xs font-medium text-gray-700 mt-1 ml-1 mb-1">Description</label>
 			<textarea name="description" rows="3"
 				class="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
 				bind:value={description}></textarea>
@@ -125,11 +125,11 @@
 		<div class="flex justify-between items-center pt-2">
 			<div class="text-xs text-gray-400">
 				{#if !isNew && sk.importedFromCSV}
-					📁 Diimport dari: {sk.csvFilename ?? 'CSV'}
+					📁 Imported from: {sk.csvFilename ?? 'CSV'}
 				{/if}
 			</div>
 			<button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-				{isNew ? 'Buat SK' : 'Simpan Perubahan'}
+				{isNew ? 'Create Decree' : 'Save Changes'}
 			</button>
 		</div>
 	</form>
@@ -147,11 +147,11 @@
 					<p class="text-xl font-bold text-blue-900">{sk.totalReassignments}</p>
 				</div>
 				<div class="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-					<p class="text-xs text-green-600 font-medium">Berhasil</p>
+					<p class="text-xs text-green-600 font-medium">Succeeded</p>
 					<p class="text-xl font-bold text-green-900">{sk.successfulReassignments ?? 0}</p>
 				</div>
 				<div class="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-					<p class="text-xs text-red-600 font-medium">Gagal</p>
+					<p class="text-xs text-red-600 font-medium">Failed</p>
 					<p class="text-xl font-bold text-red-900">{sk.failedReassignments ?? 0}</p>
 				</div>
 			</div>
@@ -160,7 +160,7 @@
 		<!-- CSV Import -->
 		<form method="POST" action="?/addReassignmentsCSV" enctype="multipart/form-data"
 			use:formEnhance={{ onSuccess: async (data) => {
-				showNotif('success', data?.message ?? 'CSV berhasil diimport');
+				showNotif('success', data?.message ?? 'CSV imported successfully');
 				csvFile = null;
 				await invalidateAll();
 			} }}
@@ -190,7 +190,7 @@
 			totalItems={sk.reassignments?.length ?? 0}
 			searchable={false}
 			header_actions={() => [
-				{ text: '+ Tambah Manual', class: 'px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm',
+				{ text: '+ Add Manually', class: 'px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm',
 					action: () => { actReassignment = { index: -1, data: null }; } }
 			]}
 			actions={(row) => [
@@ -198,17 +198,17 @@
 					const idx = (sk.reassignments ?? []).indexOf(row);
 					actReassignment = { index: idx, data: row };
 				}, class: 'text-indigo-600 hover:text-indigo-800' },
-				{ label: 'Hapus', onClick: () => {
+				{ label: 'Delete', onClick: () => {
 					const idx = (sk.reassignments ?? []).indexOf(row);
 					handleDelete(idx);
 				}, class: 'text-red-600 hover:text-red-800' }
 			]}
-			emptyMessage="Belum ada karyawan terdampak. Tambah manual atau import CSV."
+			emptyMessage="No affected employees yet. Add manually or import from CSV."
 		/>
 
 		<!-- Hidden delete form -->
 		<form bind:this={deleteFormEl} method="POST" action="?/deleteReassignment"
-			use:formEnhance={{ success: 'Data karyawan dihapus', onSuccess: async () => { await invalidateAll(); } }}
+			use:formEnhance={{ success: 'Employee removed', onSuccess: async () => { await invalidateAll(); } }}
 			class="hidden">
 			<input type="hidden" name="index" value={pendingDeleteIndex} />
 		</form>

@@ -14,7 +14,7 @@
 	let showPageHints = $state(false);
 
 	const tabs = [
-		{ id: 'employee', name: 'Karyawan', icon: '👨‍💼', description: 'Employee identities' },
+		{ id: 'employee', name: 'Employee', icon: '👨‍💼', description: 'Employee identities' },
 		{ id: 'partner', name: 'Partners', icon: '🤝', description: 'Partner/vendor identities' },
 		{ id: 'external', name: 'External', icon: '🌐', description: 'External user identities' },
 		{ id: 'service_account', name: 'Service Accounts', icon: '🤖', description: 'API/system accounts' }
@@ -73,7 +73,7 @@
 	}
 
 	async function handleDelete(identity: Identity) {
-		if (!confirm(`Apakah Anda yakin ingin menghapus ${identity.fullName}? Tindakan ini tidak dapat dibatalkan.`)) {
+		if (!confirm(`Are you sure you want to delete ${identity.fullName}? This action cannot be undone.`)) {
 			return;
 		}
 
@@ -271,7 +271,7 @@
 
 			]}
 			searchable={true}
-			searchPlaceholder="Cari identitas (nama, email, NIK)..."
+			searchPlaceholder="Search identity (name, email, employee ID)..."
 			searchKeys={['fullName', 'email', 'employeeId', 'phone', 'companyName', 'partnerType']}
 			onPageChange={handlePageChange}
 			onPageSizeChange={handlePageSizeChange}

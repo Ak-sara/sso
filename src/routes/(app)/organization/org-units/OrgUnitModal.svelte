@@ -57,45 +57,45 @@
 			});
 			const result = await res.json();
 			if (result.type === 'failure') {
-				showNotif('error', JSON.parse(result.data).slice(1).join(' ') ?? 'Operasi gagal');
+				showNotif('error', JSON.parse(result.data).slice(1).join(' ') ?? 'Operation failed');
 				return;
 			}
-			showNotif('success', isNew ? 'Unit kerja berhasil dibuat' : 'Unit kerja berhasil disimpan');
+			showNotif('success', isNew ? 'Work unit created' : 'Work unit saved');
 			await invalidate('app:pagination');
 			unit = null;
 		} catch (err) {
 			log.error('Error saving unit', { error: err });
-			showNotif('error', 'Operasi gagal');
+			showNotif('error', 'Operation failed');
 		}
 	}
 </script>
 
 <FormModal
 	onClose={() => (unit = null)}
-	title={isNew ? 'Tambah Unit Kerja' : unit?.name}
-	subtitle={isNew ? 'Isi data unit kerja baru' : `Kode: ${unit?.code}`}>
+	title={isNew ? 'Add Work Unit' : unit?.name}
+	subtitle={isNew ? 'Fill in new work unit details' : `Code: ${unit?.code}`}>
 
 	<div class="p-4 space-y-2">
 		<div class="grid grid-cols-[3fr_1fr_1fr] gap-2">
 			{#if isNew}
-				<Input type="text" label="Kode Unit *" bind:value={unit.code} placeholder="DIR-001" />
+				<Input type="text" label="Unit Code *" bind:value={unit.code} placeholder="DIR-001" />
 			{:else}
-				<Input type="info" label="Kode Unit" value={unit.code} />
+				<Input type="info" label="Unit Code" value={unit.code} />
 			{/if}
-			<Input type="checkbox" label="Unit Aktif"  bind:value={unit.isActive} />
+			<Input type="checkbox" label="Active Unit"  bind:value={unit.isActive} />
 			<Input type="select"   label="STO Mode"    bind:value={unit.diagram} options={diagramOptions} />
 		</div>
 
 		<div class="grid grid-cols-2 gap-2">
-			<Input type="text" label="Nama Unit *"   bind:value={unit.name} />
-			<Input type="text" label="Nama Singkat"  bind:value={unit.shortName} placeholder="Opsional" />
+			<Input type="text" label="Unit Name *"   bind:value={unit.name} />
+			<Input type="text" label="Short Name"  bind:value={unit.shortName} placeholder="Optional" />
 		</div>
 
-		<Input type="textarea" label="Deskripsi" bind:value={unit.description} rows={2} />
+		<Input type="textarea" label="Description" bind:value={unit.description} rows={2} />
 
 		<div class="grid grid-cols-2 gap-2">
-			<Input type="select" label="Organisasi" bind:value={unit.organizationId} options={orgOptions} />
-			<Input type="select" label="Tipe Unit"  bind:value={unit.type} options={typeOptions} />
+			<Input type="select" label="Organization" bind:value={unit.organizationId} options={orgOptions} />
+			<Input type="select" label="Unit Type"  bind:value={unit.type} options={typeOptions} />
 		</div>
 
 		<LookupModal
@@ -103,7 +103,7 @@
 			displayValue={unit.parentName || ''}
 			fetchEndpoint="/api/org-units/search?organizationId={unit.organizationId}&currentUnitId={unit._id}"
 			columns={parentUnitColumns}
-			placeholder="Klik untuk memilih parent unit..."
+			placeholder="Click to select parent unit..."
 			label="Parent Unit" title="Select Parent Unit"
 			onSelect={(item) => {
 				unit.parentId = item ? item._id : null;
@@ -115,7 +115,7 @@
 			displayValue={unit.groupName || ''}
 			fetchEndpoint="/api/org-units/search?organizationId={unit.organizationId}&currentUnitId={unit._id}"
 			columns={parentUnitColumns}
-			placeholder="Klik untuk memilih group..."
+			placeholder="Click to select group..."
 			label="Group" title="Select Group"
 			onSelect={(item) => {
 				unit.groupId = item ? item._id : null;
@@ -127,7 +127,7 @@
 			displayValue={unit.picName || ''}
 			fetchEndpoint="/api/org-units/search?organizationId={unit.organizationId}&currentUnitId={unit._id}"
 			columns={parentUnitColumns}
-			placeholder="Klik untuk memilih PIC..."
+			placeholder="Click to select PIC..."
 			label="PIC" title="Select PIC"
 			onSelect={(item) => {
 				unit.picId = item ? item._id : null;
@@ -139,7 +139,7 @@
 			displayValue={unit.managerName || ''}
 			fetchEndpoint="/api/identities/search?identityType=employee"
 			columns={managerColumns}
-			placeholder="Klik untuk memilih manager..."
+			placeholder="Click to select manager..."
 			label="Manager (Unit Head)" title="Select Manager"
 			onSelect={(item) => {
 				unit.managerId = item ? item._id : null;
@@ -150,9 +150,9 @@
 
 	<div class="sticky bottom-0 bg-gray-50 border-t px-6 py-4 flex justify-end gap-3">
 		<button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-			type="button" onclick={() => (unit = null)}>Batal</button>
+			type="button" onclick={() => (unit = null)}>Cancel</button>
 		<button class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-			type="button" onclick={save}>{isNew ? '+ Buat Unit' : 'Save Changes'}</button>
+			type="button" onclick={save}>{isNew ? '+ Create Unit' : 'Save Changes'}</button>
 	</div>
 
 </FormModal>

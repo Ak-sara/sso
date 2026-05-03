@@ -28,8 +28,7 @@ export function formEnhance(node: HTMLFormElement, opts: Opts | string = {}) {
 				await o.onSuccess?.(result.type === 'success' ? result.data : undefined);
 				await update({ reset: false });
 			} else if (result.type === 'failure') {
-				showNotif('error', (result.data as any)?.error ?? 'Operasi gagal');
-				await update({ reset: false });
+				showNotif('error', (result.data as any)?.error ?? 'Operation failed');
 			} else if (result.type === 'error') {
 				showNotif('error', (result as any).error?.message ?? 'Server error');
 			} else {

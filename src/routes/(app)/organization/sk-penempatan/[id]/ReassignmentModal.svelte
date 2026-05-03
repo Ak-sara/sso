@@ -24,11 +24,11 @@
 	let notes = $state(reassignment?.notes ?? '');
 </script>
 
-<FormModal title="{isNew ? 'Tambah' : 'Edit'} Karyawan Terdampak" onClose={onClose}>
+<FormModal title="{isNew ? 'Add' : 'Edit'} Affected Employee" onClose={onClose}>
 	<div class="p-4">
 		<form method="POST" action="?/upsertReassignment"
 			use:formEnhance={{ onSuccess: async () => {
-				showNotif('success', isNew ? 'Karyawan berhasil ditambahkan' : 'Data karyawan diperbarui');
+				showNotif('success', isNew ? 'Employee added' : 'Employee updated');
 				await invalidateAll();
 				onClose();
 			} }}
@@ -36,39 +36,39 @@
 
 			<input type="hidden" name="index" value={index} />
 
-			<Input type="text" name="employeeId" label="NIK Karyawan *" bind:value={employeeId}
-				placeholder="Masukkan NIK" />
+			<Input type="text" name="employeeId" label="Employee ID *" bind:value={employeeId}
+				placeholder="Enter Employee ID" />
 			<div class="grid grid-cols-2 gap-4">
-				<Input type="text" name="newOrgUnitCode" label="Kode Unit Kerja Baru"
-					bind:value={newOrgUnitCode} placeholder="Contoh: DIV-001" />
-				<Input type="text" name="newPositionCode" label="Kode Posisi Baru"
-					bind:value={newPositionCode} placeholder="Contoh: POS-001" />
+				<Input type="text" name="newOrgUnitCode" label="New Work Unit Code"
+					bind:value={newOrgUnitCode} placeholder="e.g. DIV-001" />
+				<Input type="text" name="newPositionCode" label="New Position Code"
+					bind:value={newPositionCode} placeholder="e.g. POS-001" />
 			</div>
 			<div class="grid grid-cols-2 gap-4">
-				<Input type="text" name="newWorkLocation" label="Lokasi Kerja Baru"
+				<Input type="text" name="newWorkLocation" label="New Work Location"
 					bind:value={newWorkLocation} />
-				<Input type="text" name="newRegion" label="Region Baru"
+				<Input type="text" name="newRegion" label="New Region"
 					bind:value={newRegion} />
 			</div>
-			<Input type="text" name="reason" label="Alasan Penempatan" bind:value={reason} />
-			<Input type="text" name="notes" label="Catatan" bind:value={notes} />
+			<Input type="text" name="reason" label="Placement Reason" bind:value={reason} />
+			<Input type="text" name="notes" label="Notes" bind:value={notes} />
 
 			{#if !isNew && reassignment}
 				<div class="bg-gray-50 rounded-lg p-3 text-sm text-gray-600 space-y-1">
 					<p><span class="font-medium">Nama:</span> {reassignment.employeeName}</p>
-					<p><span class="font-medium">Unit saat ini:</span> {reassignment.previousOrgUnitName ?? '-'}</p>
-					<p><span class="font-medium">Posisi saat ini:</span> {reassignment.previousPositionName ?? '-'}</p>
+					<p><span class="font-medium">Current unit:</span> {reassignment.previousOrgUnitName ?? '-'}</p>
+					<p><span class="font-medium">Current position:</span> {reassignment.previousPositionName ?? '-'}</p>
 				</div>
 			{/if}
 
 			<div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
 				<button type="button" onclick={onClose}
 					class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-					Batal
+					Cancel
 				</button>
 				<button type="submit"
 					class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-					{isNew ? 'Tambah' : 'Simpan'}
+					{isNew ? 'Add' : 'Save'}
 				</button>
 			</div>
 		</form>

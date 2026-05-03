@@ -139,7 +139,7 @@
 	<form method="POST" action="?/updateSK" class="space-y-4">
 		<div class="grid grid-cols-2 gap-4">
 			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-2">Nomor SK *</label>
+				<label class="block text-sm font-medium text-gray-700 mb-2">Decree No. *</label>
 				<input
 					type="text"
 					name="skNumber"
@@ -149,12 +149,12 @@
 				/>
 			</div>
 			<div>
-				<Input type="date" name="skDate" label="Tanggal SK *" bind:value={skDate} />
+				<Input type="date" name="skDate" label="Decree Date *" bind:value={skDate} />
 			</div>
 			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-2">Ditandatangani Oleh</label>
+				<label class="block text-sm font-medium text-gray-700 mb-2">Signed By</label>
 				<select name="skSignedBy" class="w-full px-3 py-2 border rounded-md">
-					<option value="">Pilih penandatangan...</option>
+					<option value="">Select signatory...</option>
 					{#each data.directors as director}
 						<option value={director.employeeId} selected={data.version.skSignedBy === director.employeeId}>
 							{director.fullName} - {director.positionName}
@@ -163,19 +163,19 @@
 				</select>
 			</div>
 			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-2">Upload Dokumen SK</label>
+				<label class="block text-sm font-medium text-gray-700 mb-2">Upload Decree Document</label>
 				<input
 					type="file"
 					accept=".pdf,.docx"
 					class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
 				/>
-				<p class="text-xs text-gray-500 mt-1">Format: PDF atau DOCX, max 10MB</p>
+				<p class="text-xs text-gray-500 mt-1">Format: PDF or DOCX, max 10MB</p>
 			</div>
 		</div>
 
 		{#if data.version.skAttachments && data.version.skAttachments.length > 0}
 			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-2">Lampiran</label>
+				<label class="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
 				<ul class="space-y-2">
 					{#each data.version.skAttachments as attachment}
 						<li class="flex items-center justify-between p-2 bg-gray-50 rounded">
@@ -186,7 +186,7 @@
 									({new Date(attachment.uploadedAt).toLocaleDateString('id-ID')})
 								</span>
 							</div>
-							<button class="text-red-600 hover:text-red-800 text-sm">Hapus</button>
+							<button class="text-red-600 hover:text-red-800 text-sm">Delete</button>
 						</li>
 					{/each}
 				</ul>
@@ -196,7 +196,7 @@
 		<div class="flex justify-end">
 			<button type="submit"
 				class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700" >
-				Simpan Informasi SK
+				Save Decree Info
 			</button>
 		</div>
 	</form>
@@ -208,25 +208,25 @@
 				onclick={() => activeTab = 'structure'}
 				class="py-2 px-1 border-b-2 font-medium text-sm {activeTab === 'structure' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
 			>
-				📊 Struktur Organisasi
+				📊 Org Structure
 			</button>
 			<button
 				onclick={() => activeTab = 'changes'}
 				class="py-2 px-1 border-b-2 font-medium text-sm {activeTab === 'changes' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
 			>
-				🔄 Perubahan ({data.version.changes.length})
+				🔄 Changes ({data.version.changes.length})
 			</button>
 			<button
 				onclick={() => activeTab = 'sk-penempatan'}
 				class="py-2 px-1 border-b-2 font-medium text-sm {activeTab === 'sk-penempatan' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
 			>
-				👥 SK Penempatan ({data.linkedSKPenempatan?.length || 0})
+				👥 Placement Decrees ({data.linkedSKPenempatan?.length || 0})
 			</button>
 			<button
 				onclick={() => activeTab = 'reassignments'}
 				class="py-2 px-1 border-b-2 font-medium text-sm {activeTab === 'reassignments' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
 			>
-				📊 Total Terdampak ({data.totalAffectedEmployees || 0})
+				📊 Total Affected ({data.totalAffectedEmployees || 0})
 			</button>
 		</nav>
 	</div>
@@ -237,17 +237,17 @@
 			data={data.version.structure.orgUnits}
 			columns={structureColumns}
 			searchable={true}
-			searchPlaceholder="Cari unit kerja (nama, kode)..."
+			searchPlaceholder="Search work unit (name, code)..."
 			searchKeys={['name', 'code', 'type']}
 			emptyMessage="Tidak ada unit kerja dalam versi ini."
 		/>
 
 	{:else if activeTab === 'changes'}
 		<div class="bg-white shadow rounded-lg p-6">
-			<h3 class="text-lg font-medium mb-4">Daftar Perubahan</h3>
+			<h3 class="text-lg font-medium mb-4">Change List</h3>
 
 			{#if data.version.changes.length === 0}
-				<p class="text-gray-500">Tidak ada perubahan dari versi sebelumnya.</p>
+				<p class="text-gray-500">No changes from previous version.</p>
 			{:else}
 				<div class="space-y-4">
 					{#each data.version.changes as change}
@@ -255,11 +255,11 @@
 							<div class="flex items-start justify-between">
 								<div>
 									<p class="font-medium">
-										{#if change.type === 'unit_added'}🟢 Unit Ditambahkan
-										{:else if change.type === 'unit_removed'}🔴 Unit Dihapus
-										{:else if change.type === 'unit_renamed'}🔵 Unit Diganti Nama
-										{:else if change.type === 'unit_moved'}🔵 Unit Dipindah
-										{:else if change.type === 'unit_merged'}🔵 Unit Digabung
+										{#if change.type === 'unit_added'}🟢 Unit Added
+										{:else if change.type === 'unit_removed'}🔴 Unit Removed
+										{:else if change.type === 'unit_renamed'}🔵 Unit Renamed
+										{:else if change.type === 'unit_moved'}🔵 Unit Moved
+										{:else if change.type === 'unit_merged'}🔵 Unit Merged
 										{:else}{change.type}{/if}
 									</p>
 									<p class="text-sm text-gray-600">{change.description}</p>
@@ -286,9 +286,9 @@
 		<div class="bg-white shadow rounded-lg p-6">
 			<div class="flex items-center justify-between mb-6">
 				<div>
-					<h3 class="text-lg font-medium">👥 SK Penempatan Karyawan</h3>
+					<h3 class="text-lg font-medium">👥 Placement Decrees</h3>
 					<p class="text-sm text-gray-600 mt-1">
-						Daftar SK Penempatan yang diterbitkan untuk karyawan terdampak perubahan struktur ini.
+						List of placement decrees issued for employees affected by this structure change.
 					</p>
 				</div>
 				<button
@@ -297,7 +297,7 @@
 					class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center space-x-2"
 				>
 					<span>+</span>
-					<span>Buat SK Penempatan Baru</span>
+					<span>Create New Placement Decree</span>
 				</button>
 			</div>
 
@@ -334,9 +334,9 @@
 									<div class="flex items-center space-x-4 text-xs text-gray-500">
 										<span>📅 {new Date(sk.skDate).toLocaleDateString('id-ID')}</span>
 										<span>•</span>
-										<span>Efektif: {new Date(sk.effectiveDate).toLocaleDateString('id-ID')}</span>
+										<span>Effective: {new Date(sk.effectiveDate).toLocaleDateString('id-ID')}</span>
 										<span>•</span>
-										<span class="font-medium text-indigo-600">{sk.totalReassignments} karyawan</span>
+										<span class="font-medium text-indigo-600">{sk.totalReassignments} employees</span>
 									</div>
 								</div>
 								<div class="text-gray-400">
@@ -349,9 +349,9 @@
 			{:else}
 				<div class="border border-gray-200 rounded-lg p-12 text-center">
 					<div class="text-gray-400 text-5xl mb-4">📋</div>
-					<p class="text-gray-600 font-medium mb-2">Belum ada SK Penempatan</p>
+					<p class="text-gray-600 font-medium mb-2">No Placement Decrees yet</p>
 					<p class="text-sm text-gray-500">
-						Klik tombol "Buat SK Penempatan Baru" untuk membuat SK penempatan karyawan.
+						Click "Create New Placement Decree" to create an employee placement decree.
 					</p>
 				</div>
 			{/if}
@@ -361,11 +361,11 @@
 		<DataTable
 			data={data.aggregatedReassignments || []}
 			columns={reassignmentColumns}
-			header_before="<p class='text-sm text-gray-500'>Agregasi seluruh karyawan yang terdampak dari semua SK Penempatan</p>"
+			header_before="<p class='text-sm text-gray-500'>Aggregated list of all employees affected across all Placement Decrees</p>"
 			searchable={true}
-			searchPlaceholder="Cari karyawan (NIK, nama)..."
+			searchPlaceholder="Search employee (ID, name)..."
 			searchKeys={['employeeId', 'employeeName', 'skNumber']}
-			emptyMessage="Tidak ada karyawan yang terdampak. Buat SK Penempatan terlebih dahulu."
+			emptyMessage="No affected employees. Create a Placement Decree first."
 		/>
 	{/if}
 </div>
@@ -374,19 +374,19 @@
 	<FormModal
 		onClose={() => showApproveModal = false}
 		title="Submit for Approval"
-		subtitle="Versi ini akan di-submit untuk approval">
+		subtitle="This version will be submitted for approval">
 
 		<div class="p-6 space-y-6">
 			<p class="text-sm text-gray-600">
-				Apakah Anda yakin ingin submit versi ini untuk approval? Setelah di-submit, versi tidak dapat diedit lagi.
+				Are you sure you want to submit this version for approval? Once submitted, the version can no longer be edited.
 			</p>
 
 			<div class="bg-yellow-50 border border-yellow-200 rounded p-4">
 				<p class="text-sm text-yellow-800">
-					⚠️ Pastikan:<br>
-					• Semua perubahan sudah benar<br>
-					• Informasi SK sudah lengkap<br>
-					• Daftar karyawan terdampak sudah akurat
+					⚠️ Please ensure:<br>
+					• All changes are correct<br>
+					• Decree information is complete<br>
+					• The list of affected employees is accurate
 				</p>
 			</div>
 
@@ -406,14 +406,14 @@
 {#if showCreateSKModal}
 	<FormModal
 		onClose={() => showCreateSKModal = false}
-		title="Buat SK Penempatan Baru"
-		subtitle="SK Penempatan terkait versi struktur ini">
+		title="Create New Placement Decree"
+		subtitle="Placement decree linked to this structure version">
 
 		<div class="p-6">
 			<form method="POST" action="?/createSKPenempatan" class="space-y-4">
 				<div class="grid grid-cols-2 gap-4">
 					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-2">Nomor SK *</label>
+						<label class="block text-sm font-medium text-gray-700 mb-2">Decree No. *</label>
 						<input
 							type="text"
 							name="skNumber"
@@ -423,28 +423,28 @@
 						/>
 					</div>
 					<div>
-						<Input type="date" name="skDate" label="Tanggal SK *" bind:value={createSkDate} />
+						<Input type="date" name="skDate" label="Decree Date *" bind:value={createSkDate} />
 					</div>
 				</div>
 
 				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Judul SK</label>
+					<label class="block text-sm font-medium text-gray-700 mb-2">Decree Title</label>
 					<input
 						type="text"
 						name="skTitle"
-						placeholder="Penempatan Karyawan Batch 1"
+						placeholder="Employee Placement Batch 1"
 						class="w-full px-3 py-2 border rounded-md"
 					/>
 				</div>
 
 				<div>
-					<Input type="date" name="effectiveDate" label="Tanggal Efektif *" bind:value={createEffectiveDate} />
+					<Input type="date" name="effectiveDate" label="Effective Date *" bind:value={createEffectiveDate} />
 				</div>
 
 				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Ditandatangani Oleh *</label>
+					<label class="block text-sm font-medium text-gray-700 mb-2">Signed By *</label>
 					<select name="signedBy" required class="w-full px-3 py-2 border rounded-md">
-						<option value="">Pilih penandatangan...</option>
+						<option value="">Select signatory...</option>
 						{#each data.directors as director}
 							<option value={director.employeeId}>
 								{director.fullName} - {director.positionName}
@@ -454,19 +454,19 @@
 				</div>
 
 				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
+					<label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
 					<textarea
 						name="description"
 						rows="3"
-						placeholder="Deskripsi SK Penempatan..."
+						placeholder="Placement decree description..."
 						class="w-full px-3 py-2 border rounded-md"
 					></textarea>
 				</div>
 
 				<div class="bg-blue-50 border border-blue-200 rounded p-4">
 					<p class="text-sm text-blue-800">
-						💡 Setelah SK Penempatan dibuat, Anda dapat menambahkan karyawan terdampak melalui:
-						<br>• Import CSV
+						💡 After the decree is created, you can add affected employees via:
+						<br>• CSV import
 						<br>• Manual entry
 					</p>
 				</div>
@@ -476,7 +476,7 @@
 						type="submit"
 						class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
 					>
-						Buat SK Penempatan
+						Create Decree
 					</button>
 				</div>
 			</form>

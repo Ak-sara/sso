@@ -58,7 +58,7 @@
 </script>
 
 <div class="space-y-6">
-	<form method="POST" action="?/update" use:formEnhance={'Pengaturan berhasil disimpan'}>
+	<form method="POST" action="?/update" use:formEnhance={'Settings saved successfully'}>
 	<!-- Header -->
 		<div class="flex justify-between items-center my-2">
 			<div>
@@ -136,7 +136,7 @@
 	{/each}
 	</form>
 
-	<form method="POST" action="?/update-default-email-provider" use:formEnhance={'Email settings berhasil disimpan'}>
+	<form method="POST" action="?/update-default-email-provider" use:formEnhance={'Email settings saved'}>
 		<!-- Email Settings (excluded from generic each, rendered explicitly) -->
 		<div class="bg-white shadow rounded-lg p-4 mb-2">
 			<div class="flex items-center justify-between border-b border-gray-200 p-2 my-2">

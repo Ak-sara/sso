@@ -29,7 +29,7 @@
 
 	const columns = [
 		{
-			key: 'name', label: 'Unit Kerja', sortable: true,
+			key: 'name', label: 'Work Unit', sortable: true,
 			render: (value: string, row: any) => `
 				<div class="flex items-center">
 					<span class="text-xl mr-2">${getTypeIcon(row.type)}</span>
@@ -44,11 +44,11 @@
 			render: (value: string) => `<code class="bg-yellow-100 px-2 py-1 rounded text-xs">${value}</code>`
 		},
 		{
-			key: 'code', label: 'Kode', sortable: true,
+			key: 'code', label: 'Code', sortable: true,
 			render: (value: string) => `<code class="bg-gray-100 px-2 py-1 rounded text-xs">${value}</code>`
 		},
 		{
-			key: 'type', label: 'Tipe', sortable: true,
+			key: 'type', label: 'Type', sortable: true,
 			render: (value: string) => `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">${value}</span>`
 		},
 		{	key: 'parentName', label: 'Parent', sortable: false, render: (value: string) => value },
@@ -57,7 +57,7 @@
 			key: 'isActive', label: 'Status', sortable: true,
 			render: (value: boolean) => {
 				const cls = value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-				return `<span class="px-2 py-1 text-xs font-semibold rounded-full ${cls}">${value ? 'Aktif' : 'Nonaktif'}</span>`;
+				return `<span class="px-2 py-1 text-xs font-semibold rounded-full ${cls}">${value ? 'Active' : 'Inactive'}</span>`;
 			}
 		}
 	];
@@ -67,27 +67,27 @@
 	async function handleEdit(unit: any) {
 		try {
 			const res = await fetch(`/api/org-units/${unit._id}`);
-			if (!res.ok) { showNotif('error', 'Gagal memuat data unit'); return; }
+			if (!res.ok) { showNotif('error', 'Failed to load unit'); return; }
 			actUnit = await res.json();
 		} catch (err) {
 			log.error('Error loading unit', { error: err });
-			showNotif('error', 'Gagal memuat data unit');
+			showNotif('error', 'Failed to load unit');
 		}
 	}
 
 	async function handleDelete(unit: any) {
-		if (!confirm(`Hapus unit "${unit.name}"? Tindakan ini tidak dapat dibatalkan.`)) return;
+		if (!confirm(`Delete unit "${unit.name}"? This action cannot be undone.`)) return;
 		try {
 			const f = new FormData();
 			f.append('code', unit.code);
 			const res = await fetch('?/delete', { method: 'POST', body: f });
 			const result = await res.json();
-			if (result.type === 'failure') { showNotif('error', result.data?.error ?? 'Gagal menghapus'); return; }
-			showNotif('success', 'Unit berhasil dihapus');
+			if (result.type === 'failure') { showNotif('error', result.data?.error ?? 'Failed to delete'); return; }
+			showNotif('success', 'Unit deleted');
 			await invalidate('app:pagination');
 		} catch (err) {
 			log.error('Error deleting unit', { error: err });
-			showNotif('error', 'Gagal menghapus unit');
+			showNotif('error', 'Failed to delete unit');
 		}
 	}
 </script>
@@ -96,14 +96,14 @@
 	<DataTable
 		data={data.orgUnits}
 		{columns}
-		header_before="<p class='text-sm text-gray-500'>Kelola unit kerja dalam organisasi</p>"
+		header_before="<p class='text-sm text-gray-500'>Manage work units in the organization</p>"
 		header_actions={()=>[
 			{
 				text: 'ℹ️',
 				class: 'px-2 py-0 text-2xl inline-block transition-transform duration-200 hover:-rotate-12 cursor-pointer',
 				action: () => (showPageHints = true)
 			},{
-				text: '+ Tambah Unit Kerja',
+				text: '+ Add Work Unit',
 				class: 'px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors',
 				action: () => { actUnit = { code: '', name: '', shortName: '', type: 'department', description: '', organizationId: data.organizationOptions[0]?.value || null, parentId: null, parentName: null, groupId: null, groupName: null, picId: null, picName: null, managerId: null, managerName: null, diagram: 'logical', isActive: true }; }
 			}
@@ -111,7 +111,7 @@
 		page={data.pagination.page}
 		pageSize={data.pagination.pageSize}
 		totalItems={data.pagination.total}
-		searchPlaceholder="Cari unit kerja (nama, kode)..."
+		searchPlaceholder="Search work unit (name, code)..."
 		searchable={true}
 		searchKeys={['name', 'code', 'type']}
 		onPageChange={(p) => navigateWithParams({ page: String(p) })}
@@ -122,17 +122,17 @@
 			{ label: 'Edit',   onClick: () => handleEdit(row),   class: 'text-indigo-600 hover:text-indigo-800', icon: '✏️ ' },
 			{ label: 'Delete', onClick: () => handleDelete(row), class: 'text-red-600 hover:text-red-800',    icon: '🗑️' }
 		]}
-		emptyMessage="Belum ada unit kerja. Tambahkan unit kerja baru untuk memulai."
+		emptyMessage="No work units yet. Add a new work unit to get started."
 	/>
 </div>
 
 <PageHints
 	bind:visible={showPageHints}
-	title='Tentang Unit Kerja/Divisi'
+	title='About Work Units/Divisions'
 	paragraph='<p class="mt-1 text-sm text-blue-700">
-		Unit kerja adalah bagian dari struktur organisasi seperti Direktorat, Divisi, Departemen, Seksi, dll.
-		Setiap unit memiliki hierarki dan dapat memiliki unit parent. Unit ini digunakan untuk penempatan
-		karyawan dan pelaporan struktur organisasi.
+		Work units are parts of the org structure such as Directorates, Divisions, Departments, Sections, etc.
+		Each unit has a hierarchy and can have a parent unit. Units are used for employee placement
+		and org structure reporting.
 	</p>'
 />
 

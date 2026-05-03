@@ -32,26 +32,26 @@
 	async function handleLogoUpload(e: Event) {
 		const file = (e.target as HTMLInputElement).files?.[0];
 		if (!file) return;
-		if (!file.type.startsWith('image/')) { showNotif('error', 'Upload file gambar'); return; }
-		if (file.size > 2 * 1024 * 1024) { showNotif('error', 'Logo maksimal 2MB'); return; }
+		if (!file.type.startsWith('image/')) { showNotif('error', 'Please upload an image file'); return; }
+		if (file.size > 2 * 1024 * 1024) { showNotif('error', 'Logo must be under 2MB'); return; }
 		try { branding.logoBase64 = await fileToBase64(file); }
-		catch (err) { log.error('Logo upload error', { error: err }); showNotif('error', 'Gagal upload logo'); }
+		catch (err) { log.error('Logo upload error', { error: err }); showNotif('error', 'Failed to upload logo'); }
 	}
 
 	async function handleBgUpload(e: Event) {
 		const file = (e.target as HTMLInputElement).files?.[0];
 		if (!file) return;
-		if (!file.type.startsWith('image/')) { showNotif('error', 'Upload file gambar'); return; }
-		if (file.size > 5 * 1024 * 1024) { showNotif('error', 'Background maksimal 5MB'); return; }
+		if (!file.type.startsWith('image/')) { showNotif('error', 'Please upload an image file'); return; }
+		if (file.size > 5 * 1024 * 1024) { showNotif('error', 'Background must be under 5MB'); return; }
 		try { branding.loginBackgroundBase64 = await fileToBase64(file); }
-		catch (err) { log.error('Background upload error', { error: err }); showNotif('error', 'Gagal upload background'); }
+		catch (err) { log.error('Background upload error', { error: err }); showNotif('error', 'Failed to upload background'); }
 	}
 </script>
 
 <FormModal wide title="Branding — {form?.name}" subtitle={form?.code} onClose={() => { form = null; }}>
 	<div class="p-4 overflow-y-auto max-h-[70vh]">
 		<form method="POST" action="?/updateBranding"
-			use:formEnhance={{ success: 'Branding berhasil disimpan', onSuccess: async () => {
+			use:formEnhance={{ success: 'Branding saved', onSuccess: async () => {
 				await invalidate('app:pagination');
 				form = null;
 			} }}
@@ -74,7 +74,7 @@
 						<div class="mb-2 p-3 bg-gray-50 rounded-md border-2 border-dashed border-gray-300 text-center">
 							<img src={branding.logoBase64} alt="Logo" class="h-16 w-auto object-contain mx-auto mb-2" />
 							<button type="button" onclick={() => (branding.logoBase64 = '')}
-								class="text-xs text-red-600 hover:text-red-800">✕ Hapus Logo</button>
+								class="text-xs text-red-600 hover:text-red-800">✕ Remove Logo</button>
 						</div>
 					{/if}
 					<input type="file" accept="image/*" onchange={handleLogoUpload}
@@ -87,7 +87,7 @@
 						<div class="mb-2 p-3 bg-gray-50 rounded-md border-2 border-dashed border-gray-300 text-center">
 							<img src={branding.loginBackgroundBase64} alt="Background" class="h-24 w-full object-cover rounded mb-2" />
 							<button type="button" onclick={() => (branding.loginBackgroundBase64 = '')}
-								class="text-xs text-red-600 hover:text-red-800">✕ Hapus Background</button>
+								class="text-xs text-red-600 hover:text-red-800">✕ Remove Background</button>
 						</div>
 					{/if}
 					<input type="file" accept="image/*" onchange={handleBgUpload}
@@ -157,9 +157,9 @@
 
 			<div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
 				<button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-					type="button" onclick={() => { form = null; }} > Batal </button>
+					type="button" onclick={() => { form = null; }} > Cancel </button>
 				<button class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700"
-					type="submit" > Simpan Branding </button>
+					type="submit" > Save Branding </button>
 			</div>
 		</form>
 	</div>

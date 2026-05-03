@@ -26,7 +26,7 @@
 	const assignmentColumns = [
 		{ key: 'employeeId', label: 'NIK' },
 		{
-			key: 'employmentType', label: 'Tipe',
+			key: 'employmentType', label: 'Type',
 			render: (v: string) => `<span class="capitalize px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">${v || '-'}</span>`
 		},
 		{
@@ -39,11 +39,11 @@
 				return `<span class="px-2 py-1 text-xs rounded-full ${c[v] || 'bg-gray-100 text-gray-800'}">${v || '-'}</span>`;
 			}
 		},
-		{ key: 'organizationId', label: 'Organisasi', render: (v: string) => data.orgs[v] || v || '-' },
-		{ key: 'orgUnitId',      label: 'Unit Kerja', render: (v: string) => data.ous[v]  || v || '-' },
-		{ key: 'positionId',     label: 'Posisi',     render: (v: string) => data.pos[v]  || v || '-' },
-		{ key: 'startDate', label: 'Dari',   render: (v: string) => formatDate(v) },
-		{ key: 'endDate',   label: 'Sampai', render: (v: string) => formatDate(v) },
+		{ key: 'organizationId', label: 'Organization', render: (v: string) => data.orgs[v] || v || '-' },
+		{ key: 'orgUnitId',      label: 'Work Unit',   render: (v: string) => data.ous[v]  || v || '-' },
+		{ key: 'positionId',     label: 'Position',    render: (v: string) => data.pos[v]  || v || '-' },
+		{ key: 'startDate', label: 'From', render: (v: string) => formatDate(v) },
+		{ key: 'endDate',   label: 'To',   render: (v: string) => formatDate(v) },
 		{
 			key: 'isRemote', label: 'Remote',
 			render: (v: boolean) => v
@@ -53,14 +53,14 @@
 	];
 
 	async function deleteAssignment(a: any) {
-		if (!confirm(`Hapus assignment NIK "${a.employeeId}"? Tindakan ini tidak dapat dibatalkan.`)) return;
+		if (!confirm(`Delete assignment for employee "${a.employeeId}"? This action cannot be undone.`)) return;
 		try {
 			const f = new FormData();
 			f.append('assignmentId', a._id?.toString());
 			const res = await fetch('?/deleteAssignment', { method: 'POST', body: f });
 			const result = await res.json();
-			if (result.type === 'failure') { showNotif('error', result.data?.error ?? 'Gagal menghapus'); return; }
-			showNotif('success', 'Assignment berhasil dihapus');
+			if (result.type === 'failure') { showNotif('error', result.data?.error ?? 'Failed to delete'); return; }
+			showNotif('success', 'Assignment deleted');
 			await invalidateAll();
 		} catch (err) { log.error('Error deleting assignment', { error: err }); }
 	}
@@ -105,11 +105,11 @@
 		</div>
 
 		<!-- Personal Info Form -->
-		<form method="POST" action="?/updateProfile" use:formEnhance={'Profil berhasil disimpan'}>
+		<form method="POST" action="?/updateProfile" use:formEnhance={'Profile saved successfully'}>
 			<div class="flex items-center justify-between border-b border-gray-200 pb-1 mb-4">
-				<p class="font-semibold text-gray-900">Informasi Pribadi</p>
+				<p class="font-semibold text-gray-900">Personal Info</p>
 				<button class="px-4 py-1.5 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700" type="submit">
-					💾 Simpan </button>
+					💾 Save </button>
 			</div>
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
 				<div>
@@ -128,13 +128,13 @@
 					<Input type="text" label="ID Number / KTP" name="idNumber" value={user?.idNumber || ''} />
 					<Input type="text" label="Tax ID / NPWP"   name="taxId"    value={user?.taxId || ''} />
 					{#if user?.organizationId}
-						<Input type="info" label="Organisasi" value={': ' + (data.orgs[user.organizationId] || user.organizationId)} />
+						<Input type="info" label="Organization" value={': ' + (data.orgs[user.organizationId] || user.organizationId)} />
 					{/if}
 					{#if user?.orgUnitId}
-						<Input type="info" label="Unit Kerja" value={': ' + (data.ous[user.orgUnitId] || user.orgUnitId)} />
+						<Input type="info" label="Work Unit" value={': ' + (data.ous[user.orgUnitId] || user.orgUnitId)} />
 					{/if}
 					{#if user?.positionId}
-						<Input type="info" label="Posisi" value={': ' + (data.pos[user.positionId] || user.positionId)} />
+						<Input type="info" label="Position" value={': ' + (data.pos[user.positionId] || user.positionId)} />
 					{/if}
 				</div>
 			</div>
@@ -147,9 +147,9 @@
 			data={user?.assignments ?? []}
 			columns={assignmentColumns}
 			searchable={false}
-			emptyMessage="Belum ada riwayat assignment"
+			emptyMessage="No assignment history"
 			cssClass="bg-white rounded-lg shadow-sm border border-gray-200 p-2"
-			header_before="<h2 class='ml-5 text-lg font-semibold text-gray-900'>Riwayat Assignment</h2>"
+			header_before="<h2 class='ml-5 text-lg font-semibold text-gray-900'>Assignment History</h2>"
 			header_actions={() => [{
 				text: '+ Assignment',
 				class: 'px-4 py-1 bg-indigo-600 hover:bg-indigo-700 hover:cursor-pointer text-white rounded-md transition-colors',

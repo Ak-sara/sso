@@ -34,34 +34,34 @@
 		const labels: Record<string, string> = {
 			login: 'Login',
 			logout: 'Logout',
-			'login_failed': 'Login Gagal',
-			'create_identity': 'Buat Identitas',
-			'update_identity': 'Update Identitas',
-			'delete_identity': 'Hapus Identitas',
-			'create_employee': 'Buat Karyawan',
-			'update_employee': 'Update Karyawan',
-			'delete_employee': 'Hapus Karyawan',
+			'login_failed': 'Login Failed',
+			'create_identity': 'Create Identity',
+			'update_identity': 'Update Identity',
+			'delete_identity': 'Delete Identity',
+			'create_employee': 'Create Employee',
+			'update_employee': 'Update Employee',
+			'delete_employee': 'Delete Employee',
 			'employee_onboard': 'Onboarding',
-			'employee_mutation': 'Mutasi',
+			'employee_mutation': 'Mutation',
 			'employee_transfer': 'Transfer',
-			'employee_promotion': 'Promosi',
-			'employee_demotion': 'Demosi',
+			'employee_promotion': 'Promotion',
+			'employee_demotion': 'Demotion',
 			'employee_offboard': 'Offboarding',
-			'create_organization': 'Buat Organisasi',
-			'update_organization': 'Update Organisasi',
-			'oauth_token_grant': 'Grant Token OAuth',
-			'oauth_token_refresh': 'Refresh Token OAuth',
-			'access_granted': 'Akses Diberikan',
-			'access_denied': 'Akses Ditolak'
+			'create_organization': 'Create Organization',
+			'update_organization': 'Update Organization',
+			'oauth_token_grant': 'OAuth Token Grant',
+			'oauth_token_refresh': 'OAuth Token Refresh',
+			'access_granted': 'Access Granted',
+			'access_denied': 'Access Denied'
 		};
 		return labels[action] || action;
 	};
 
 	const getStatusBadge = (status: string) => {
 		const badges: Record<string, { color: string; label: string }> = {
-			success: { color: 'bg-green-100 text-green-800', label: 'Berhasil' },
-			failed: { color: 'bg-red-100 text-red-800', label: 'Gagal' },
-			denied: { color: 'bg-yellow-100 text-yellow-800', label: 'Ditolak' }
+			success: { color: 'bg-green-100 text-green-800', label: 'Success' },
+			failed: { color: 'bg-red-100 text-red-800', label: 'Failed' },
+			denied: { color: 'bg-yellow-100 text-yellow-800', label: 'Denied' }
 		};
 		return badges[status] || { color: 'bg-gray-100 text-gray-800', label: status };
 	};

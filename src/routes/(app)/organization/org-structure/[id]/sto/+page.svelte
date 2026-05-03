@@ -74,11 +74,11 @@
 	async function openNodeEditor(nodeCode: string) {
 		try {
 			const response = await fetch(`/api/org-units/${nodeCode}`);
-			if (!response.ok) { showNotif('error', 'Unit tidak ditemukan'); return; }
+			if (!response.ok) { showNotif('error', 'Unit not found'); return; }
 			selectedNode = await response.json();
 		} catch (err) {
 			log.error('Error loading node', { error: err });
-			showNotif('error', 'Gagal memuat data unit');
+			showNotif('error', 'Failed to load unit');
 		}
 	}
 
@@ -87,13 +87,13 @@
 		try {
 			const response = await fetch('?/update', { method: 'POST', body: unitToFormData(selectedNode) });
 			const result = await response.json();
-			if (result.type === 'failure') { showNotif('error', result.data?.error ?? 'Gagal menyimpan'); return; }
-			showNotif('success', 'Perubahan berhasil disimpan');
+			if (result.type === 'failure') { showNotif('error', result.data?.error ?? 'Failed to save'); return; }
+			showNotif('success', 'Changes saved');
 			selectedNode = null;
 			await invalidateAll();
 		} catch (err) {
 			log.error('Error saving node', { error: err });
-			showNotif('error', 'Gagal menyimpan perubahan');
+			showNotif('error', 'Failed to save changes');
 		}
 	}
 </script>

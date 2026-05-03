@@ -19,8 +19,8 @@
 	<div class="bg-white rounded-2xl shadow-2xl overflow-hidden shadow-2xl p-8 lg:p-12">
 		<!-- Header -->
 		<div class="mb-8">
-			<h1 class="text-3xl font-bold text-gray-900 mb-2">Daftar Akun Baru</h1>
-			<p class="text-gray-600">Buat akun untuk mengakses sistem organisasi Anda</p>
+			<h1 class="text-3xl font-bold text-gray-900 mb-2">Create New Account</h1>
+			<p class="text-gray-600">Create an account to access your organization's system</p>
 		</div>
 
 		<!-- Registration Disabled Message -->
@@ -30,13 +30,13 @@
 					<span class="text-yellow-600 mr-3 text-2xl">⚠️</span>
 					<div>
 						<p class="text-sm text-yellow-800 font-medium mb-2">
-							Pendaftaran mandiri saat ini dinonaktifkan
+							Self-registration is currently disabled
 						</p>
 						<p class="text-sm text-yellow-700 mb-3">
-							Untuk mendapatkan akses, silakan hubungi administrator atau supervisor Anda untuk proses onboarding.
+							To get access, please contact your administrator or supervisor for the onboarding process.
 						</p>
 						<a href="/login" class="inline-block text-sm text-yellow-600 hover:text-yellow-800 underline font-medium">
-							← Kembali ke halaman login
+							← Back to login
 						</a>
 					</div>
 				</div>
@@ -48,7 +48,7 @@
 					<div>
 						<p class="text-sm text-green-700 font-medium mb-2">{form.message}</p>
 						<a href="/login" class="text-sm text-green-600 hover:text-green-800 underline">
-							← Kembali ke halaman login
+							← Back to login
 						</a>
 					</div>
 				</div>
@@ -78,7 +78,7 @@
 				<!-- Realm Selection -->
 				<div class="mb-4">
 					<label for="realmCode" class="block text-sm font-medium text-gray-700 mb-2">
-						Organisasi <span class="text-red-500">*</span>
+						Organization <span class="text-red-500">*</span>
 					</label>
 					<select
 						id="realmCode"
@@ -88,12 +88,12 @@
 						disabled={isLoading}
 						class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
 					>
-						<option value="">-- Pilih Organisasi --</option>
+						<option value="">-- Select Organization --</option>
 						{#each data.realms as realm}
 							<option value={realm.code}>{realm.name}</option>
 						{/each}
 					</select>
-					<p class="mt-1 text-xs text-gray-500">Pilih organisasi tempat Anda bekerja</p>
+					<p class="mt-1 text-xs text-gray-500">Select the organization where you work</p>
 				</div>
 
 				<!-- Email -->
@@ -109,11 +109,11 @@
 						required
 						disabled={isLoading}
 						class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
-						placeholder="nama@perusahaan.com"
+						placeholder="name@company.com"
 						autocomplete="email"
 					/>
 					<p class="mt-1 text-xs text-gray-500">
-						Gunakan email perusahaan Anda. Domain email harus sesuai dengan organisasi yang dipilih.
+						Use your company email. The email domain must match the selected organization.
 					</p>
 				</div>
 
@@ -121,7 +121,7 @@
 				<div class="grid grid-cols-2 gap-4 mb-4">
 					<div>
 						<label for="firstName" class="block text-sm font-medium text-gray-700 mb-2">
-							Nama Depan <span class="text-red-500">*</span>
+							First Name <span class="text-red-500">*</span>
 						</label>
 						<input
 							type="text"
@@ -137,7 +137,7 @@
 					</div>
 					<div>
 						<label for="lastName" class="block text-sm font-medium text-gray-700 mb-2">
-							Nama Belakang <span class="text-red-500">*</span>
+							Last Name <span class="text-red-500">*</span>
 						</label>
 						<input
 							type="text"
@@ -168,13 +168,13 @@
 						placeholder="••••••••"
 						autocomplete="new-password"
 					/>
-					<p class="mt-1 text-xs text-gray-500">Minimal 8 karakter</p>
+					<p class="mt-1 text-xs text-gray-500">Minimum 8 characters</p>
 				</div>
 
 				<!-- Confirm Password -->
 				<div class="mb-6">
 					<label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">
-						Konfirmasi Password <span class="text-red-500">*</span>
+						Confirm Password <span class="text-red-500">*</span>
 					</label>
 					<input
 						type="password"
@@ -196,9 +196,9 @@
 				>
 					{#if isLoading}
 						<span class="inline-block animate-spin mr-2">⏳</span>
-						Memproses...
+						Processing...
 					{:else}
-						Daftar
+						Register
 					{/if}
 				</button>
 			</form>
@@ -207,9 +207,9 @@
 		<!-- Footer -->
 		<div class="mt-8 text-center text-sm text-gray-600">
 			<p>
-				Sudah punya akun?
+				Already have an account?
 				<a href="/login" class="text-indigo-600 font-medium hover:text-indigo-700 transition-colors">
-					Login di sini
+					Login here
 				</a>
 			</p>
 		</div>

@@ -1,4 +1,4 @@
-import { redirect, error } from '@sveltejs/kit';
+import { redirect, error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { authorizeSchema } from '$lib/validation.js';
 import { oauthStore } from '$lib/store.js';
@@ -84,16 +84,19 @@ export const actions: Actions = {
             const password = formData?.password as string;
 
             if (!username || !password) {
-                return { error: 'Email/NIK and password are required' };
+                log.error('OAuth authorize error', { error: 'Email/NIK and password are required' });
+                return fail(400, { error: 'Email/NIK and password are required' });
             }
 
             const identity = await findIdentityByEmailOrNIK(username);
             if (!identity || !(await verify(identity.password, password))) {
-                return { error: 'Invalid credentials' };
+                log.error('OAuth authorize error', { error: `Invalid credentials for ${username}` });
+                return fail(401, { error: `Invalid credentials for ${username}` });
             }
 
             if (!identity.isActive) {
-                return { error: 'Account is inactive' };
+                log.error('OAuth authorize error', { error: `${username} Account is inactive` });
+                return fail(403, { error: `${username} Account is inactive` });
             }
 
             const session = await sessionManager.createSession(
@@ -120,14 +123,14 @@ export const actions: Actions = {
             log.debug('Authorize action - Identity ID from session', { identityId });
 
             if (!identityId) {
-                return { error: 'Not logged in' };
+                return fail(401, { error: 'Not logged in' });
             }
 
             const user = await oauthStore.getUserById(identityId);
             log.debug('Authorize action - User found', { email: user ? user.email : null });
 
             if (!user) {
-                return { error: 'User not found' };
+                return fail(404, { error: 'User not found' });
             }
 
             // Generate authorization code

@@ -31,19 +31,19 @@
 		const labels: Record<string, string> = {
 			login: 'Login',
 			logout: 'Logout',
-			'create-user': 'Buat User',
+			'create-user': 'Create User',
 			'update-user': 'Update User',
-			'delete-user': 'Hapus User',
-			'create-employee': 'Buat Karyawan',
-			'update-employee': 'Update Karyawan',
-			'delete-employee': 'Hapus Karyawan',
+			'delete-user': 'Delete User',
+			'create-employee': 'Create Employee',
+			'update-employee': 'Update Employee',
+			'delete-employee': 'Delete Employee',
 			'employee-onboard': 'Onboarding',
-			'employee-mutation': 'Mutasi',
+			'employee-mutation': 'Mutation',
 			'employee-offboard': 'Offboarding',
-			'create-org': 'Buat Organisasi',
-			'update-org': 'Update Organisasi',
-			'access-granted': 'Akses Diberikan',
-			'access-denied': 'Akses Ditolak'
+			'create-org': 'Create Organization',
+			'update-org': 'Update Organization',
+			'access-granted': 'Access Granted',
+			'access-denied': 'Access Denied'
 		};
 		return labels[action] || action;
 	};
@@ -56,10 +56,10 @@
 		const diffHours = Math.floor(diffMs / 3600000);
 		const diffDays = Math.floor(diffMs / 86400000);
 
-		if (diffMins < 1) return 'Baru saja';
-		if (diffMins < 60) return `${diffMins} menit lalu`;
-		if (diffHours < 24) return `${diffHours} jam lalu`;
-		if (diffDays < 7) return `${diffDays} hari lalu`;
+		if (diffMins < 1) return 'Just now';
+		if (diffMins < 60) return `${diffMins} min ago`;
+		if (diffHours < 24) return `${diffHours} hr ago`;
+		if (diffDays < 7) return `${diffDays} days ago`;
 		return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 	};
 
@@ -166,12 +166,12 @@
 		page={data.pagination.page}
 		pageSize={data.pagination.pageSize}
 		totalItems={data.pagination.total}
-		searchPlaceholder="Cari log (aksi, resource, ID)..."
+		searchPlaceholder="Search log (action, resource, ID)..."
 		onPageChange={handlePageChange}
 		onPageSizeChange={handlePageSizeChange}
 		onSort={handleSort}
 		onSearch={handleSearch}
 		onEdit={(row) => goto(`/audit/${row._id}`)}
-		emptyMessage="Belum ada log aktivitas sistem."
+		emptyMessage="No system activity logs yet."
 	/>
 </div>

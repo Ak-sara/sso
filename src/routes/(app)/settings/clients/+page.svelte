@@ -56,7 +56,7 @@
 			sortable: true,
 			render: (value: boolean) => {
 				const colorClass = value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-				const label = value ? 'Aktif' : 'Nonaktif';
+				const label = value ? 'Active' : 'Inactive';
 				return `<span class="px-2 py-1 text-xs font-semibold rounded-full ${colorClass}">${label}</span>`;
 			}
 		}
@@ -67,30 +67,30 @@
 			if (res.ok) {
 				actClient = await res.json();
 			} else {
-				showNotif('error', 'Gagal memuat data client');
+				showNotif('error', 'Failed to load client');
 			}
 		} catch (err) {
 			log.error('Error loading client', { error: err });
-			showNotif('error', 'Gagal memuat data client');
+			showNotif('error', 'Failed to load client');
 		}
 	}
 
 	async function handleDelete(client: any) {
-		if (!confirm(`Hapus client "${client.clientName}"? Tindakan ini tidak dapat dibatalkan.`)) return;
+		if (!confirm(`Delete client "${client.clientName}"? This action cannot be undone.`)) return;
 		try {
 			const fd = new FormData();
 			fd.append('clientId', client.clientId);
 			const res = await fetch('?/delete', { method: 'POST', body: fd });
 			const result = await res.json();
 			if (result.type === 'failure') {
-				showNotif('error', result.data.error ?? 'Gagal menghapus client');
+				showNotif('error', result.data.error ?? 'Failed to delete client');
 			} else {
-				showNotif('success', 'Client berhasil dihapus');
+				showNotif('success', 'Client deleted');
 				await invalidate('app:pagination');
 			}
 		} catch (err) {
 			log.error('Error deleting client', { error: err });
-			showNotif('error', 'Gagal menghapus client');
+			showNotif('error', 'Failed to delete client');
 		}
 	}
 </script>
@@ -115,7 +115,7 @@
 				action: () => { actClient = { clientName: '', redirectUris: [], allowedScopes: [], grantTypes: [], isActive: false }; }
 			}
 		]}
-		searchPlaceholder="Find client (nama, client ID)..."
+		searchPlaceholder="Find client (name, client ID)..."
 		onEdit={handleEdit}
 		onDelete={handleDelete}
 		emptyMessage="no OAuth client. Add new client to start."
@@ -125,10 +125,10 @@
 <PageHints bind:visible={showPageHints}
 	title='OAuth Clients'
 	paragraph='<p class="mt-1 text-sm text-blue-700">
-		OAuth Client adalah aplikasi yang dapat menggunakan SSO untuk autentikasi. Setiap client memiliki
-		<strong>Client ID</strong> dan <strong>Client Secret</strong> yang digunakan untuk OAuth 2.0 flow.
-		Anda perlu mengkonfigurasi <code class="bg-blue-100 px-1 rounded">Redirect URIs</code> dan
-		<code class="bg-blue-100 px-1 rounded">Allowed Scopes</code> untuk keamanan.
+		An OAuth Client is an application that can use SSO for authentication. Each client has a
+		<strong>Client ID</strong> and <strong>Client Secret</strong> used for the OAuth 2.0 flow.
+		You need to configure <code class="bg-blue-100 px-1 rounded">Redirect URIs</code> and
+		<code class="bg-blue-100 px-1 rounded">Allowed Scopes</code> for security.
 	</p>' />
 
 {#if actClient}

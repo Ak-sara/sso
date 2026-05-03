@@ -56,15 +56,10 @@
 							Email / NIK
 						</label>
 						<div class="mt-1">
-							<input
-								id="email"
-								name="email"
-								type="text"
-								autocomplete="username"
-								required
+							<input class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
 								placeholder="email@company.com or NIK123456"
-								class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-							/>
+								id="email" name="email"
+								type="text" autocomplete="username" required />
 						</div>
 						<p class="mt-1 text-xs text-gray-500">
 							You can use either your email address or NIK (Employee ID)
@@ -77,11 +72,9 @@
 						</label>
 						<div class="mt-1 relative">
 							<input class="appearance-none block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-								id="password"
-								name="password"
+								id="password" name="password"
 								type={showPassword ? 'text' : 'password'}
-								autocomplete="current-password"
-								required />
+								autocomplete="current-password" required />
 							<button type="button" onclick={() => showPassword = !showPassword}
 								class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
 								aria-label={showPassword ? 'Hide password' : 'Show password'}>
@@ -134,17 +127,11 @@
 					</div>
 
 					<form method="POST" use:formEnhance class="space-y-4">
-						<button
-							type="submit"
-							class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white brand-bg-primary brand-bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-						>
-							Authorize
-						</button>
+						<button class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white brand-bg-primary brand-bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+							type="submit" > Authorize </button>
 
-						<a
-							href="{data.params.redirect_uri}?error=access_denied&error_description=User+cancelled+authorization{data.params.state ? `&state=${data.params.state}` : ''}"
-							class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-						>
+						<a class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+							href="{data.params.redirect_uri}?error=access_denied&error_description=User+cancelled+authorization{data.params.state ? `&state=${data.params.state}` : ''}" >
 							Cancel
 						</a>
 					</form>

@@ -190,7 +190,7 @@
 
 		<!-- Add Rule Form -->
 		{#if showAddRule}
-			<form method="POST" action="?/addRule" use:formEnhance={{ success: 'Rule berhasil ditambahkan', onSuccess: () => { showAddRule = false; resetNewRule(); } }} class="mb-4 p-4 bg-gray-50 rounded-md">
+			<form method="POST" action="?/addRule" use:formEnhance={{ success: 'Rule added successfully', onSuccess: () => { showAddRule = false; resetNewRule(); } }} class="mb-4 p-4 bg-gray-50 rounded-md">
 				<div class="grid grid-cols-2 gap-4">
 					<div>
 						<div class="flex justify-between items-center mb-1">
@@ -304,7 +304,7 @@
 							</div>
 
 							{#if isEditing}
-								<form method="POST" action="?/deleteRule" use:formEnhance={'Rule berhasil dihapus'}>
+								<form method="POST" action="?/deleteRule" use:formEnhance={'Rule deleted'}>
 									<input type="hidden" name="index" value={index} />
 									<button class="text-red-600 hover:text-red-800 text-sm font-medium"
 										type="submit" > Delete </button>
@@ -366,7 +366,7 @@
 
 	<!-- Save/Cancel Actions -->
 	{#if isEditing}
-	<form method="POST" action="?/update" use:formEnhance={{ success: 'Konfigurasi berhasil disimpan', onSuccess: () => { isEditing = false; } }}>
+	<form method="POST" action="?/update" use:formEnhance={{ success: 'Configuration saved', onSuccess: () => { isEditing = false; } }}>
 		<input type="hidden" name="enabled" value={config.enabled} />
 		<input type="hidden" name="rules" value={JSON.stringify(config.rules)} />
 		<input type="hidden"

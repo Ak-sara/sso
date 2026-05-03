@@ -11,7 +11,7 @@ let showPassword=$state(false);
 </script>
 
 <FormModal wide onClose={() => { form = null; }} title={'Change Password'}
-	subtitle="Pastikan password baru Anda kuat dan aman">
+	subtitle="Make sure your new password is strong and secure">
 
 	<!-- Form Content -->
 	<div class="grid p-2 gap-4">
