@@ -30,7 +30,22 @@ const structure: NodeDef[] = [
 
 const { groups, standalones, connections, keyMap } = buildLayout(structure);
 </script>
-
+<div class="flex w90 h-20 mb-2"><svg width="100%" height="100%" viewbox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" xml:space="preserve">
+    <path fill="none" stroke="#F39" stroke-width="5" d="m0,0 v 1000 h 1000 v -1000 h -1000" />
+    <path fill="none" stroke="#3A3" stroke-width="5" d="M200,950 v-300 h500 v-300" />
+</svg>
+<svg width="100%" height="100%" viewbox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" xml:space="preserve">
+    <path fill="none" stroke="#F39" stroke-width="5" d="m0,0 v 1000 h 1000 v -1000 h -1000" />
+    <path fill="none" stroke="#3A3" stroke-width="5" d="M800,950 v-300 h-500 v-300" />
+</svg>
+<svg width="100%" height="100%" viewbox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" xml:space="preserve">
+    <path fill="none" stroke="#F39" stroke-width="5" d="m0,0 v 1000 h 1000 v -1000 h -1000" />
+    <path fill="none" stroke="#3A3" stroke-width="5" d="M950,800 h-300 v-500 h-600" />
+</svg>
+<svg width="100%" height="100%" viewbox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" xml:space="preserve">
+    <path fill="none" stroke="#F39" stroke-width="5" d="m0,0 v 1000 h 1000 v -1000 h -1000" />
+    <path fill="none" stroke="#3A3" stroke-width="5" d="M50,800 h300 v-500 h600" />
+</svg></div>
 <svg class="border w-full" style="min-height:87vh;">
     {#each groups as g}
         <G x={g.x} y={g.y} W={g.w} H={g.h} label={g.label} key={g.key}
