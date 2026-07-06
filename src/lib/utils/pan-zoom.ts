@@ -16,6 +16,8 @@ export interface PanZoomOptions {
 	maxScale?: number;
 	/** CSS selector for elements that should not trigger panning (e.g., '.node') */
 	excludeSelector?: string;
+	/** Only zoom on Ctrl/Cmd + wheel, letting plain wheel scroll the page (default: false) */
+	ctrlWheelZoom?: boolean;
 	/** Callback when pan starts */
 	onPanStart?: () => void;
 	/** Callback when pan ends */
@@ -47,6 +49,7 @@ export function createPanZoom(options: PanZoomOptions): PanZoomInstance {
 		minScale = 0.1,
 		maxScale = 10,
 		excludeSelector,
+		ctrlWheelZoom = false,
 		onPanStart,
 		onPanEnd,
 		onTransform
@@ -110,6 +113,7 @@ export function createPanZoom(options: PanZoomOptions): PanZoomInstance {
 
 	// Mouse wheel - zoom
 	function handleWheel(e: WheelEvent) {
+		if (ctrlWheelZoom && !e.ctrlKey && !e.metaKey) return; // plain wheel scrolls the page
 		e.preventDefault();
 
 		const delta = e.deltaY > 0 ? 0.9 : 1.1;

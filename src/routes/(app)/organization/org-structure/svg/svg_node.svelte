@@ -12,6 +12,7 @@
         label?: string;
         title?: string;
         has_parent?: boolean;
+        has_child?: boolean;
         has_shadow?: boolean; // sends shadow (outgoing) → bottom green dot
         is_shadow?:  boolean; // receives shadow (incoming) → top green dot
         has_neck?:   boolean;
@@ -19,7 +20,7 @@
         r_neck?:     boolean;
     }
     let { x = 0, y = 0, absX = x, absY = y, key, name, label, title,
-          has_parent = false, has_shadow = false, is_shadow = false,
+          has_parent = false, has_child = false, has_shadow = false, is_shadow = false,
           has_neck = false, l_neck = false, r_neck = false }: Props = $props();
 
     const [blue,orange,green]=["#2c7be5","#e67e22","#16a34a"]
@@ -65,7 +66,7 @@
     </text>
 
     {#if has_parent }<circle cx="{(W/2)-8}" cy="{T}" r="3" fill="{blue}"   />{/if}
-    <circle                  cx="{(W/2)-8}" cy="{B}" r="3" fill="{blue}"   />
+    {#if has_child }<circle cx="{(W/2)-8}" cy="{B}" r="3" fill="{blue}"   />{/if}
 
     {#if has_shadow }<circle cx="{(W/2)+8}"  cy="{B}" r="3" fill="{green}"  />{/if}
     {#if is_shadow  }<circle cx="{(W/2)+8}"  cy="{T}" r="3" fill="{green}"  />{/if}

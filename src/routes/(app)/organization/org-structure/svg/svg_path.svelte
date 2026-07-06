@@ -5,8 +5,13 @@
         type?:      'blue' | 'green' | 'orange';
         pathStyle?: 'vhv' | 'hvh' | 'vh';
     }
+    import { DROP } from './layout';
+
     let { x1, y1, x2, y2, type = 'blue', pathStyle = 'vhv' }: Props = $props();
 
+    // first vertical segment differs per line type so parallel runs don't overlap.
+    // note: orange never reaches the vhv branch — neck lines are 'vh', their drop
+    // is baked into the neck node's y by layout.ts (DROP.orange)
     function buildPath(x1: number, y1: number, x2: number, y2: number, style: string): string {
         if (style === 'vh') {
             // vertical then horizontal: go to target y first, then across
@@ -16,8 +21,9 @@
             const midX = (x1 + x2) / 2;
             return `M${x1},${y1} L${midX},${y1} L${midX},${y2} L${x2},${y2}`;
         }
-        // vhv: go halfway down, across, then down to target
-        const mid = (y1 + y2) / 2;
+        // vhv: drop the type-specific distance, across, then down to target
+        const dir = y2 >= y1 ? 1 : -1;
+        const mid = y1 + dir * Math.min(DROP[type], Math.abs(y2 - y1) / 2);
         return `M${x1},${y1} L${x1},${mid} L${x2},${mid} L${x2},${y2}`;
     }
 
