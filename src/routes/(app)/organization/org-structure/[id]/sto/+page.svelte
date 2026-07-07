@@ -51,7 +51,7 @@
 		await chart.load(strcdata)
 			.assign(userList, userCard, { width: 220, height: 72 })
 			.render();
-
+console.log(JSON.stringify(strcdata))
 		document.querySelector('#sto-chart')?.addEventListener('click', (e) => {
 			const target = (e.target as Element).closest('[data-id]');
 			if (target) {

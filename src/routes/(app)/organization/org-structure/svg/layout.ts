@@ -5,7 +5,7 @@ type        NameEntry  = { absX: number; absY: number; key: string; w: number; h
 
 export type LayoutNode = {
     name: string; label: string; key: string; lx: number; ly: number; absX: number; absY: number;
-  has_parent?: boolean; has_child?: boolean; has_shadow?: boolean; is_shadow?: boolean; has_neck?: boolean; l_neck?: boolean;
+    has_parent?: boolean; has_child?: boolean; has_shadow?: boolean; is_shadow?: boolean; has_neck?: boolean; l_neck?: boolean;
 };
 export type LayoutGroup = {
     name: string; label: string; key: string; x: number; y: number; w: number; h: number; nodes: LayoutNode[];
@@ -21,9 +21,7 @@ export type Connection = {
 };
 
 const NW = 160, NH = 60, H_GAP = 40, V_GAP = 40, G_PAD = 24, G_GAP = 60;
-// first-vertical drop per line type. blue/green are applied by svg_path.svelte (vhv);
-// orange is baked into neck node placement here — its 'vh' path just follows the node's y
-export const DROP = { blue: 18, green: 14, orange: 10 } as const;
+export const DROP = { blue: 22, green: 18, orange: 16 } as const;
 
 export function anchorPt(absX: number, absY: number, a: AnchorType, w = NW, h = NH): [number, number] {
     if (a === 'parent_in')  return [absX + w/2 - 8,  absY];
@@ -43,191 +41,346 @@ function buildKey(groupName: string, memberName: string, members: NodeDef[]): st
     return `${groupName}:${path.join('_')}`;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// buildLayout — three-pass recursive layout
+//
+//  Pass 1  Build Col tree from flat defs (members + external children)
+//  Pass 2  Bottom-up: compute slotW / boxW / boxH for every Col
+//  Pass 3  Top-down:  assign absolute coordinates
+//  Emit    Walk the tree to produce LayoutGroup / LayoutAlone / Connection
+// ─────────────────────────────────────────────────────────────────────────────
 export function buildLayout(defs: NodeDef[]) {
-    const isHeaderName = (name: string) => defs.some(m => m.group === name);
-    const isHeader   = (n: NodeDef) => !n.neck && !n.group && !n.parent && isHeaderName(n.name);
-    const isAlone    = (n: NodeDef) => !n.neck && !n.group && !n.parent && !isHeaderName(n.name);
-    const isNeck     = (n: NodeDef) => !!n.neck && !n.group;
-    const isExternal = (n: NodeDef) => !n.neck && !n.group && !!n.parent;
-
     const shadowSources = new Set(defs.filter(m => m.shadow).map(m => m.name));
     const shadowTargets = new Set(defs.filter(m => m.shadow).map(m => m.shadow!));
     const neckTargets   = new Set(defs.filter(m => m.neck).map(m => m.neck!));
 
-    const groups:      LayoutGroup[]  = [];
-    const standalones: LayoutAlone[]  = []; // alones + necks + externals unified
-    const connections: Connection[]   = [];
-    const keyMap  = new Map<string, LayoutNode | LayoutGroup | LayoutAlone>();
+    const outGroups:      LayoutGroup[] = [];
+    const outStandalones: LayoutAlone[] = [];
+    const outConnections: Connection[]  = [];
     const nameMap = new Map<string, NameEntry>();
+    const keyMap  = new Map<string, LayoutNode | LayoutGroup | LayoutAlone>();
 
-    // external children grouped by the box they hang below (parent's group, or the parent itself)
-    const boxOf = (pname: string) => defs.find(d => d.name === pname)?.group ?? pname;
-    const rowsByBox = new Map<string, NodeDef[]>();
-    for (const n of defs.filter(isExternal)) {
-        const b = boxOf(n.parent!);
-        if (!rowsByBox.has(b)) rowsByBox.set(b, []);
-        rowsByBox.get(b)!.push(n);
-    }
-    // below-groups grouped by their reference box
-    const belowsByRef = new Map<string, NodeDef[]>();
-    for (const n of defs.filter(d => isHeader(d) && !!d.below)) {
-        if (!belowsByRef.has(n.below!)) belowsByRef.set(n.below!, []);
-        belowsByRef.get(n.below!)!.push(n);
+    // ── Pass 1: Build Col tree ────────────────────────────────────────────────
+
+    // lpos entry: node position inside its parent group box
+    type LPos = { lx: number; ly: number; slotLeft: number; slotW: number };
+    // inner layout result for a group box
+    type IL   = { boxW: number; boxH: number; lpos: Map<string, LPos> };
+
+    type Col = {
+        def: NodeDef;
+        isBox: boolean;       // true when other defs declare group === def.name
+        members: Col[];       // nodes physically inside this group box
+        children: Col[];      // external cols hanging below (via parent / below)
+        // computed in pass 2:
+        slotW: number;        // total column width (covers box + recursive children)
+        boxW:  number;        // own box width
+        boxH:  number;        // own box height (group rect or NH)
+        innerH: number;       // boxH extended to include member external-child subtrees
+        totalH: number;       // innerH + direct children below
+        // set in pass 3:
+        absX: number;         // absolute left edge of this col's slot
+        absY: number;         // absolute top of this col's box
+        il?: IL;              // cached inner layout (group boxes only)
+    };
+
+    const colMap = new Map<string, Col>();
+    for (const def of defs) {
+        colMap.set(def.name, {
+            def, isBox: defs.some(d => d.group === def.name),
+            members: [], children: [],
+            slotW: 0, boxW: 0, boxH: 0, innerH: 0, totalH: 0, absX: 0, absY: 0,
+        });
     }
 
-    function measureGroup(gh: NodeDef) {
-        const members = defs.filter(n => n.group === gh.name);
-        function subtreeW(name: string): number {
-            const ch = members.filter(m => m.parent === name);
-            if (!ch.length) return NW;
-            return ch.reduce((s, c) => s + subtreeW(c.name), 0) + (ch.length - 1) * H_GAP;
+    // Wire members and external children
+    for (const def of defs) {
+        // member of a group box
+        if (def.group) colMap.get(def.group)?.members.push(colMap.get(def.name)!);
+        // pure external child (no group → pure parent link)
+        if (def.parent && !def.group) colMap.get(def.parent)?.children.push(colMap.get(def.name)!);
+        // `below` acts like a parent for placement (no group, no existing parent handled)
+        if (def.below && !def.parent && !def.group) colMap.get(def.below)?.children.push(colMap.get(def.name)!);
+    }
+
+    // ── Pass 2: Bottom-up slot widths ─────────────────────────────────────────
+
+    const sumW = (cols: Col[], gap: number) =>
+        cols.length ? cols.reduce((s, c) => s + c.slotW, 0) + (cols.length - 1) * gap : 0;
+
+    // Build internal layout for a group box.
+    // Each member's slot width = max(NW, its external children's total width).
+    // Internal parent-child ordering determines row structure.
+    function buildIL(col: Col): IL {
+        if (col.il) return col.il;
+        const mems = col.members;
+        if (!mems.length) {
+            col.il = { boxW: NW + G_PAD * 2, boxH: NH + G_PAD * 2, lpos: new Map() };
+            return col.il;
         }
-        const lpos: Record<string, { lx: number; ly: number }> = {};
-        function place(name: string, startX: number, depth: number) {
-            const ch = members.filter(m => m.parent === name);
-            lpos[name] = { lx: startX + (subtreeW(name) - NW) / 2, ly: depth * (NH + V_GAP) };
+        const memSet = new Set(mems.map(m => m.def.name));
+        const roots  = mems.filter(m => !m.def.parent || !memSet.has(m.def.parent));
+
+        // Slot width for a member inside the group, accounting for its external children
+        function mSlotW(m: Col): number {
+            const extW = sumW(m.children, G_GAP);
+            const ownW = Math.max(NW, extW || NW);
+            const inCh = mems.filter(c => c.def.parent === m.def.name);
+            if (!inCh.length) return ownW;
+            const inW  = inCh.reduce((s, c) => s + mSlotW(c), 0) + (inCh.length - 1) * H_GAP;
+            return Math.max(ownW, inW);
+        }
+
+        const lpos = new Map<string, LPos>();
+        function placeM(m: Col, startX: number, depth: number) {
+            const sw  = mSlotW(m);
+            lpos.set(m.def.name, { lx: startX + (sw - NW) / 2, ly: depth * (NH + V_GAP), slotLeft: startX, slotW: sw });
+            const inCh = mems.filter(c => c.def.parent === m.def.name);
             let cx = startX;
-            for (const c of ch) { place(c.name, cx, depth + 1); cx += subtreeW(c.name) + H_GAP; }
+            for (const c of inCh) { placeM(c, cx, depth + 1); cx += mSlotW(c) + H_GAP; }
         }
-        const roots  = members.filter(m => !m.parent || !members.find(p => p.name === m.parent));
-        const rootsW = roots.reduce((s, r) => s + subtreeW(r.name), 0) + (roots.length - 1) * H_GAP;
-        let rx = (Math.max(NW, rootsW) - rootsW) / 2;
-        for (const r of roots) { place(r.name, rx, 0); rx += subtreeW(r.name) + H_GAP; }
-        const w = (members.length ? Math.max(...members.map(n => lpos[n.name].lx + NW)) : NW) + G_PAD * 2;
-        const h = (members.length ? Math.max(...members.map(n => lpos[n.name].ly + NH)) : NH) + G_PAD * 2;
-        return { members, lpos, w, h };
-    }
-    type Meas = ReturnType<typeof measureGroup>;
 
-    // ---- column model: a top-level box plus everything stacked below it (external rows, below-groups),
-    // measured before placement so the whole column reserves its width and neighbours cannot overlap
-    type Block =
-        | { kind: 'group'; def: NodeDef; meas: Meas; ox: number; oy: number; w: number }
-        | { kind: 'row';   kids: NodeDef[];          ox: number; oy: number; w: number };
+        const rW = roots.reduce((s, r) => s + mSlotW(r), 0) + (roots.length - 1) * H_GAP;
+        let rx = (Math.max(NW, rW) - rW) / 2;
+        for (const r of roots) { placeM(r, rx, 0); rx += mSlotW(r) + H_GAP; }
 
-    function stackBox(def: NodeDef, ox: number, oy: number, blocks: Block[]): number {
-        const meas = measureGroup(def);
-        blocks.push({ kind: 'group', def, meas, ox, oy, w: meas.w });
-        let bottom = oy + meas.h;
-        const kids = rowsByBox.get(def.name) ?? [];
-        if (kids.length) {
-            const rw = kids.length * NW + (kids.length - 1) * H_GAP;
-            blocks.push({ kind: 'row', kids, ox: ox + (meas.w - rw) / 2, oy: bottom + V_GAP, w: rw });
-            bottom += V_GAP + NH;
-        }
-        for (const b of belowsByRef.get(def.name) ?? []) bottom = stackBox(b, ox, bottom + G_GAP, blocks);
-        return bottom;
+        const maxLx = Math.max(...mems.map(m => lpos.get(m.def.name)!.lx + NW));
+        const maxLy = Math.max(...mems.map(m => lpos.get(m.def.name)!.ly + NH));
+        col.il = { boxW: maxLx + G_PAD * 2, boxH: maxLy + G_PAD * 2, lpos };
+        return col.il;
     }
 
-    function realizeGroup(gh: NodeDef, meas: Meas, gAX: number, gAY: number) {
-        const { members, lpos, w: gW, h: gH } = meas;
-        const gKey = gh.name;
-        const nodes: LayoutNode[] = members.map(n => {
-            const lx = lpos[n.name].lx + G_PAD, ly = lpos[n.name].ly + G_PAD;
+    const computed = new Set<string>();
+    function computeCol(col: Col) {
+        if (computed.has(col.def.name)) return;
+        computed.add(col.def.name);
+        // Recurse members first (they own their children's slotW too)
+        for (const m of col.members) computeCol(m);
+        for (const c of col.children) computeCol(c);
+
+        if (col.isBox || col.members.length) {
+            const il = buildIL(col);
+            col.boxW = il.boxW;
+            col.boxH = il.boxH;
+            // innerH: max vertical extent considering member external-child subtrees
+            let maxInner = col.boxH;
+            for (const m of col.members) {
+                const lp = il.lpos.get(m.def.name);
+                if (lp) {
+                    // member top is at G_PAD + lp.ly inside the box; its full subtree is m.totalH
+                    maxInner = Math.max(maxInner, G_PAD + lp.ly + m.totalH);
+                }
+            }
+            col.innerH = maxInner;
+        } else {
+            col.boxW   = NW;
+            col.boxH   = NH;
+            col.innerH = NH;
+        }
+        // totalH = innerH + direct external children stacked below
+        col.totalH = col.children.length
+            ? col.innerH + G_GAP + Math.max(...col.children.map(c => c.totalH))
+            : col.innerH;
+
+        const extW = sumW(col.children, G_GAP);
+        col.slotW  = Math.max(col.boxW, extW || col.boxW);
+    }
+
+    // ── Pass 3: Top-down coordinate assignment ────────────────────────────────
+
+    function assignCoords(col: Col, slotLeft: number, y: number) {
+        col.absX = slotLeft;
+        col.absY = y;
+
+        // Place direct external children below this box AND below any member subtrees
+        if (col.children.length) {
+            const chY      = y + col.innerH + G_GAP;
+            const chTotalW = sumW(col.children, G_GAP);
+            const chStartX = slotLeft + (col.slotW - chTotalW) / 2;
+            let cx = chStartX;
+            for (const ch of col.children) { assignCoords(ch, cx, chY); cx += ch.slotW + G_GAP; }
+        }
+
+        // For group boxes: assign member coords and recurse into member children
+        if ((col.isBox || col.members.length) && col.members.length) {
+            const il  = buildIL(col);
+            const gAX = slotLeft + (col.slotW - col.boxW) / 2;
+            const gAY = y;
+            for (const m of col.members) {
+                const lp = il.lpos.get(m.def.name)!;
+                m.absX = gAX + lp.lx + G_PAD;
+                m.absY = gAY + lp.ly + G_PAD;
+                // Place this member's external children below the member node
+                if (m.children.length) {
+                    const mSlotLeft = gAX + lp.slotLeft + G_PAD;
+                    const mChTotalW = sumW(m.children, G_GAP);
+                    const mChStartX = mSlotLeft + (lp.slotW - mChTotalW) / 2;
+                    let cx = mChStartX;
+                    const mChY = m.absY + NH + G_GAP;
+                    for (const ch of m.children) { assignCoords(ch, cx, mChY); cx += ch.slotW + G_GAP; }
+                }
+            }
+        }
+    }
+
+    // ── Emit: walk tree → produce layout output ───────────────────────────────
+
+    function emitGroup(col: Col) {
+        const il   = buildIL(col);
+        const gAX  = col.absX + (col.slotW - col.boxW) / 2;
+        const gAY  = col.absY;
+        const gKey = col.def.name;
+
+        const nodes: LayoutNode[] = col.members.map(m => {
+            const lp = il.lpos.get(m.def.name)!;
+            const lx = lp.lx + G_PAD, ly = lp.ly + G_PAD;
             return {
-                name: n.name, label: n.label, key: buildKey(gKey, n.name, members), lx, ly,
-                absX: gAX + lx, absY: gAY + ly,
-                has_parent: !!n.parent && defs.some(d => d.name === n.parent),
-                has_child:  defs.some(d => d.parent === n.name),
-                has_shadow: shadowSources.has(n.name),
-                is_shadow:  shadowTargets.has(n.name),
-                has_neck:   neckTargets.has(n.name),
+                name: m.def.name, label: m.def.label,
+                key: buildKey(gKey, m.def.name, col.members.map(mm => mm.def)),
+                lx, ly, absX: gAX + lx, absY: gAY + ly,
+                has_parent: !!m.def.parent && defs.some(d => d.name === m.def.parent),
+                has_child:  m.children.length > 0 || defs.some(d => d.parent === m.def.name && !d.group),
+                has_shadow: shadowSources.has(m.def.name),
+                is_shadow:  shadowTargets.has(m.def.name),
+                has_neck:   neckTargets.has(m.def.name),
             };
         });
+
         const g: LayoutGroup = {
-            name: gh.name, label: gh.label, key: gKey, x: gAX, y: gAY, w: gW, h: gH, nodes,
-            is_shadow:  shadowTargets.has(gh.name),
-            has_shadow: shadowSources.has(gh.name),
-            has_child:  defs.some(d => d.parent === gh.name),
-            has_neck:   neckTargets.has(gh.name),
+            name: col.def.name, label: col.def.label, key: gKey,
+            x: gAX, y: gAY, w: col.boxW, h: col.boxH, nodes,
+            is_shadow:  shadowTargets.has(col.def.name),
+            has_shadow: shadowSources.has(col.def.name),
+            has_child:  col.children.length > 0,
+            has_neck:   neckTargets.has(col.def.name),
+            l_neck:     !!col.def.neck,
         };
-        groups.push(g);
+        outGroups.push(g);
         keyMap.set(gKey, g);
-        nameMap.set(gh.name, { absX: gAX, absY: gAY, key: gKey, w: gW, h: gH });
+        nameMap.set(col.def.name, { absX: gAX, absY: gAY, key: gKey, w: col.boxW, h: col.boxH });
         for (const n of nodes) {
             keyMap.set(n.key, n);
             nameMap.set(n.name, { absX: n.absX, absY: n.absY, key: n.key, w: NW, h: NH });
         }
-        // blue connectors between members of the same group
-        for (const m of members.filter(m => m.parent && members.find(p => p.name === m.parent))) {
-            const pn = nodes.find(n => n.name === m.parent)!;
-            const cn = nodes.find(n => n.name === m.name)!;
-            const [x1, y1] = anchorPt(pn.absX, pn.absY, 'parent_out');
-            const [x2, y2] = anchorPt(cn.absX, cn.absY, 'parent_in');
-            connections.push({ fromKey: pn.key, toKey: cn.key, x1, y1, x2, y2, type: 'blue', pathStyle: 'vhv' });
-        }
-    }
 
-    function placeStandalone(n: NodeDef, x: number, y: number, extra: Partial<LayoutAlone> = {}) {
-        const s: LayoutAlone = {
-            name: n.name, label: n.label, key: n.name, x, y,
-            has_child:  defs.some(d => d.parent === n.name),
-            has_shadow: shadowSources.has(n.name), is_shadow: shadowTargets.has(n.name),
-            has_neck: neckTargets.has(n.name),
-            ...extra,
-        };
-        standalones.push(s);
-        keyMap.set(n.name, s);
-        nameMap.set(n.name, { absX: x, absY: y, key: n.name, w: NW, h: NH });
-    }
-
-    // Pass 1 — top-level items in definition order (header columns, alones, necks),
-    // so a neck defined right after its target group lands next to it
-    let cursorX = G_PAD;
-    const pendingNecks: NodeDef[] = [];
-    function placeNeck(n: NodeDef) {
-        const tgt = nameMap.get(n.neck!);
-        if (!tgt) return;
-        placeStandalone(n, cursorX, tgt.absY + tgt.h + DROP.orange - NH / 2, { l_neck: true });
-        cursorX += NW + H_GAP;
-    }
-    for (const n of defs) {
-        if (isHeader(n) && !n.below) {
-            const blocks: Block[] = [];
-            stackBox(n, 0, 0, blocks);
-            const minOx = Math.min(...blocks.map(b => b.ox));
-            const maxOx = Math.max(...blocks.map(b => b.ox + b.w));
-            const baseX = cursorX - minOx, baseY = G_PAD;
-            for (const b of blocks) {
-                if (b.kind === 'group') realizeGroup(b.def, b.meas, baseX + b.ox, baseY + b.oy);
-                else {
-                    let x = baseX + b.ox;
-                    for (const kid of b.kids) { placeStandalone(kid, x, baseY + b.oy, { has_parent: true }); x += NW + H_GAP; }
+        // Internal blue connectors (within same group)
+        const memSet = new Set(col.members.map(m => m.def.name));
+        for (const m of col.members) {
+            if (m.def.parent && memSet.has(m.def.parent)) {
+                const pn = nodes.find(n => n.name === m.def.parent)!;
+                const cn = nodes.find(n => n.name === m.def.name)!;
+                if (pn && cn) {
+                    const [x1,y1] = anchorPt(pn.absX, pn.absY, 'parent_out');
+                    const [x2,y2] = anchorPt(cn.absX, cn.absY, 'parent_in');
+                    outConnections.push({ fromKey: pn.key, toKey: cn.key, x1, y1, x2, y2, type: 'blue', pathStyle: 'vhv' });
                 }
             }
-            cursorX += (maxOx - minOx) + G_GAP;
         }
-        else if (isAlone(n)) { placeStandalone(n, cursorX, G_PAD); cursorX += NW + H_GAP; }
-        else if (isNeck(n))  { if (nameMap.has(n.neck!)) placeNeck(n); else pendingNecks.push(n); }
-    }
-    for (const n of pendingNecks) placeNeck(n);
 
-    // Pass 2 — blue connectors that cross box boundaries: external children + members whose parent is in another group
-    for (const n of defs.filter(d => !!d.parent && (isExternal(d) || (!!d.group && !defs.some(m => m.group === d.group && m.name === d.parent))))) {
-        const src = nameMap.get(n.parent!), me = nameMap.get(n.name);
+        for (const ch of col.children) emitCol(ch);
+        for (const m of col.members) for (const mch of m.children) emitCol(mch);
+    }
+
+    function emitNode(col: Col) {
+        const x = col.absX + (col.slotW - NW) / 2;
+        const y = col.absY;
+        const s: LayoutAlone = {
+            name: col.def.name, label: col.def.label, key: col.def.name, x, y,
+            has_parent: !!col.def.parent || !!col.def.below,
+            has_child:  col.children.length > 0,
+            has_shadow: shadowSources.has(col.def.name),
+            is_shadow:  shadowTargets.has(col.def.name),
+            has_neck:   neckTargets.has(col.def.name),
+        };
+        outStandalones.push(s);
+        keyMap.set(col.def.name, s);
+        nameMap.set(col.def.name, { absX: x, absY: y, key: col.def.name, w: NW, h: NH });
+        for (const ch of col.children) emitCol(ch);
+    }
+
+    function emitCol(col: Col) {
+        if (col.isBox || col.members.length) emitGroup(col);
+        else emitNode(col);
+    }
+
+    // ── Top-level roots + neck deferred placement ─────────────────────────────
+
+    const allMemberNames = new Set(defs.filter(d => d.group).map(d => d.name));
+    const allChildNames  = new Set([
+        ...defs.filter(d => d.parent && !d.group).map(d => d.name),
+        ...defs.filter(d => d.below && !d.parent && !d.group).map(d => d.name),
+    ]);
+
+    // neck nodes/groups are deferred until after main layout (need target in nameMap)
+    const neckCols   = [...colMap.values()].filter(c => !!c.def.neck);
+    const topLevel   = [...colMap.values()].filter(c =>
+        !allMemberNames.has(c.def.name) &&
+        !allChildNames.has(c.def.name) &&
+        !c.def.neck
+    );
+
+    let cursorX = G_PAD;
+    for (const col of topLevel) {
+        computeCol(col);
+        assignCoords(col, cursorX, G_PAD);
+        emitCol(col);
+        cursorX += col.slotW + G_GAP;
+    }
+
+    // Neck cols: place to the right of cursor, aligned to target's y
+    for (const col of neckCols) {
+        computeCol(col);
+        const tgt = nameMap.get(col.def.neck!);
+        if (tgt) {
+            assignCoords(col, cursorX, tgt.absY);
+            emitCol(col);
+            cursorX += col.slotW + G_GAP;
+        }
+    }
+
+    // ── Connections (cross-box blue, shadow green, neck orange) ───────────────
+
+    // Cross-box blue: any parent link not already drawn as internal
+    for (const def of defs) {
+        if (!def.parent) continue;
+        const src = nameMap.get(def.parent), me = nameMap.get(def.name);
         if (!src || !me) continue;
-        const [x1, y1] = anchorPt(src.absX, src.absY, 'parent_out', src.w, src.h);
-        const [x2, y2] = anchorPt(me.absX, me.absY, 'parent_in', me.w, me.h);
-        connections.push({ fromKey: src.key, toKey: me.key, x1, y1, x2, y2, type: 'blue', pathStyle: 'vhv' });
+        // Skip if both are in same group (drawn internally in emitGroup)
+        const parentGroup = defs.find(d => d.name === def.parent)?.group;
+        if (def.group && def.group === parentGroup) continue;
+        // Skip internal member-to-member same-group links
+        if (def.group && defs.find(d => d.name === def.parent)?.group === def.group) continue;
+        const [x1,y1] = anchorPt(src.absX, src.absY, 'parent_out', src.w, src.h);
+        const [x2,y2] = anchorPt(me.absX,  me.absY,  'parent_in',  me.w, me.h);
+        outConnections.push({ fromKey: src.key, toKey: me.key, x1, y1, x2, y2, type: 'blue', pathStyle: 'vhv' });
     }
 
-    // Pass 3 — shadow connections: shadow_out → shadow_in (green vhv)
-    for (const n of defs.filter(m => !!m.shadow)) {
-        const src = nameMap.get(n.name), tgt = nameMap.get(n.shadow!);
+    // below-connectors: draw as blue parent_out → parent_in
+    for (const def of defs.filter(d => d.below && !d.parent)) {
+        const src = nameMap.get(def.below!), me = nameMap.get(def.name);
+        if (!src || !me) continue;
+        const [x1,y1] = anchorPt(src.absX, src.absY, 'parent_out', src.w, src.h);
+        const [x2,y2] = anchorPt(me.absX,  me.absY,  'parent_in',  me.w, me.h);
+        outConnections.push({ fromKey: src.key, toKey: me.key, x1, y1, x2, y2, type: 'blue', pathStyle: 'vhv' });
+    }
+
+    // Shadow (green)
+    for (const def of defs.filter(d => d.shadow)) {
+        const src = nameMap.get(def.name), tgt = nameMap.get(def.shadow!);
         if (!src || !tgt) continue;
-        const [x1, y1] = anchorPt(src.absX, src.absY, 'shadow_out', src.w, src.h);
-        const [x2, y2] = anchorPt(tgt.absX, tgt.absY, 'shadow_in',  tgt.w, tgt.h);
-        connections.push({ fromKey: src.key, toKey: tgt.key, x1, y1, x2, y2, type: 'green', pathStyle: 'vhv' });
+        const [x1,y1] = anchorPt(src.absX, src.absY, 'shadow_out', src.w, src.h);
+        const [x2,y2] = anchorPt(tgt.absX, tgt.absY, 'shadow_in',  tgt.w, tgt.h);
+        outConnections.push({ fromKey: src.key, toKey: tgt.key, x1, y1, x2, y2, type: 'green', pathStyle: 'vhv' });
     }
 
-    // Pass 4 — neck connections: neck_out → l_neck (orange vh)
-    for (const n of defs.filter(isNeck)) {
-        const src = nameMap.get(n.name), tgt = nameMap.get(n.neck!);
+    // Neck (orange)
+    for (const def of defs.filter(d => d.neck)) {
+        const src = nameMap.get(def.name), tgt = nameMap.get(def.neck!);
         if (!src || !tgt) continue;
-        const [x1, y1] = anchorPt(tgt.absX, tgt.absY, 'neck_out', tgt.w, tgt.h);
-        const [x2, y2] = anchorPt(src.absX, src.absY, 'l_neck',   src.w, src.h);
-        connections.push({ fromKey: tgt.key, toKey: src.key, x1, y1, x2, y2, type: 'orange', pathStyle: 'vh' });
+        const [x1,y1] = anchorPt(tgt.absX, tgt.absY, 'neck_out', tgt.w, tgt.h);
+        const [x2,y2] = anchorPt(src.absX, src.absY, 'l_neck',   src.w, src.h);
+        outConnections.push({ fromKey: tgt.key, toKey: src.key, x1, y1, x2, y2, type: 'orange', pathStyle: 'vh' });
     }
 
-    return { groups, standalones, connections, keyMap };
+    return { groups: outGroups, standalones: outStandalones, connections: outConnections, keyMap };
 }
