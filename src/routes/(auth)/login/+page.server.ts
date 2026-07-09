@@ -54,7 +54,7 @@ export const actions: Actions = {
 
 		if (!identity.isActive) {
 			// Log failed login attempt (inactive account)
-			await logAudit({ action: 'login_failed', resource: 'sessions', identityId: identity._id!.toString(), status: 'failed', details: { email: identity.email, username: identity.username, reason: 'Account inactive' }, ipAddress, userAgent });
+			await logAudit({ action: 'login_failed', resource: 'sessions', identityId: identity._id!.toString(), status: 'failed', details: { email: identity.email, employeeId: identity.employeeId, reason: 'Account inactive' }, ipAddress, userAgent });
 
 			return fail(403, {
 				error: 'Akun Anda tidak aktif. Silakan hubungi administrator.',
@@ -66,7 +66,7 @@ export const actions: Actions = {
 
 		if (!isPasswordValid) {
 			// Log failed login attempt (wrong password)
-			await logAudit({ action: 'login_failed', resource: 'sessions', identityId: identity._id!.toString(), status: 'failed', details: { email: identity.email, username: identity.username, reason: 'Invalid password' }, ipAddress, userAgent });
+			await logAudit({ action: 'login_failed', resource: 'sessions', identityId: identity._id!.toString(), status: 'failed', details: { email: identity.email, employeeId: identity.employeeId, reason: 'Invalid password' }, ipAddress, userAgent });
 
 			return fail(401, {
 				error: 'Username/Email/NIK atau password salah',
@@ -89,7 +89,7 @@ export const actions: Actions = {
 		sessionManager.setSessionCookie(cookies, session.sessionId);
 
 		// Log successful login
-		await logAudit({ action: 'login', resource: 'sessions', identityId: identity._id!.toString(), details: { email: identity.email, username: identity.username }, ipAddress, userAgent });
+		await logAudit({ action: 'login', resource: 'sessions', identityId: identity._id!.toString(), details: { email: identity.email, employeeId: identity.employeeId }, ipAddress, userAgent });
 
 		throw redirect(302, '/');
 	},

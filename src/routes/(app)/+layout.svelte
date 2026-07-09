@@ -3,6 +3,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import type { LayoutData } from './$types';
 	import { getBrandingCSS } from '$lib/branding-utils';
+	import { isRestrictedUser } from '$lib/auth/access-control';
 
 	import type { Snippet } from 'svelte';
 
@@ -25,6 +26,7 @@
 	});
 
 	const user = $derived(data.user);
+	const isRestricted = $derived(isRestrictedUser(user?.roles));
 	const branding = $derived(data.branding);
 	const brandingCSS = $derived(branding ? getBrandingCSS(branding) : '');
 	const appName = $derived(branding?.appName || 'Aksara SSO');
@@ -61,7 +63,7 @@
 		items: NavItem[];
 	}
 
-	const navigation: (NavItem | NavGroup)[] = [
+	const allNavigation: (NavItem | NavGroup)[] = [
 		{ name: 'Dashboard', href: '/', icon: '📊' },
 		{
 			name: 'Organization',
@@ -94,6 +96,11 @@
 			],
 		},
 	];
+
+	// Restricted 'user' role only sees the (view-only) Organization section
+	const navigation = $derived(
+		isRestricted ? allNavigation.filter((item) => 'items' in item && item.name === 'Organization') : allNavigation
+	);
 
 	function toggleSidebar() {
 		isSidebarOpen = !isSidebarOpen;
@@ -380,9 +387,11 @@
 								<a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
 									👤 My Profile
 								</a>
-								<a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-									⚙️ Settings
-								</a>
+								{#if !isRestricted}
+									<a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+										⚙️ Settings
+									</a>
+								{/if}
 								<a href="/docs" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
 									📒 Documentation
 								</a>

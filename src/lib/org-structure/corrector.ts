@@ -1,6 +1,7 @@
 import { getDB } from '$lib/db/connection';
 import { ObjectId } from 'mongodb';
 import { useLogger } from '@ak-sara/fbao/foundation';
+import { logAudit } from '$lib/audit/logger';
 import type { InconsistencyIssue } from './types';
 
 const log = useLogger({ module: 'org:corrector' });
@@ -405,20 +406,12 @@ export class VersionCorrector {
 		entityId: string,
 		corrections: any
 	) {
-		const db = getDB();
-
 		try {
-			await db.collection('audit_logs').insertOne({
+			await logAudit({
 				action: 'version_correction',
-				resourceType: 'org_structure_version',
+				resource: 'org_structure_version',
 				resourceId: versionId,
-				details: {
-					entityType,
-					entityId,
-					corrections
-				},
-				timestamp: new Date(),
-				userId: 'system' // TODO: Get from session
+				details: { entityType, entityId, corrections }
 			});
 		} catch (error) {
 			log.error('Error logging correction', { error });

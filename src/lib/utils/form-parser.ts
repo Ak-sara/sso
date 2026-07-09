@@ -6,9 +6,9 @@ import { sanitizeObject } from '@ak-sara/fbao/foundation/sanitize';
  * Unwraps ZodOptional / ZodDefault before checking the inner type.
  */
 function coerceField(value: string, schema: z.ZodTypeAny): unknown {
-	let inner = schema;
+	let inner: z.ZodTypeAny = schema;
 	while (inner instanceof z.ZodOptional || inner instanceof z.ZodDefault)
-		inner = inner._def.innerType;
+		inner = inner.unwrap() as z.ZodTypeAny;
 
 	if (inner instanceof z.ZodNumber)  return Number(value) || 0;
 	if (inner instanceof z.ZodBoolean) return value === 'true';

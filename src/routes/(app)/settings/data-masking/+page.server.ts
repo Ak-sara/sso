@@ -1,6 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import { getMaskingConfig, updateMaskingConfig } from '$lib/services/settings-service';
+import { getMaskingConfig } from '$lib/utils/masking-helper';
+import { updateMaskingConfig } from '$lib/services/settings-service';
 import { useLogger } from '@ak-sara/fbao/foundation';
 
 const log = useLogger({ module: 'app:data-masking' });
@@ -33,7 +34,7 @@ export const actions: Actions = {
 			if (showLast) newRule.showLast = parseInt(showLast);
 			if (maskChar && maskChar !== '*') newRule.maskChar = maskChar;
 
-			const config = await getMaskingConfig() as { rules: any[]; [k: string]: unknown };
+			const config = await getMaskingConfig();
 			config.rules.push(newRule);
 			await updateMaskingConfig(config);
 			return { success: 'Rule added successfully' };
@@ -46,7 +47,7 @@ export const actions: Actions = {
 	deleteRule: async ({ locals }) => {
 		try {
 			const ruleIndex = parseInt((locals.body as any).index);
-			const config = await getMaskingConfig() as { rules: any[]; [k: string]: unknown };
+			const config = await getMaskingConfig();
 			config.rules.splice(ruleIndex, 1);
 			await updateMaskingConfig(config);
 			return { success: 'Rule deleted successfully' };

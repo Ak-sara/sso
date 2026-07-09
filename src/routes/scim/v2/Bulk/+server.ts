@@ -354,7 +354,6 @@ async function processGroupOperation(
 				code: operation.data.externalId || `OU-${Date.now()}`,
 				name: operation.data.displayName,
 				type: operation.data['x-orgUnit']?.type || 'department',
-				level: operation.data['x-orgUnit']?.level || 1,
 				isActive: true,
 			} as any);
 

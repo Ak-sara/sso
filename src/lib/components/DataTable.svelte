@@ -250,7 +250,7 @@
 		{#if header_actions}
 		
 			{#each header_actions() as item}
-			<button onclick={item.action}  class="{item.class}" >{item.text} </button>
+			<button type="button" onclick={item.action}  class="{item.class}" >{item.text} </button>
 			{/each}
 		{/if}
 	</div>
@@ -400,13 +400,13 @@
 			</div>
 
 			<div class="flex items-center gap-2">
-				<button onclick={() => goToPage(1)}
+				<button type="button" onclick={() => goToPage(1)}
 					disabled={currentPage === 1}
 					class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
 					title="First Page" >
 					«
 				</button>
-				<button onclick={() => goToPage(currentPage - 1)}
+				<button type="button" onclick={() => goToPage(currentPage - 1)}
 					disabled={currentPage === 1}
 					class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
 					title="Previous Page" >
@@ -418,7 +418,7 @@
 					return start + i;
 				}) as pageNum}
 					{#if pageNum <= totalPages}
-						<button onclick={() => goToPage(pageNum)}
+						<button type="button" onclick={() => goToPage(pageNum)}
 							class="px-3 py-2 border rounded-lg"
 							class:bg-indigo-600={currentPage === pageNum}
 							class:text-white={currentPage === pageNum}
@@ -430,13 +430,13 @@
 					{/if}
 				{/each}
 
-				<button onclick={() => goToPage(currentPage + 1)}
+				<button type="button" onclick={() => goToPage(currentPage + 1)}
 					disabled={currentPage === totalPages}
 					class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
 					title="Next Page" >
 					›
 				</button>
-				<button onclick={() => goToPage(totalPages)}
+				<button type="button" onclick={() => goToPage(totalPages)}
 					disabled={currentPage === totalPages}
 					class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
 					title="Last Page" >

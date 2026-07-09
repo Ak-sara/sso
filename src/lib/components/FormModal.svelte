@@ -18,7 +18,7 @@
 				<h3 class="text-xl font-bold">{title}</h3>
 				{#if subtitle!="" } <p class="text-sm text-gray-500">{subtitle}</p>{/if}
 			</div>
-			<button onclick={handleClose} title={title} class="text-gray-400 hover:text-gray-600 text-2xl" > &times; </button>
+			<button type="button" onclick={handleClose} title={title} class="text-gray-400 hover:text-gray-600 text-2xl" > &times; </button>
 		</div>
 
         <slot/>

@@ -148,15 +148,13 @@ export async function detectConflictsWithDatabase(
 
 /**
  * Get unique filter for upserting identities
- * Priority: employeeId (NIK) > email > username
+ * Priority: employeeId (NIK) > email
  */
 export function getIdentityUniqueFilter(identity: Partial<Identity>): any {
 	if (identity.employeeId) {
 		return { employeeId: identity.employeeId };
 	} else if (identity.email) {
 		return { email: identity.email };
-	} else if (identity.username) {
-		return { username: identity.username };
 	}
 	return { _id: identity._id }; // Fallback
 }

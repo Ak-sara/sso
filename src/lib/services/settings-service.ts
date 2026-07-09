@@ -1,6 +1,7 @@
 import { useLogger } from '@ak-sara/fbao/foundation';
 import { db } from '$lib/db/db';
 import type { SystemSettings } from '$lib/db/schemas/system-settings';
+import type { MaskingConfig } from '$lib/utils/data-masking';
 
 const log = useLogger({ module: 'service:settings' });
 
@@ -118,18 +119,7 @@ export async function updateEmailProvider(provider: string, providerConfig: Reco
 	]);
 }
 
-export async function getMaskingConfig(): Promise<Record<string, unknown>> {
-	const setting = await db.systemSettings.findOne({ key: 'data_masking_config' } as any);
-	if (!setting) {
-		const { getDefaultMaskingConfig } = await import('$lib/utils/data-masking');
-		const config = getDefaultMaskingConfig();
-		await updateSetting('data_masking_config', config);
-		return config;
-	}
-	return setting.value as Record<string, unknown>;
-}
-
-export async function updateMaskingConfig(config: Record<string, unknown>): Promise<void> {
+export async function updateMaskingConfig(config: MaskingConfig): Promise<void> {
 	await updateSetting('data_masking_config', config);
 }
 

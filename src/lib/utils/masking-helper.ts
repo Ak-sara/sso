@@ -13,7 +13,7 @@ export async function getMaskingConfig(): Promise<MaskingConfig> {
 	try {
 		const setting = await db.systemSettings.findOne({ key: 'data_masking_config' });
 		if (!setting?.value) return getDefaultMaskingConfig();
-		return setting.value as MaskingConfig;
+		return setting.value as unknown as MaskingConfig;
 	} catch (error) {
 		log.error('Error loading masking config', { error });
 		return getDefaultMaskingConfig();

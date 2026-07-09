@@ -418,7 +418,6 @@ export const actions: Actions = {
 
 					if (Object.keys(customProps).length > 0) mappedData.customProperties = customProps;
 					if (!mappedData.email && entraUser.userPrincipalName) mappedData.email = entraUser.userPrincipalName;
-					if (!mappedData.username) mappedData.username = mappedData.email || entraUser.userPrincipalName;
 					if (!mappedData.firstName && entraUser.givenName) mappedData.firstName = entraUser.givenName;
 					if (!mappedData.lastName && entraUser.surname) mappedData.lastName = entraUser.surname;
 					mappedData.fullName = `${mappedData.firstName || ''} ${mappedData.lastName || ''}`.trim();

@@ -2,7 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { hash } from '@node-rs/argon2';
 import { getMaskingConfig } from '$lib/utils/masking-helper';
-import { listIdentities, getTabCounts, deleteIdentity, createIdentity } from '$lib/services/identity-service';
+import { listIdentities, getTabCounts, deleteIdentity, createIdentity, getIdentityById, updateIdentity } from '$lib/services/identity-service';
 
 export const load: PageServerLoad = async ({ locals, depends }) => {
 	depends('app:pagination');
@@ -43,20 +43,13 @@ export const actions: Actions = {
 			return fail(400, { error: 'Identity ID is required' });
 		}
 
-		try {
-			const identity = await db.identities.findById(identityId);
-			if (!identity) {
-				return fail(404, { error: 'Identity not found' });
-			}
+		const current = await getIdentityById(identityId);
+		if (!current.ok) return fail(current.status || 404, { error: current.error });
 
-			await db.identities.updateById(identityId, {
-				isActive: !identity.isActive
-			} as any);
+		const result = await updateIdentity(identityId, { isActive: !current.data.isActive });
+		if (!result.ok) return fail(result.status || 500, { error: result.error });
 
-			return { success: true, message: `Identity ${identity.isActive ? 'deactivated' : 'activated'} successfully` };
-		} catch (error: any) {
-			return fail(500, { error: error.message });
-		}
+		return { success: true, message: `Identity ${current.data.isActive ? 'deactivated' : 'activated'} successfully` };
 	},
 
 	delete: async ({ locals }) => {

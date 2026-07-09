@@ -3,8 +3,10 @@ import '$lib/auth/roles';
 import { connectDB } from '$lib/db/connection';
 import { sessionManager } from '$lib/auth/session';
 import { extractRequestMetadata, logAudit } from '$lib/audit/logger';
+import { isRestrictedUser } from '$lib/auth/access-control';
 import { sequence } from '@sveltejs/kit/hooks';
 import { sanitizeObject, createSanitizeHook, createRateLimitHook, useLogger } from '@ak-sara/fbao/foundation';
+import { error } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit';
 
 const log = useLogger({ module: 'hooks' });
@@ -75,7 +77,8 @@ const mainHandle: Handle = async ({ event, resolve }) => {
 			bodyParams = await event.request.json();
 		} else if (contentType.includes('form')) {
 			const formData = await event.request.formData();
-			for (const [key, value] of formData.entries()) {
+			// bun-types mistypes FormData.entries() as [string, string] (unlike its own get()/getAll()); actual runtime values can be File
+			for (const [key, value] of formData.entries() as IterableIterator<[string, File | string]>) {
 				if (value instanceof File) fileEntries[key] = value;
 				else bodyParams[key] = value;
 			}
@@ -94,6 +97,16 @@ const mainHandle: Handle = async ({ event, resolve }) => {
 		user_agent: Headers.get('user-agent') || '',
 	};
 	/* end:inputs params */
+
+	// Restricted 'user' role gets read-only access to /organization (view via GET, no writes)
+	if (
+		event.locals.user &&
+		isRestrictedUser(event.locals.user.roles) &&
+		event.url.pathname.startsWith('/organization') &&
+		!['GET', 'HEAD'].includes(Method)
+	) {
+		throw error(403, 'Forbidden: read-only access');
+	}
 
 	// Disable CSRF for machine-to-machine OAuth endpoints (token, userinfo, well-known)
 	const isM2MOAuthPath = event.url.pathname.startsWith('/oauth/token') ||

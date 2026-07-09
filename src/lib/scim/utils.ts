@@ -225,7 +225,6 @@ export async function orgUnitToScimGroup(
 
 	const orgUnitData: ScimOrgUnit = {
 		unitType: orgUnit.type,
-		level: orgUnit.level,
 		parentUnitId: orgUnit.parentId?.toString(),
 		managerId
 	};

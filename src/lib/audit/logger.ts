@@ -2,10 +2,16 @@
  * Audit logger — one write function, all events go to 'audit_log' collection via FBA.
  */
 
-import { AuditLogger } from '@ak-sara/fbao/foundation';
+import { AuditLogger, type AuditEntry } from '@ak-sara/fbao/foundation';
 import { getDB } from '$lib/db/connection';
 
 const auditLogger = new AuditLogger(() => getDB(), { collectionName: 'audit_log' });
+
+// fba's AuditEntry doesn't declare topic/traceId, but AuditLogger.log() spreads the object as-is into insertOne
+interface StoredAuditEntry extends AuditEntry {
+	topic?: string;
+	traceId?: string;
+}
 
 /**
  * topic: coarse-grained category for filtering (e.g. 'auth', 'identity', 'oauth', 'scim', 'sync', 'org').
@@ -36,7 +42,7 @@ function deriveTopic(action: string): string {
 }
 
 export async function logAudit(entry: AuditLogEntry): Promise<void> {
-	await auditLogger.log({
+	const payload: StoredAuditEntry = {
 		identityId: entry.identityId || 'system',
 		action: entry.action,
 		resource: entry.resource,
@@ -47,7 +53,8 @@ export async function logAudit(entry: AuditLogEntry): Promise<void> {
 		userAgent: entry.userAgent,
 		organizationId: entry.organizationId,
 		traceId: entry.traceId,
-	});
+	};
+	await auditLogger.log(payload);
 }
 
 export function extractRequestMetadata(event: any): { ipAddress?: string; userAgent?: string } {

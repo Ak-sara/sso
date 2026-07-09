@@ -91,11 +91,6 @@ export const GET: RequestHandler = async ({ locals }) => {
 						userInfo.positionGrade = position.grade;
 					}
 				}
-
-				// Add manager information
-				if (identity.managerId) {
-					userInfo.managerId = identity.managerId;
-				}
 			}
 
 			// Add partner-specific fields if identity is a partner

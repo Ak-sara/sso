@@ -78,10 +78,8 @@
 
 	<!-- Quick Actions -->
 	<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-		<a
-			href="/identities"
-			class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow"
-		>
+		<a href="/organization/identities"
+			class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow" >
 			<div class="p-6">
 				<div class="flex items-center">
 					<div class="text-3xl mr-4">👥</div>
@@ -93,10 +91,8 @@
 			</div>
 		</a>
 
-		<a
-			href="/org-structure"
-			class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow"
-		>
+		<a href="/organization/org-structure"
+			class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow" >
 			<div class="p-6">
 				<div class="flex items-center">
 					<div class="text-3xl mr-4">🌳</div>

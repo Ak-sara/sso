@@ -115,7 +115,6 @@ export interface ScimGroupMember {
 
 export interface ScimOrgUnit {
 	unitType?: string; // directorate, division, department, etc.
-	level?: number;
 	parentUnitId?: string;
 	managerId?: string; // User ID of unit manager/head
 }

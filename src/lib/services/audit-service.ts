@@ -41,14 +41,25 @@ export async function getAuditLogById(id: string) {
 	};
 }
 
+const SEARCH_FIELDS = ['action', 'resource', 'resourceId', 'identityId'];
+
 export async function listAuditLogs(params: PaginationInput, filter: Record<string, any> = {}) {
 	const page = params.page || 1;
 	const pageSize = params.pageSize || 20;
 	const skip = (page - 1) * pageSize;
 
+	const query = { ...filter };
+	if (params.search) {
+		query.$or = SEARCH_FIELDS.map((f) => ({ [f]: { $regex: params.search, $options: 'i' } }));
+	}
+
+	// Default to newest-first; only honor an explicit column sort (sortKey set) otherwise
+	const sortField = params.sortKey || 'timestamp';
+	const sortDir: 1 | -1 = params.sortKey ? (params.sortDirection === 'desc' ? -1 : 1) : -1;
+
 	const [items, total] = await Promise.all([
-		col().find(filter).sort({ timestamp: -1 }).skip(skip).limit(pageSize).toArray(),
-		col().countDocuments(filter),
+		col().find(query).sort({ [sortField]: sortDir }).skip(skip).limit(pageSize).toArray(),
+		col().countDocuments(query),
 	]);
 
 	const identityIds = items

@@ -3,6 +3,7 @@ import type { LayoutServerLoad } from './$types';
 import { getBrandingByOrganization, getBranding } from '$lib/branding';
 import { listActiveOrgs } from '$lib/services/organization-service';
 import { getIdentityById } from '$lib/services/identity-service';
+import { isRestrictedUser, isPathAllowedForRestrictedUser } from '$lib/auth/access-control';
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {
 	if (!locals.user) {
@@ -10,6 +11,11 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	}
 
 	const user = locals.user;
+
+	if (isRestrictedUser(user.roles) && !isPathAllowedForRestrictedUser(url.pathname)) {
+		throw redirect(302, '/profile');
+	}
+
 	const isAdmin = user.roles?.includes('admin') || user.roles?.includes('superadmin');
 
 	const allOrgs = await listActiveOrgs();

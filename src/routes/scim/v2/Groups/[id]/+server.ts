@@ -106,7 +106,6 @@ export const PUT: RequestHandler = async (event) => {
 		const updates: any = {
 			name: scimGroup.displayName || existingOrgUnit.name,
 			type: orgUnitData?.unitType || existingOrgUnit.type,
-			level: orgUnitData?.level ?? existingOrgUnit.level,
 			parentId: orgUnitData?.parentUnitId
 				? new ObjectId(orgUnitData.parentUnitId)
 				: existingOrgUnit.parentId
@@ -195,8 +194,6 @@ export const PATCH: RequestHandler = async (event) => {
 					updates.type = op.value;
 				} else if (op.path === 'x-orgUnit.parentUnitId') {
 					updates.parentId = op.value ? new ObjectId(op.value) : null;
-				} else if (op.path === 'x-orgUnit.level') {
-					updates.level = op.value;
 				}
 			} else if (op.op === 'add') {
 				// Handle member additions (not implemented for org units)

@@ -120,7 +120,6 @@ export const POST: RequestHandler = async (event) => {
 			code: scimGroup.externalId || `OU-${Date.now()}`,
 			name: scimGroup.displayName,
 			type: orgUnitData?.unitType || 'department',
-			level: orgUnitData?.level || 1,
 			parentId: orgUnitData?.parentUnitId || null,
 			isActive: true
 		};
