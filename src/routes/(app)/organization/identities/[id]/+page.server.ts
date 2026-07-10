@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const [identityResult, organizations, orgUnits, positions] = await Promise.all([
 		isNew ? null : getIdentityById(params.id, { maskingConfig, userRoles, applyMask: mode === 'view' }),
 		listOrganizations(),
-		db.orgUnits.find(),
+		db.orgUnits.find({ type: { $ne: 'logical' } } as any), // rendering-only containers aren't real assignable units
 		listPositions(),
 	]);
 

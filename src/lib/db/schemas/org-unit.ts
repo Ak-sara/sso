@@ -6,9 +6,10 @@ export const OrgUnitSchema = z.object({
 	organizationId: z.string(), // Which company/entity
 
 	code: z.string(), // DU, DC, DO, etc
-	type: z.enum(['board', 'directorate', 'division', 'department', 'section', 'team', 'sbu']),
+	// 'logical' = rendering-only container (e.g. a chart grouping box), not a real org unit —
+	// excluded from listings/pickers that deal in actual assignable units.
+	type: z.enum(['board', 'directorate', 'division', 'department', 'section', 'team', 'sbu', 'logical']),
 	name: z.string(), // Direktur Utama, Direktur Komersial, etc
-	shortName: z.string().optional(),
 	description: z.string().optional(),
 
 	parentId: z.string().optional(), // Reference to parent unit
@@ -16,7 +17,7 @@ export const OrgUnitSchema = z.object({
 	picId: z.string().optional(), // Reference to pic unit
 	managerId: z.string().optional(), // Employee ID of manager
 	
-	diagram: z.enum(['block', 'logical', 'neck', 'group']),
+	isNeck: z.boolean().default(false), // render this unit as a floating "neck" off its parent, instead of a normal reporting line
 
 	isActive: z.boolean().default(true),
 	createdAt: z.date().default(() => new Date()),

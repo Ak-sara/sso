@@ -58,7 +58,8 @@ async function buildReassignment(employee: any, formData: any, organizationId: a
 	let newPosition: any = null;
 
 	if (formData?.newOrgUnitCode) {
-		newOrgUnit = await db.orgUnits.findOne({ code: formData.newOrgUnitCode, organizationId } as any) as any;
+		// 'logical' units are rendering-only containers, not real assignable units
+		newOrgUnit = await db.orgUnits.findOne({ code: formData.newOrgUnitCode, organizationId, type: { $ne: 'logical' } } as any) as any;
 		if (!newOrgUnit) throw new Error(`Unit kerja '${formData.newOrgUnitCode}' tidak ditemukan`);
 	}
 	if (formData?.newPositionCode) {
@@ -230,7 +231,8 @@ export const actions = {
 			const employeeMap = new Map((employees as any[]).map((e) => [e.employeeId, e]));
 
 			const [orgUnits, positions] = await Promise.all([
-				db.orgUnits.find({ organizationId: sk.organizationId } as any),
+				// 'logical' units are rendering-only containers, not real assignable units
+				db.orgUnits.find({ organizationId: sk.organizationId, type: { $ne: 'logical' } } as any),
 				db.positions.find({ organizationId: sk.organizationId } as any)
 			]);
 			const orgUnitMap = new Map((orgUnits as any[]).map((u) => [u.code, u]));

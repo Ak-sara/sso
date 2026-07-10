@@ -1,10 +1,10 @@
 <script lang="ts">
 import { setContext } from 'svelte';
-import G    from './svg_g.svelte';
-import Node from './svg_node.svelte';
-import Line from './svg_path.svelte';
-import { Draw, REGISTRY_CTX, type Registry, type NodeRef } from './registry';
-import { buildLayout, type NodeDef } from './layout';
+import G    from '$lib/components/org-chart/svg_g.svelte';
+import Node from '$lib/components/org-chart/svg_node.svelte';
+import Line from '$lib/components/org-chart/svg_path.svelte';
+import { Draw, REGISTRY_CTX, type Registry, type NodeRef } from '$lib/components/org-chart/registry';
+import { buildLayout, type NodeDef } from '$lib/components/org-chart/layout';
 import { createPanZoom, type PanZoomInstance } from '$lib/utils/pan-zoom';
 
 const _reg = new Map<string, NodeRef>();
@@ -18,7 +18,7 @@ setContext(REGISTRY_CTX, registry);
 let structure: NodeDef[] = [
     { name: 'SS', label: 'Secretary' },
     { name: 'A',  label: 'Anita',          group: 'SS' },
-    { name: 'B',  label: 'Bella',          group: 'SS', parent: 'A', shadow: 'P' },
+    { name: 'B',  label: 'Bella',          group: 'SS', parent: 'A' },
     { name: 'FF', label: 'Finance' },
     { name: 'C',  label: 'Crystal Claire', group: 'FF' },
     { name: 'D',  label: 'Debbie Kristoff',group: 'FF', parent: 'C' },
@@ -95,7 +95,7 @@ let structure2: NodeDef[] =[
     {name:'AE',label:'Air Express',parent:'LOG'},
     {name:'BIP',label:'Business Intelligence and Performance',parent:'CBE'},
 
-    {name:"BO",label:"Branches", below:'DD'},
+    {name:"BO",label:"Branches", below:'GMCO'},
     {name:'KNO',label:'Regional Station KNO',group:"BO",parent:'GMCO'},
     {name:'DPS',label:'Regional Station DPS',group:"BO",parent:'GMCO'},
     {name:'UPG',label:'Regional Station UPG',group:"BO",parent:'GMCO'},
@@ -129,6 +129,7 @@ function section(id:string){
     document.getElementById(id)?.classList.remove('hidden')
 }
 let svg_grid=$derived({} as any);
+let hoveredKey: string | null = $state(null);
 let chartEl: HTMLDivElement;
 let viewportEl: SVGGElement;
 let panZoom: PanZoomInstance | undefined;
@@ -161,23 +162,28 @@ onMount(() => {
             <g bind:this={viewportEl} style="transform-origin:0 0;">
             {#each groups as g}
                 <G x={g.x} y={g.y} W={g.w} H={g.h} label={g.label} key={g.key}
-                is_shadow={g.is_shadow} has_shadow={g.has_shadow} has_child={g.has_child} has_neck={g.has_neck}>
+                has_parent={g.has_parent} is_below={g.is_below} has_below={g.has_below} has_child={g.has_child} has_neck={g.has_neck}
+                hovered={hoveredKey === g.key} onnodeenter={(k) => hoveredKey = k} onnodeleave={() => hoveredKey = null}>
                     {#each g.nodes as node}
                         <Node x={node.lx} y={node.ly} absX={node.absX} absY={node.absY}
                             name={node.name} label={node.label} key={node.key}
-                            has_parent={node.has_parent} has_child={node.has_child} has_shadow={node.has_shadow}
-                            is_shadow={node.is_shadow} has_neck={node.has_neck} />
+                            has_parent={node.has_parent} has_child={node.has_child} has_below={node.has_below}
+                            is_below={node.is_below} has_neck={node.has_neck} is_stack_child={node.is_stack_child}
+                            hovered={hoveredKey === node.key} onnodeenter={(k) => hoveredKey = k} onnodeleave={() => hoveredKey = null} />
                     {/each}
                 </G>
             {/each}
 
             {#each standalones as n}
                 <Node x={n.x} y={n.y} absX={n.x} absY={n.y} name={n.name} label={n.label} key={n.key}
-                    has_parent={n.has_parent} has_child={n.has_child} has_shadow={n.has_shadow} is_shadow={n.is_shadow} has_neck={n.has_neck} l_neck={n.l_neck} />
+                    has_parent={n.has_parent} has_child={n.has_child} has_below={n.has_below} is_below={n.is_below} has_neck={n.has_neck} l_neck={n.l_neck} is_stack_child={n.is_stack_child}
+                    hovered={hoveredKey === n.key} onnodeenter={(k) => hoveredKey = k} onnodeleave={() => hoveredKey = null} />
             {/each}
 
             {#each connections as c}
-                <Line x1={c.x1} y1={c.y1} x2={c.x2} y2={c.y2} type={c.type} pathStyle={c.pathStyle} />
+                <Line x1={c.x1} y1={c.y1} x2={c.x2} y2={c.y2} type={c.type} pathStyle={c.pathStyle}
+                    highlighted={hoveredKey !== null && (c.fromKey === hoveredKey || c.toKey === hoveredKey)}
+                    dimmed={hoveredKey !== null && c.fromKey !== hoveredKey && c.toKey !== hoveredKey} />
             {/each}
             </g>
         </svg>
@@ -187,23 +193,28 @@ onMount(() => {
             <g style="transform-origin:0 0;">
             {#each groups0 as g}
                 <G x={g.x} y={g.y} W={g.w} H={g.h} label={g.label} key={g.key}
-                is_shadow={g.is_shadow} has_shadow={g.has_shadow} has_child={g.has_child} has_neck={g.has_neck}>
+                has_parent={g.has_parent} is_below={g.is_below} has_below={g.has_below} has_child={g.has_child} has_neck={g.has_neck}
+                hovered={hoveredKey === g.key} onnodeenter={(k) => hoveredKey = k} onnodeleave={() => hoveredKey = null}>
                     {#each g.nodes as node}
                         <Node x={node.lx} y={node.ly} absX={node.absX} absY={node.absY}
                             name={node.name} label={node.label} key={node.key}
-                            has_parent={node.has_parent} has_child={node.has_child} has_shadow={node.has_shadow}
-                            is_shadow={node.is_shadow} has_neck={node.has_neck} />
+                            has_parent={node.has_parent} has_child={node.has_child} has_below={node.has_below}
+                            is_below={node.is_below} has_neck={node.has_neck} is_stack_child={node.is_stack_child}
+                            hovered={hoveredKey === node.key} onnodeenter={(k) => hoveredKey = k} onnodeleave={() => hoveredKey = null} />
                     {/each}
                 </G>
             {/each}
 
             {#each standalones0 as n}
                 <Node x={n.x} y={n.y} absX={n.x} absY={n.y} name={n.name} label={n.label} key={n.key}
-                    has_parent={n.has_parent} has_child={n.has_child} has_shadow={n.has_shadow} is_shadow={n.is_shadow} has_neck={n.has_neck} l_neck={n.l_neck} />
+                    has_parent={n.has_parent} has_child={n.has_child} has_below={n.has_below} is_below={n.is_below} has_neck={n.has_neck} l_neck={n.l_neck} is_stack_child={n.is_stack_child}
+                    hovered={hoveredKey === n.key} onnodeenter={(k) => hoveredKey = k} onnodeleave={() => hoveredKey = null} />
             {/each}
 
             {#each connections0 as c}
-                <Line x1={c.x1} y1={c.y1} x2={c.x2} y2={c.y2} type={c.type} pathStyle={c.pathStyle} />
+                <Line x1={c.x1} y1={c.y1} x2={c.x2} y2={c.y2} type={c.type} pathStyle={c.pathStyle}
+                    highlighted={hoveredKey !== null && (c.fromKey === hoveredKey || c.toKey === hoveredKey)}
+                    dimmed={hoveredKey !== null && c.fromKey !== hoveredKey && c.toKey !== hoveredKey} />
             {/each}
             </g>
         </svg>
@@ -213,9 +224,8 @@ onMount(() => {
         {#snippet nodeLabel(n: NodeDef)}
             <span class="font-medium">{isGroupHeader(n.name) ? '📁' : '📄'} {n.label}</span>
             <span class="text-xs text-gray-400">({n.name})</span>
-            {#if n.shadow}<span class="text-xs text-green-600 border border-green-400 rounded px-1">shadow → {labelOf(n.shadow)}</span>{/if}
             {#if n.neck}<span class="text-xs text-orange-500 border border-orange-400 rounded px-1">neck</span>{/if}
-            {#if n.below}<span class="text-xs text-gray-500 border border-gray-400 rounded px-1">below</span>{/if}
+            {#if n.below}<span class="text-xs text-green-600 border border-green-400 rounded px-1">below → {labelOf(n.below)}</span>{/if}
             {#if n.parent && !n.group}<span class="text-xs text-blue-500 border border-blue-400 rounded px-1">external</span>{/if}
         {/snippet}
         {#snippet tree(nodes: NodeDef[])}

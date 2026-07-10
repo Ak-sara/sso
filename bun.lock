@@ -4,7 +4,6 @@
     "": {
       "name": "aksara-sso",
       "dependencies": {
-        "@ak-sara/sto-diagram": "^0.1.1",
         "@node-rs/argon2": "^2.0.2",
         "@sendgrid/mail": "^8.1.4",
         "@types/jsonwebtoken": "^9.0.9",
@@ -39,12 +38,6 @@
   },
   "packages": {
     "@ak-sara/fbao": ["@ak-sara/fbao@0.1.0", "", { "dependencies": { "@modelcontextprotocol/sdk": "^1.27.1", "zod": "^3.23.0" }, "peerDependencies": { "@node-rs/argon2": "^2.0.0", "@sendgrid/mail": "^7.0.0 || ^8.0.0", "@sveltejs/kit": "^2.0.0", "jsonwebtoken": "^9.0.0", "marked": "^9.0.0 || ^10.0.0 || ^11.0.0 || ^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0", "mongodb": "^6.0.0 || ^7.0.0", "nodemailer": "^6.0.0", "svelte": "^5.0.0" }, "optionalPeers": ["@node-rs/argon2", "@sendgrid/mail", "jsonwebtoken", "marked", "nodemailer"], "bin": { "fba-test": "dist/testing/cli.js", "fba-mcp": "dist/mcp/cli.js" } }, "sha512-PNNZrDFYDE/xHYlDvIRgw0NLA2ed4Da/+ESQAejW0S9CM0dd74fUDy+KWjEVPn6gKKDDRrkHncTGAtBVG0IviQ=="],
-
-    "@ak-sara/sto-diagram": ["@ak-sara/sto-diagram@0.1.1", "", { "dependencies": { "@dagrejs/dagre": "^2.0.4" } }, "sha512-fFQ2kk8O3Kac5E7eLmfw/jLmKP5i+i2896oZnj8wMY43b43u1fYbvIRiT9XMA1p92VKX1l+s0lIbQIA2yTZlmA=="],
-
-    "@dagrejs/dagre": ["@dagrejs/dagre@2.0.4", "", { "dependencies": { "@dagrejs/graphlib": "3.0.4" } }, "sha512-J6vCWTNpicHF4zFlZG1cS5DkGzMr9941gddYkakjrg3ZNev4bbqEgLHFTWiFrcJm7UCRu7olO3K6IRDd9gSGhA=="],
-
-    "@dagrejs/graphlib": ["@dagrejs/graphlib@3.0.4", "", {}, "sha512-HxZ7fCvAwTLCWCO0WjDkzAFQze8LdC6iOpKbetDKHIuDfIgMlIzYzqZ4nxwLlclQX+3ZVeZ1K2OuaOE2WWcyOg=="],
 
     "@emnapi/core": ["@emnapi/core@1.9.1", "", { "dependencies": { "@emnapi/wasi-threads": "1.2.0", "tslib": "^2.4.0" } }, "sha512-mukuNALVsoix/w1BJwFzwXBN/dHeejQtuVzcDsfOEsdpCumXb/E9j8w11h5S54tT1xhifGfbbSm/ICrObRb3KA=="],
 

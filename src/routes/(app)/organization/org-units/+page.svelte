@@ -33,15 +33,14 @@
 			render: (value: string, row: any) => `
 				<div class="flex items-center">
 					<span class="text-xl mr-2">${getTypeIcon(row.type)}</span>
-					<div>
-						<div class="text-sm font-medium text-gray-900">${value}</div>
-						${row.shortName ? `<div class="text-xs text-gray-500">${row.shortName}</div>` : ''}
-					</div>
+					<div class="text-sm font-medium text-gray-900">${value}</div>
 				</div>`
 		},
 		{
-			key: 'diagram', label: 'STO', sortable: true,
-			render: (value: string) => `<code class="bg-yellow-100 px-2 py-1 rounded text-xs">${value}</code>`
+			key: 'isNeck', label: 'STO', sortable: true,
+			render: (value: boolean) => value
+				? `<code class="bg-yellow-100 px-2 py-1 rounded text-xs">neck</code>`
+				: ''
 		},
 		{
 			key: 'code', label: 'Code', sortable: true,
@@ -105,7 +104,7 @@
 			},{
 				text: '+ Add Work Unit',
 				class: 'px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors',
-				action: () => { actUnit = { code: '', name: '', shortName: '', type: 'department', description: '', organizationId: data.organizationOptions[0]?.value || null, parentId: null, parentName: null, groupId: null, groupName: null, picId: null, picName: null, managerId: null, managerName: null, diagram: 'logical', isActive: true }; }
+				action: () => { actUnit = { code: '', name: '', type: 'department', description: '', organizationId: data.organizationOptions[0]?.value || null, parentId: null, parentName: null, groupId: null, groupName: null, picId: null, picName: null, managerId: null, managerName: null, isNeck: false, isActive: true }; }
 			}
 		]}
 		page={data.pagination.page}

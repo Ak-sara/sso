@@ -29,7 +29,6 @@
 		"@ak-sara/fbao": "^0.1.0"
 	},
 	"dependencies": {
-		"@ak-sara/sto-diagram": "^0.1.1",
 		"@node-rs/argon2": "^2.0.2",
 		"@sendgrid/mail": "^8.1.4",
 		"@types/jsonwebtoken": "^9.0.9",

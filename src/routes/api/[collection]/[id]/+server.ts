@@ -30,7 +30,7 @@ const CONFIGS: Record<string, CollectionConfig> = {
 		repoKey: 'orgUnits',
 		keyField: 'code',
 		allowedUpdateFields: [
-			'name', 'shortName', 'type', 'description', 'isActive', 'organizationId', 'parentId', 'managerId'
+			'name', 'type', 'description', 'isActive', 'organizationId', 'parentId', 'managerId'
 		],
 		objectIdFields: ['organizationId', 'parentId', 'managerId'],
 		getEnrich: async (doc) => {

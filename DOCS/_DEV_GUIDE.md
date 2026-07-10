@@ -119,7 +119,7 @@
 - **F3.1.2 Organizational Units** ✅ - Direktorat, Divisi, Departemen, Bagian, Seksi
 - **F3.1.3 Multi-Level Hierarchy** ✅ - Holding → Subsidiary → Branch → Divisions → Departments
 - **F3.1.4 Position/Jabatan Management** ✅ - Job titles with levels, manager flags
-- **F3.1.5 STO Diagram Visualization** ✅ - Interactive org charts via `@ak-sara/sto-diagram` with pan/zoom (Mermaid removed)
+- **F3.1.5 STO Diagram Visualization** ✅ - Interactive org charts via in-house `$lib/components/org-chart` SVG engine with pan/zoom (Mermaid and `@ak-sara/sto-diagram`/dagre removed)
 - **F3.1.6 Matrix Reporting Structures** - Support for multiple reporting lines
 
 ### F3.2 Organization Structure Versioning ✅
@@ -128,7 +128,7 @@
 - **F3.2.3 Employee Snapshot** ✅ - Captured with each version
 - **F3.2.4 Workflow** ✅ - Draft → Active → Archived (no approval step)
 - **F3.2.5 Idempotent Publishing** ✅ - Resume-capable, no MongoDB transactions needed
-- **F3.2.6 Automatic Diagram Generation** ✅ - Visual org charts from structure data (via sto-diagram, Mermaid removed)
+- **F3.2.6 Automatic Diagram Generation** ✅ - Visual org charts from structure data (via in-house `$lib/components/org-chart` engine, Mermaid removed)
 - **F3.2.7 Active Version Live Data** ✅ - STO page uses live org_units data for active versions
 - **F3.2.8 Historical Snapshots** ✅ - Non-active versions remain read-only with frozen data
 - **F3.2.9 Validation & Correction** - Detect orphaned units, circular references, detect promotion chains

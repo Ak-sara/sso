@@ -44,8 +44,8 @@ export const GET: RequestHandler = async (event) => {
 			}
 		}
 
-		// Get org units
-		const allOrgUnits = await db.orgUnits.find();
+		// Get org units — 'logical' units are rendering-only containers, not real SCIM groups
+		const allOrgUnits = await db.orgUnits.find({ type: { $ne: 'logical' } } as any);
 
 		// Apply filter
 		const filteredOrgUnits = filterParam

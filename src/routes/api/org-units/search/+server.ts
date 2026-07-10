@@ -19,8 +19,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 		if (search) {
 			filter.$or = [
 				{ name: { $regex: search, $options: 'i' } },
-				{ code: { $regex: search, $options: 'i' } },
-				{ shortName: { $regex: search, $options: 'i' } }
+				{ code: { $regex: search, $options: 'i' } }
 			];
 		}
 
@@ -45,7 +44,6 @@ export const GET: RequestHandler = async ({ locals }) => {
 				_id: unit._id.toString(),
 				code: unit.code,
 				name: unit.name,
-				shortName: unit.shortName || '',
 				type: unit.type,
 				level: unit.level || 0
 			})),

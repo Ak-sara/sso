@@ -35,10 +35,10 @@ export const GET: RequestHandler = async (event) => {
 			);
 		}
 
-		// Get org unit
+		// Get org unit — 'logical' units are rendering-only containers, not real SCIM groups
 		const orgUnit = await db.orgUnits.findById(id);
 
-		if (!orgUnit) {
+		if (!orgUnit || (orgUnit as any).type === 'logical') {
 			throw error(
 				404,
 				JSON.stringify(createScimError(404, `Group ${id} not found`, 'noTarget'))

@@ -27,13 +27,13 @@ function toObjId(id: string | null | undefined): ObjectId | null {
 
 export function makeEmpty(organizationId?: string): OrgUnitDetail {
 	return {
-		_id: '', code: '', name: '', shortName: '', type: 'department', description: '',
+		_id: '', code: '', name: '', type: 'department', description: '',
 		organizationId: organizationId as string,
 		parentId: '', parentName: null,
 		groupId: '', groupName: null,
 		picId: '', picName: null,
 		managerId: '', managerName: null,
-		diagram:'logical',
+		isNeck: false,
 	} as OrgUnitDetail;
 }
 
@@ -88,12 +88,15 @@ export async function listOrgUnits(
 
 	const params = paramsOrOrgId as PaginationInput;
 	const sanitizedParams = { ...params, search: params.search ? sanitizeString(params.search) : undefined };
-	const result = await db.orgUnits.findPaginated(sanitizedParams, filter, ['name', 'code', 'shortName']);
+	const result = await db.orgUnits.findPaginated(sanitizedParams, filter, ['name', 'code']);
 	return { ...result, items: result.items.map((u: any) => serializeOrgUnit(u, nodes)) };
 }
 
-export async function getOrgUnitById(id: string): Promise<ServiceResult<OrgUnitDetail>> {
-	const doc = await db.orgUnits.findById( id ) as any;
+export async function getOrgUnitById(codeOrId: string): Promise<ServiceResult<OrgUnitDetail>> {
+	// Callers pass either the unit's code (STO page) or its Mongo _id (org-units admin page)
+	const doc = (ObjectId.isValid(codeOrId)
+		? await db.orgUnits.findById(codeOrId)
+		: await db.orgUnits.findOne({ code: codeOrId } as MongoFilter<OrgUnit>)) as any;
 	if (!doc) return { ok: false, error: 'Organization unit not found', status: 404 };
 
 	const [parent, manager, group, pic] = await Promise.all([
@@ -146,7 +149,8 @@ export async function createOrgUnit(input: OrgUnit): Promise<ServiceResult<{ cod
 	}
 }
 
-export async function updateOrgUnit(code: string|undefined, input: Partial<OrgUnit>): Promise<ServiceResult<null>> {
+export async function updateOrgUnit(codeOrId: string|undefined, input: Partial<OrgUnit>): Promise<ServiceResult<null>> {
+	if (!codeOrId) return { ok: false, error: 'Organization unit not found', status: 404 };
 	const {_id, ...INP}=input
 	const update = {
 		...INP,
@@ -159,11 +163,18 @@ export async function updateOrgUnit(code: string|undefined, input: Partial<OrgUn
 	};
 
 	try {
-		const updated = await db.orgUnits.updateOne({ _id:new ObjectId(code) } as MongoFilter<OrgUnit>, update as MongoUpdate<OrgUnit>);
+		// Callers pass either the unit's code (STO page, generic API route) or its
+		// Mongo _id (org-units admin page) — resolve whichever was given to a real _id.
+		const doc = ObjectId.isValid(codeOrId)
+			? await db.orgUnits.findById(codeOrId)
+			: await db.orgUnits.findOne({ code: codeOrId } as MongoFilter<OrgUnit>);
+		if (!doc) return { ok: false, error: 'Organization unit not found', status: 404 };
+
+		const updated = await db.orgUnits.updateOne({ _id: doc._id } as MongoFilter<OrgUnit>, update as MongoUpdate<OrgUnit>);
 		if (!updated) return { ok: false, error: 'Organization unit not found', status: 404 };
 		return { ok: true, data: null };
 	} catch (err) {
-		log.error('Failed to update org unit', { error: err, code });
+		log.error('Failed to update org unit', { error: err, codeOrId });
 		return { ok: false, error: 'Failed to update unit', status: 500 };
 	}
 }

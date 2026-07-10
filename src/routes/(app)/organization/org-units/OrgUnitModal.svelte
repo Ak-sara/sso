@@ -20,10 +20,9 @@
 
 	const typeOptions = {
 		board: 'Board', directorate: 'Directorate', division: 'Division',
-		department: 'Department', section: 'Section', team: 'Team', sbu: 'SBU'
+		department: 'Department', section: 'Section', team: 'Team', sbu: 'SBU',
+		logical: 'Logical (rendering only)'
 	};
-
-	const diagramOptions = { block: 'Node', logical: 'Container', group: 'Group', neck: 'Neck' };
 
 	const parentUnitColumns = [
 		{ key: 'code', label: 'Code', sortable: true },
@@ -82,22 +81,18 @@
 			{:else}
 				<Input type="info" label="Unit Code" value={unit.code} />
 			{/if}
+			<Input type="select" label="Unit Type"  bind:value={unit.type} options={typeOptions} />
 			<Input type="checkbox" label="Active Unit"  bind:value={unit.isActive} />
-			<Input type="select"   label="STO Mode"    bind:value={unit.diagram} options={diagramOptions} />
 		</div>
 
 		<div class="grid grid-cols-2 gap-2">
 			<Input type="text" label="Unit Name *"   bind:value={unit.name} />
-			<Input type="text" label="Short Name"  bind:value={unit.shortName} placeholder="Optional" />
+			<Input type="select" label="Organization" bind:value={unit.organizationId} options={orgOptions} />
 		</div>
 
 		<Input type="textarea" label="Description" bind:value={unit.description} rows={2} />
 
-		<div class="grid grid-cols-2 gap-2">
-			<Input type="select" label="Organization" bind:value={unit.organizationId} options={orgOptions} />
-			<Input type="select" label="Unit Type"  bind:value={unit.type} options={typeOptions} />
-		</div>
-
+		<div class="grid grid-cols-[3fr_1fr] gap-2">
 		<LookupModal
 			bind:value={unit.parentId}
 			displayValue={unit.parentName || ''}
@@ -110,6 +105,8 @@
 				unit.parentName = item ? `${item.code} - ${item.name}` : '';
 			}}
 		/>
+		<Input type="checkbox" label="Render as Neck" bind:value={unit.isNeck} />
+		</div>
 		<LookupModal
 			bind:value={unit.groupId}
 			displayValue={unit.groupName || ''}

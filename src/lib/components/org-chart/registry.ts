@@ -1,7 +1,8 @@
 export type AnchorType =
     | 'parent_in'  | 'parent_out'
-    | 'shadow_in'  | 'shadow_out'
-    | 'neck_out'   | 'l_neck' | 'r_neck';
+    | 'below_in'   | 'below_out'
+    | 'neck_out'   | 'l_neck' | 'r_neck'
+    | 'stack_in';
 
 export interface NodeRef {
     getAnchor(type: AnchorType): [number, number];
