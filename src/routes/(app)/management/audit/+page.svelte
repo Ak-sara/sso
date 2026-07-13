@@ -1,10 +1,13 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import DataTable from '$lib/components/DataTable.svelte';
+	import AuditDetailModal from './AuditDetailModal.svelte';
 	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
 
 	let { data }: { data: PageData } = $props();
+
+	let selectedAuditLogId: string | null = $state(null);
 
 	const getActionIcon = (action: string) => {
 		const icons: Record<string, string> = {
@@ -171,7 +174,11 @@
 		onPageSizeChange={handlePageSizeChange}
 		onSort={handleSort}
 		onSearch={handleSearch}
-		onEdit={(row) => goto(`/audit/${row._id}`)}
+		onEdit={(row) => (selectedAuditLogId = row._id)}
 		emptyMessage="No system activity logs yet."
 	/>
 </div>
+
+{#if selectedAuditLogId}
+	<AuditDetailModal bind:auditLogId={selectedAuditLogId} />
+{/if}

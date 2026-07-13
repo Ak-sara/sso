@@ -243,5 +243,7 @@
 		organizations={data.organizations}
 		orgUnits={data.orgUnits}
 		positions={data.positions}
+		realmRoles={data.realmRoles}
+		clientRoles={data.clientRoles}
 		onSaved={() => { selectedAssignment = null; }} />
 {/if}

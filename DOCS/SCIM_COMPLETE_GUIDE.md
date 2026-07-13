@@ -1,8 +1,22 @@
 # Aksara SSO: Complete SCIM 2.0 Enterprise Guide
 
-**Version:** 2.0
-**Last Updated:** 2025-10-18
-**Status:** Production Ready
+**Version:** 2.1
+**Last Updated:** 2026-07-13
+**Status:** Production Ready — **inbound only** (see [§6.5](#65-inbound-vs-outbound-provisioning--why-cloudflare-doesnt-just-work))
+
+> **Read this before connecting a third-party SCIM consumer (Cloudflare
+> Access, Okta-as-SP, etc.):** this app plays the **SCIM server** role — it
+> generates its own endpoint + credentials and expects a *client* to call in.
+> Cloudflare Access plays the exact same role for its own SCIM connector — it
+> also generates its own endpoint + bearer token and expects a *client* to
+> call in. Two servers, each waiting for the other to be the client: neither
+> side has the outbound capability to actually make the connection. This
+> app's webhooks (§6) don't change that — they're a custom (non-SCIM) payload
+> this app pushes to receivers built to understand it, not a way to call a
+> standard SCIM endpoint like Cloudflare's. Jump to
+> [§6.5](#65-inbound-vs-outbound-provisioning--why-cloudflare-doesnt-just-work)
+> for the full explanation before assuming a Cloudflare integration will "just
+> work" the way OFM's does.
 
 ---
 
@@ -14,6 +28,7 @@
 4. [Advanced Filtering](#4-advanced-filtering)
 5. [Bulk Operations](#5-bulk-operations)
 6. [Webhooks & Real-Time Sync](#6-webhooks--real-time-sync)
+   - [6.5 Inbound vs Outbound Provisioning — why Cloudflare doesn't "just work"](#65-inbound-vs-outbound-provisioning--why-cloudflare-doesnt-just-work)
 7. [OFM Integration Guide](#7-ofm-integration-guide)
 8. [Enterprise Features](#8-enterprise-features)
 9. [vs Industry Leaders](#9-vs-industry-leaders)
@@ -27,9 +42,11 @@
 SCIM (System for Cross-domain Identity Management) is an industry-standard REST API for automated user and org unit provisioning.
 
 **Benefits:**
-- ✅ Auto-sync employees to connected apps
+- ✅ Auto-sync employees to connected apps *you build to pull from this API
+  or receive its webhooks* (see [§6.5](#65-inbound-vs-outbound-provisioning--why-cloudflare-doesnt-just-work)
+  for what this does **not** yet cover — e.g. Cloudflare Access, Okta-as-SP)
 - ✅ Auto-sync organizational structure
-- ✅ Instant deactivation when offboarded
+- ✅ Instant deactivation when offboarded (for apps polling/receiving webhooks)
 - ✅ Single source of truth for identity data
 
 ### Authentication Setup (OAuth 2.0)
@@ -754,7 +771,85 @@ If webhook delivery fails:
 
 ---
 
+## 6.5 Inbound vs Outbound Provisioning — why Cloudflare doesn't "just work"
+
+This is the section to read before wiring up any pre-built, third-party SCIM
+consumer (Cloudflare Access, Okta acting as a Service Provider, AWS IAM
+Identity Center, etc.) — as opposed to an in-house app like OFM that we
+control and can write to match whatever this SSO exposes.
+
+### Both sides picked the same role
+
+This app has the **exact same role** in SCIM as Cloudflare Access does: it is
+a **server**, expecting some other system to be the **client**.
+
+- **Aksara SSO**: exposes `/scim/v2/Users` and `/scim/v2/Groups`, generates
+  its own `clientId`/`clientSecret` pairs (`/settings/clients-scim`), and
+  waits for a caller to authenticate and pull data or receive webhook
+  notifications.
+- **Cloudflare Access**: generates its own SCIM endpoint URL + bearer token
+  in its dashboard, and waits for an identity provider to authenticate with
+  that token and push `POST`/`PATCH`/`DELETE /Users` requests to it.
+
+Neither one is wrong, and neither is "the special case" — they're just two
+independent systems that both implemented the **server** side of SCIM and
+neither implemented the **client** side. So when you point one at the other,
+nothing happens: both sit there waiting to be called, and nobody is doing the
+calling. This is exactly why OFM works today (§7) — OFM was written in-house
+specifically to be the *client* that calls into our server — and why
+Cloudflare does not: nothing in this codebase plays that client role toward
+an external, pre-built system.
+
+The webhook system in §6 doesn't change this. It's this app acting as a
+client, but only in its own custom, non-SCIM shape (a signed JSON envelope) —
+it has no code path that speaks standard SCIM REST to call *out* to another
+system's server, which is what Cloudflare's side requires.
+
+**Bottom line:** to connect to Cloudflare (or Okta, or any similar consumer),
+this app needs a genuinely new capability — a SCIM *client* — that doesn't
+exist in either direction today. It's not a missing setting; it's missing
+code.
+
+### Why the webhook system in §6 doesn't bridge this gap
+
+The webhook system is real and working, but it is **not** SCIM-over-the-wire:
+
+| | §6 Webhooks (this app) | What Cloudflare/Okta need |
+|---|---|---|
+| Request shape | Custom envelope: `{event, resourceType, resourceId, action, data}` | Standard SCIM REST: `POST/PATCH/DELETE /Users`, `/Groups` |
+| Auth to the *target* | None — target verifies an `X-SCIM-Signature` HMAC we compute | Bearer token *the target issued to us* |
+| Who owns the subscription | An inbound SCIM client we already authenticated (`requireScimAuthEnhanced`) | A provisioning target with its own URL + token, independent of our inbound clients |
+
+A receiver has to be custom-built to understand our envelope and verify our
+HMAC — which is exactly what the OFM guide's webhook receiver (§7, Step 3)
+does. Cloudflare, Okta, etc. do not know how to consume this format; they only
+speak standard SCIM REST calls against the endpoint *they* generated.
+
+### Current status
+
+**Not implemented.** There is no code anywhere in this app that stores a
+third-party SCIM base URL + bearer token and pushes SCIM-formatted requests
+to it. Building that requires:
+
+1. A new "provisioning target" concept (target name, SCIM base URL, bearer
+   token — analogous to `scim_clients` but for the *outbound* direction)
+2. An outbound SCIM client module that translates identity create/update/
+   deactivate events into real `POST`/`PATCH`/`DELETE` calls against each
+   active target
+3. An admin UI to register a target (paste in Cloudflare's generated
+   endpoint + secret)
+
+None of this exists yet — treat any "Cloudflare SCIM provisioning" plan as a
+new feature to build, not a configuration step on top of what's here today.
+
+---
+
 ## 7. OFM Integration Guide
+
+> This is the **inbound/pull** pattern — OFM is a system we control, written
+> to poll our SCIM API and receive our custom webhook format. It is not a
+> template for third-party push-based consumers like Cloudflare Access; see
+> [§6.5](#65-inbound-vs-outbound-provisioning--why-cloudflare-doesnt-just-work).
 
 ### Architecture
 
@@ -1163,7 +1258,9 @@ curl -X PATCH http://localhost:5173/scim/v2/Users/507f... \
 
 **OAuth 2.0 Authentication:**
 - ✅ Client Credentials Grant (RFC 6749)
-- ✅ JWT tokens with HS256 signing
+- ✅ JWT tokens with HS256 signing (SCIM access tokens — separate from the
+  OIDC ID token issued by `/oauth/token`, which is signed RS256; see
+  `AUTHENTICATION_GUIDE.md`)
 - ✅ 1-hour token expiration (configurable)
 - ✅ Automatic token rotation
 
@@ -1508,21 +1605,26 @@ Use Google Directory API to export, then import via bulk operations.
 
 ## Summary
 
-Aksara SSO implements **enterprise-grade SCIM 2.0** with:
+Aksara SSO implements **enterprise-grade inbound SCIM 2.0** with:
 
 ✅ **OAuth 2.0 authentication** (not basic bearer tokens)
 ✅ **Advanced filtering** (full RFC 7644 compliance)
 ✅ **Bulk operations** (1,000 ops, 10 MB payload)
-✅ **Real-time webhooks** (HMAC-signed)
+✅ **Real-time webhooks** (HMAC-signed, custom format — for apps built to consume it)
 ✅ **Hierarchical org units** (UNIQUE feature)
 ✅ **Unit-level managers** (approval workflows)
 ✅ **100% free and open source**
 
-**For Indonesian companies with complex organizational structures and approval workflows, Aksara SSO is the clear winner.**
+⚠️ **Not yet implemented**: outbound SCIM provisioning (this app acting as a
+SCIM *client* pushing to a third-party's generated endpoint — needed for
+Cloudflare Access, Okta-as-SP, and similar push-based consumers). See
+[§6.5](#65-inbound-vs-outbound-provisioning--why-cloudflare-doesnt-just-work).
+
+**For Indonesian companies with complex organizational structures and approval workflows, Aksara SSO is the clear winner** for inbound provisioning and in-house integrations; outbound provisioning to pre-built third-party SCIM consumers is on the roadmap, not shipped.
 
 ---
 
-**Last Updated:** 2025-10-18
-**Version:** 2.0
+**Last Updated:** 2026-07-13
+**Version:** 2.1
 **License:** MIT
 **Maintained by:** Aksara Team

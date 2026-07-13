@@ -13,7 +13,11 @@
       "Bash(cat:*)",
       "Bash(bash scripts/test/custom.sh:*)",
       "Bash(test:*)",
-      "Bash(npx svelte-check:*)"
+      "Bash(npx svelte-check:*)",
+      "Bash(bunx svelte-check *)",
+      "Read(//tmp/**)",
+      "Read(//Users/HERIAWAN/Project/_mya/jss/AO/**)",
+      "Bash(bun link *)"
     ],
     "deny": [],
     "ask": []

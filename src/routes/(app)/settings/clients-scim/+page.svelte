@@ -167,7 +167,7 @@
 			{
 				text: '+ Add New Client',
 				class: 'px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors',
-				action: () => { actClient = { clientName: '', description: '', contactEmail: '', scopes: [], rateLimit: 100, ipWhitelist: [], isActive: false }; }
+				action: () => { actClient = { clientName: '', description: '', contactEmail: '', scopes: ['read:users', 'read:groups'], rateLimit: 100, ipWhitelist: [], isActive: false }; }
 			}
 		]}
 		searchPlaceholder="Search SCIM client (name, client ID)..."
@@ -213,7 +213,8 @@
 
 
 {#if actClient}
-	<ScimClientModal bind:client={actClient} />
+	<ScimClientModal bind:client={actClient}
+		onCreated={(result) => { cli = result.clientId; secret = result.plainSecret; }} />
 {/if}
 
 <!-- Success Modal (shows client secret) -->

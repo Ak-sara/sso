@@ -15,14 +15,19 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const maskingConfig = await getMaskingConfig();
 	const userRoles = locals.user?.roles || [];
 
-	const [identityResult, organizations, orgUnits, positions] = await Promise.all([
+	const [identityResult, organizations, orgUnits, positions, realmRoles, clientRoles, oauthClients] = await Promise.all([
 		isNew ? null : getIdentityById(params.id, { maskingConfig, userRoles, applyMask: mode === 'view' }),
 		listOrganizations(),
 		db.orgUnits.find({ type: { $ne: 'logical' } } as any), // rendering-only containers aren't real assignable units
 		listPositions(),
+		db.realmRoles.find({ isActive: true } as any, { name: 1 }),
+		db.clientRoles.find({}, { name: 1 }),
+		db.oauthClients.find({}, { clientName: 1 }),
 	]);
 
 	if (!isNew && identityResult && !identityResult.ok) throw error(404, 'Identitas tidak ditemukan');
+
+	const clientNameById = new Map(oauthClients.map((c: any) => [c.clientId, c.clientName]));
 
 	return {
 		mode: isNew ? 'edit' : mode,
@@ -32,6 +37,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		organizations: organizations.map(o => ({ _id: o._id, name: o.name, code: o.code })),
 		orgUnits: (orgUnits as any[]).map(u => ({ _id: u._id.toString(), name: u.name, code: u.code })),
 		positions: positions.map(p => ({ _id: p._id, name: p.name, code: p.code })),
+		realmRoles: realmRoles.map((r: any) => ({
+			_id: r._id.toString(), name: r.name, organizationId: r.organizationId, allowedClientIds: r.allowedClientIds || []
+		})),
+		clientRoles: clientRoles.map((r: any) => ({
+			_id: r._id.toString(), name: r.name, clientId: r.clientId, clientName: clientNameById.get(r.clientId) || r.clientId
+		})),
 	};
 };
 

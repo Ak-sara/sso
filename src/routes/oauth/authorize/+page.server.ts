@@ -9,6 +9,7 @@ import { sessionManager } from '$lib/auth/session.js';
 import { findIdentityByEmailOrNIK } from '$lib/db/schemas';
 import { useLogger } from '@ak-sara/fbao/foundation';
 import { logAudit } from '$lib/audit/logger';
+import { canIdentityAccessClient } from '$lib/auth/realm-access';
 
 const log = useLogger({ module: 'oauth:authorize' });
 
@@ -34,8 +35,13 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 
         // Check if user is already logged in via session
         if (locals.user?.userId) {
-            const user = await oauthStore.getUserById(locals.user.userId.toString());
+            const identityId = locals.user.userId.toString();
+            const user = await oauthStore.getUserById(identityId);
             if (user) {
+                const allowed = await canIdentityAccessClient(identityId, validatedParams.client_id);
+                if (!allowed) {
+                    throw error(403, 'Your account is not authorized to access this application');
+                }
                 return {
                     params: validatedParams,
                     client,
@@ -131,6 +137,11 @@ export const actions: Actions = {
 
             if (!user) {
                 return fail(404, { error: 'User not found' });
+            }
+
+            const allowed = await canIdentityAccessClient(identityId, validatedParams.client_id);
+            if (!allowed) {
+                return fail(403, { error: 'Your account is not authorized to access this application' });
             }
 
             // Generate authorization code

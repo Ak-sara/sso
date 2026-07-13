@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { oauthStore } from '$lib/store.js';
 import { db } from '$lib/db/db';
+import { getClientRoleNames } from '$lib/auth/realm-access';
 import { useLogger } from '@ak-sara/fbao/foundation';
 
 const log = useLogger({ module: 'oauth:userinfo' });
@@ -29,12 +30,15 @@ export const GET: RequestHandler = async ({ locals }) => {
 		throw error(404, 'User not found');
 	}
 
+	const roles = await getClientRoleNames(tokenData.identity_id, tokenData.client_id);
+
 	// Build basic userinfo response
 	const userInfo: any = {
 		sub: user.id,
 		email: user.email,
 		name: user.name,
-		email_verified: true
+		email_verified: true,
+		...(roles.length > 0 && { roles })
 	};
 
 	// Fetch full identity data for additional fields

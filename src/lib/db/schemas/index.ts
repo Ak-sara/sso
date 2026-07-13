@@ -27,3 +27,6 @@ export { SKPenempatanSchema, type SKPenempatan } from './sk-penempatan';
 export { ScimClientSchema, type ScimClient, ScimAccessTokenSchema, type ScimAccessToken } from './scim';
 export { EntraIDConfigSchema, type EntraIDConfig } from './entraid';
 export { AuditLogSchema, type AuditLog } from './audit-log';
+export { OidcSigningKeySchema, type OidcSigningKey } from './oidc-signing-key';
+export { RealmRoleSchema, type RealmRole } from './realm-role';
+export { ClientRoleSchema, type ClientRole } from './client-role';

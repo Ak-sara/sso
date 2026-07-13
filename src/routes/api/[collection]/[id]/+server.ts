@@ -94,7 +94,7 @@ const CONFIGS: Record<string, CollectionConfig> = {
 	'oauth-clients': {
 		repoKey: 'oauthClients',
 		keyField: 'clientId',
-		allowedUpdateFields: ['clientName', 'redirectUris', 'allowedScopes', 'grantTypes', 'isActive'],
+		allowedUpdateFields: ['clientName', 'redirectUris', 'allowedScopes', 'grantTypes', 'isActive', 'organizationId'],
 		hideFields: ['clientSecret']
 	},
 

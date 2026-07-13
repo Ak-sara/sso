@@ -8,6 +8,7 @@ import type { MaskingConfig } from '$lib/utils/data-masking';
 import type { ServiceResult, MongoFilter, MongoUpdate } from './types';
 import { ObjectId, type Filter } from 'mongodb';
 import { validateBody, nonEmptyString, optionalString, emailField, booleanFromString } from '$lib/utils/validate';
+import { parseJsonArrayField } from '$lib/utils/form-json';
 
 const log = useLogger({ module: 'service:identity' });
 
@@ -135,13 +136,29 @@ export async function createIdentity(
 ): Promise<ServiceResult<{ _id: string }>> {
 	const validation = validateBody(CreateIdentitySchema, input);
 	if (!validation.ok) return validation;
-	console.debug("VALID",validation)
 	try {
 		const doc = await db.identities.insertOne(input as any);
-		console.debug("DOC", doc)
-		return { ok: true, data: { _id: doc._id!.toString() } };
+		const identityId = doc._id!.toString();
+
+		// assignments[] is the source of truth for org membership (realm roles,
+		// client roles) — keep it populated from day one instead of relying on
+		// an admin to add one manually via the Assignment History form later.
+		await upsertAssignment(identityId, {
+			organizationId: input.organizationId,
+			orgUnitId: input.orgUnitId,
+			positionId: input.positionId,
+			employeeId: input.employeeId,
+			region: input.region,
+			workLocation: input.workLocation,
+			isRemote: input.isRemote,
+			employmentType: input.employmentType,
+			employmentStatus: input.employmentStatus,
+			startDate: input.joinDate || new Date(),
+			createdBy: input.createdBy || 'system',
+		});
+
+		return { ok: true, data: { _id: identityId } };
 	} catch (err) {
-		console.error("ERR", err)
 		log.error('Failed to create identity', { error: err });
 		return { ok: false, error: 'Gagal membuat identitas', status: 500 };
 	}
@@ -180,6 +197,8 @@ export async function upsertAssignment(
 			isRemote: data.isRemote === 'true' || data.isRemote === true,
 			employmentType: data.employmentType || undefined,
 			employmentStatus: data.employmentStatus || undefined,
+			realmRoleIds: parseJsonArrayField(data.realmRoleIds),
+			clientRoleIds: parseJsonArrayField(data.clientRoleIds),
 			letterId: data.letterId || undefined,
 			letterNo: data.letterNo || undefined,
 			startDate: data.startDate ? new Date(data.startDate) : undefined,

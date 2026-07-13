@@ -15,14 +15,13 @@ export async function getAuditLogById(id: string) {
 
 	let identityInfo = null;
 	if (doc.identityId === 'system') {
-		identityInfo = { _id: 'system', fullName: 'System', email: null, username: 'system', employeeId: null, identityType: 'system' };
+		identityInfo = { _id: 'system', fullName: 'System', email: null, employeeId: null, identityType: 'system' };
 	} else if (doc.identityId) {
 		const identity = await db.identities.findById(doc.identityId) as any;
 		if (identity) identityInfo = {
 			_id: identity._id.toString(),
 			fullName: identity.fullName,
 			email: identity.email,
-			username: identity.username,
 			employeeId: identity.employeeId,
 			identityType: identity.identityType
 		};
@@ -50,7 +49,18 @@ export async function listAuditLogs(params: PaginationInput, filter: Record<stri
 
 	const query = { ...filter };
 	if (params.search) {
-		query.$or = SEARCH_FIELDS.map((f) => ({ [f]: { $regex: params.search, $options: 'i' } }));
+		const orClauses: Record<string, any>[] = SEARCH_FIELDS.map((f) => ({ [f]: { $regex: params.search, $options: 'i' } }));
+
+		// audit_log doesn't store the performer's name, so resolve matching
+		// identities first and search by their ids alongside the direct fields
+		const matchingIdentities = await db.identities.find(
+			{ fullName: { $regex: params.search, $options: 'i' } } as MongoFilter<Identity>
+		);
+		if (matchingIdentities.length > 0) {
+			orClauses.push({ identityId: { $in: matchingIdentities.map((i: any) => i._id.toString()) } });
+		}
+
+		query.$or = orClauses;
 	}
 
 	// Default to newest-first; only honor an explicit column sort (sortKey set) otherwise
@@ -73,7 +83,7 @@ export async function listAuditLogs(params: PaginationInput, filter: Record<stri
 	const identityMap = new Map(
 		(identities as any[]).map((i) => [
 			i._id.toString(),
-			{ name: i.fullName || i.username, email: i.email, employeeId: i.employeeId }
+			{ name: i.fullName || i.email || i.employeeId || 'Unknown', email: i.email, employeeId: i.employeeId }
 		])
 	);
 

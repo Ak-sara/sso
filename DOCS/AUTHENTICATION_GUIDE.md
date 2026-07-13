@@ -1,6 +1,6 @@
 # Authentication Guide - Aksara SSO
 
-> **Last Updated**: November 2025
+> **Last Updated**: July 2026
 > **Auth System**: Unified Identity Model with Multi-Login Support
 
 ---
@@ -26,7 +26,6 @@ Users can log in using any of the following identifiers:
 const identity = await db.collection('identities').findOne({
   $or: [
     { email: loginInput },
-    { username: loginInput },
     { 'employee.employeeId': loginInput }
   ],
   isActive: true
@@ -192,6 +191,40 @@ const isValid = await verify(identity.password, submittedPassword);
      │  18. Return protected resource                 │                         │
      │<───────────────────────────────────────────────┤                         │
 ```
+
+> Note on step 17: the **access token is an opaque random string**, not a JWT —
+> the resource server looks it up in the `access_tokens` collection rather than
+> verifying a signature. The only JWT issued by the OAuth flow is the **ID
+> token** (step 15, when `scope` includes `openid`) — see [ID Token](#3-id-token-jwt-rs256) below.
+
+#### Client Authentication Methods (`/oauth/token`)
+
+The token endpoint accepts client credentials via **either** standard method
+(RFC 6749 §2.3.1) — whichever the RP sends is used, with no special-casing per
+client:
+
+| Method | How credentials are sent |
+|--------|---------------------------|
+| `client_secret_basic` | `Authorization: Basic base64(client_id:client_secret)` header |
+| `client_secret_post` | `client_id` / `client_secret` fields in the POST body |
+
+This matters because different RPs default to different methods — e.g.
+**Cloudflare Access** defaults to `client_secret_basic`, while many simple
+OAuth libraries use `client_secret_post`. Both are supported simultaneously
+(body takes precedence if a request somehow sends both).
+
+All token-endpoint errors are returned in the RFC 6749 §5.2 shape —
+`{ "error": "invalid_client", "error_description": "..." }` — so any RP can
+surface the actual failure reason instead of a generic message.
+
+#### PKCE (RFC 7636)
+
+If an authorization request included a `code_challenge`, the token endpoint
+now **requires** a matching `code_verifier` at exchange time — it's no longer
+silently skipped if the verifier is omitted. `S256` is the only supported
+challenge method (advertised in `code_challenge_methods_supported`); `plain`
+is accepted by the request schema but not actually verified, so don't rely on
+it.
 
 ### 3. SCIM 2.0 Authentication (OAuth Client Credentials)
 
@@ -558,6 +591,8 @@ await db.collection('password_reset_tokens').updateOne(
 | `/oauth/introspect` | POST | Validate access token |
 | `/oauth/revoke` | POST | Revoke token |
 | `/oauth/userinfo` | GET | Get user info (OIDC) |
+| `/.well-known/openid_configuration` | GET | OIDC discovery document |
+| `/.well-known/jwks.json` | GET | Public signing key(s) for ID token verification |
 | `/scim/v2/token` | POST | SCIM client credentials |
 | `/reset-password` | POST | Request password reset |
 | `/reset-password/verify` | POST | Verify token & reset |
@@ -566,24 +601,15 @@ await db.collection('password_reset_tokens').updateOne(
 
 ## Token Types
 
-### 1. Access Token (JWT)
+### 1. Access Token (Opaque)
 
-**Format**: JWT (JSON Web Token)
+**Format**: Opaque random string (not a JWT — nothing to decode)
 **Expiration**: 1 hour
-**Use**: API authentication
+**Use**: API authentication — resource servers look it up in the
+`access_tokens` collection to resolve identity/scope, they don't verify a
+signature.
 
-**Structure**:
-```json
-{
-  "sub": "identity_id",
-  "email": "user@example.com",
-  "identityType": "employee",
-  "roles": ["user", "hr"],
-  "scope": "read:users write:users",
-  "iat": 1699000000,
-  "exp": 1699003600
-}
-```
+**Storage**: MongoDB `access_tokens` collection, keyed by the token string.
 
 ### 2. Refresh Token
 
@@ -591,9 +617,50 @@ await db.collection('password_reset_tokens').updateOne(
 **Expiration**: 30 days
 **Use**: Obtain new access token
 
-**Storage**: MongoDB `oauth_tokens` collection
+**Storage**: MongoDB `refresh_tokens` collection
 
-### 3. Session Cookie
+### 3. ID Token (JWT, RS256)
+
+**Format**: JWT, signed **RS256** (asymmetric — not a shared-secret HMAC)
+**Expiration**: 1 hour
+**Use**: OIDC — proves identity to the Relying Party (`scope=openid` only)
+
+**Structure**:
+```json
+{
+  "sub": "identity_id",
+  "aud": "client_id",
+  "iss": "https://sso.example.com",
+  "email": "user@example.com",
+  "name": "Full Name",
+  "iat": 1699000000,
+  "exp": 1699003600
+}
+```
+
+**Header** includes a `kid` matching a key published at
+`/.well-known/jwks.json`:
+```json
+{ "alg": "RS256", "kid": "..." }
+```
+
+**Why RS256 and not HS256**: HS256 uses one shared secret for both signing and
+verifying, so any RP holding that secret could theoretically mint tokens for
+another RP. RS256 lets any RP verify signatures using only the **public** key
+published at `/.well-known/jwks.json` — the private key never leaves this
+server. This is also what most enterprise SSO consumers (Cloudflare Access,
+Okta, Azure AD, ...) expect out of a real OIDC provider; a "Certificate URL" /
+JWKS field in their config is asking for exactly this endpoint.
+
+**Signing key storage**: generated once (2048-bit RSA) and persisted in the
+`oidc_signing_keys` collection — deliberately **not** `system_settings`,
+since that collection is returned in full by `GET /api/settings`.
+
+- `src/lib/auth/id-token.ts` — signs with `jose`'s `SignJWT`
+- `src/lib/auth/oidc-keys.ts` — generates/caches/persists the keypair
+- `src/routes/.well-known/jwks.json/+server.ts` — publishes the public key(s)
+
+### 4. Session Cookie
 
 **Name**: `session`
 **Format**: Encrypted session ID
@@ -633,6 +700,18 @@ await db.collection('password_reset_tokens').updateOne(
 - Verify requested scope is allowed for client
 - Check client configuration
 
+**Problem**: RP shows "Failed to exchange code for token" / a blank or "undefined" reason
+- Confirm which client-auth method the RP is using — `client_secret_basic`
+  (Authorization header) and `client_secret_post` (body) are both supported,
+  but if the RP uses something else the request will be rejected.
+- Check the raw response body: every error now returns
+  `{ "error": "...", "error_description": "..." }` (RFC 6749 §5.2) — the
+  `error_description` names the actual cause (unknown client, bad secret,
+  expired/invalid code, PKCE mismatch, etc).
+- If the RP was issued a `code_challenge` at `/oauth/authorize` but doesn't
+  send `code_verifier` at `/oauth/token`, the exchange now fails with
+  `invalid_grant` (PKCE is enforced, not silently skipped).
+
 ---
 
 ## Related Documentation
@@ -645,6 +724,6 @@ await db.collection('password_reset_tokens').updateOne(
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: November 2025
+**Document Version**: 1.1
+**Last Updated**: July 2026
 **Status**: ✅ Current and Accurate

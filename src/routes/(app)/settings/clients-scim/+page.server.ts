@@ -15,6 +15,7 @@ import {
 } from '$lib/scim/auth-enhanced';
 import { fail } from '@sveltejs/kit';
 import { useLogger } from '@ak-sara/fbao/foundation';
+import { parseJsonArrayField } from '$lib/utils/form-json';
 
 const log = useLogger({ module: 'app:clients-scim' });
 
@@ -64,12 +65,9 @@ export const actions = {
 			const clientName = formData?.clientName;
 			const description = formData?.description;
 			const contactEmail = formData?.contactEmail;
-			const rawScopes = formData?.scopes;
-			const scopes = Array.isArray(rawScopes)
-				? rawScopes.map((s: unknown) => String(s))
-				: rawScopes ? [String(rawScopes)] : [];
+			const scopes = parseJsonArrayField(formData?.scopes);
 			const rateLimit = parseInt(formData?.rateLimit || '100');
-			const ipWhitelist = formData?.ipWhitelist.split('\n')
+			const ipWhitelist = ((formData?.ipWhitelist as string) || '').split('\n')
 				.map((ip:string) => ip.trim())
 				.filter(Boolean);
 

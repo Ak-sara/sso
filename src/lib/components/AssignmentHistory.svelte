@@ -13,10 +13,12 @@ interface Props {
 	organizations: { _id: string; name: string; code: string }[];
 	orgUnits: { _id: string; name: string; code: string }[];
 	positions: { _id: string; name: string; code: string }[];
+	realmRoles?: { _id: string; name: string; organizationId: string; allowedClientIds: string[] }[];
+	clientRoles?: { _id: string; name: string; clientId: string; clientName: string }[];
 	onSaved: () => void;
 }
 
-let { assignment = $bindable(), orgmap, unitmap, positionmap, organizations, orgUnits, positions, onSaved }: Props = $props();
+let { assignment = $bindable(), orgmap, unitmap, positionmap, organizations, orgUnits, positions, realmRoles = [], clientRoles = [], onSaved }: Props = $props();
 
 const lookupColumns = [
 	{ key: 'code', label: 'Code', sortable: true },
@@ -34,6 +36,20 @@ let posId = $state<string | null>(assignment.positionId ?? null);
 let orgName = $state(orgmap[assignment.organizationId ?? ''] ?? '');
 let unitName = $state(unitmap[assignment.orgUnitId ?? ''] ?? '');
 let positionName = $state(positionmap[assignment.positionId ?? ''] ?? '');
+
+// App access — realm roles are scoped to whichever org is picked above;
+// client roles are limited to apps those selected realm roles actually grant.
+let realmRoleIds = $state<string[]>(assignment.realmRoleIds ?? []);
+let clientRoleIds = $state<string[]>(assignment.clientRoleIds ?? []);
+
+const orgRealmRoles = $derived(realmRoles.filter((r) => r.organizationId === orgId));
+const realmRoleOptions = $derived(Object.fromEntries(orgRealmRoles.map((r) => [r._id, r.name])));
+
+const allowedClientIds = $derived(
+	new Set(orgRealmRoles.filter((r) => realmRoleIds.includes(r._id)).flatMap((r) => r.allowedClientIds))
+);
+const availableClientRoles = $derived(clientRoles.filter((r) => allowedClientIds.has(r.clientId)));
+const clientRoleOptions = $derived(Object.fromEntries(availableClientRoles.map((r) => [r._id, `${r.clientName}: ${r.name}`])));
 </script>
 
 <FormModal wide onClose={() => { assignment = null; }}
@@ -93,6 +109,12 @@ let positionName = $state(positionmap[assignment.positionId ?? ''] ?? '');
 			<Input type="checkbox" label="Remote" name="isRemote" bind:value={assignment.isRemote} />
 			<Input type="text" label="Assignment Letter" name="letterId" bind:value={assignment.letterId} />
 			<Input type="text" label="Assignment Letter Nbr" name="letterNo" bind:value={assignment.letterNo} />
+		</div>
+		<div class="grid grid-cols-2 gap-4">
+			<Input type="multi-select" label="Realm Roles (app access for this org)" name="realmRoleIds"
+				options={realmRoleOptions} bind:value={realmRoleIds} />
+			<Input type="multi-select" label="App Roles (in-app permissions)" name="clientRoleIds"
+				options={clientRoleOptions} bind:value={clientRoleIds} />
 		</div>
 		<button type="submit"
 			class="mt-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md">

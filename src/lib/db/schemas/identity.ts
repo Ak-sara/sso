@@ -67,6 +67,10 @@ export const IdentitySchema = z.object({
 			employmentType: z.enum(['permanent', 'pkwt', 'outsource', 'contract', 'mutation', 'assignment']).optional(),
 			employmentStatus: z.enum(['active', 'probation', 'terminated', 'resigned']).optional(),
 
+			// App access — scoped to this assignment so it expires when the assignment does
+			realmRoleIds: z.array(z.string()).optional().default([]), // RealmRole._id — which apps this assignment can access
+			clientRoleIds: z.array(z.string()).optional().default([]), // ClientRole._id — in-app permissions, surfaced as token claims
+
 			letterId: z.custom<ObjectId>().optional(),
 			letterNo: z.string().optional(),
 

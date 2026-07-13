@@ -18,6 +18,7 @@ import type {
 	AuthCode, RefreshToken, OrgStructureVersion,
 	SystemSettings, SKPenempatan,
 	ScimClient, ScimAccessToken, EntraIDConfig,
+	OidcSigningKey, RealmRole, ClientRole,
 } from './schemas';
 
 // Re-export for consumers that import types from here
@@ -43,6 +44,9 @@ export const lazy = () => getDB();
 
 11. system_settings
 12. entraid_configs
+13. oidc_signing_keys
+14. realm_roles
+15. client_roles
 
 ?. audit_log  -> FBA managed (AuditLogger)
 ?. sessions   -> FBA managed (MongoSessionManager)
@@ -63,4 +67,7 @@ export const db = {
 	systemSettings: new Repository<SystemSettings>(lazy, 'system_settings'),
 	entraidConfigs: new Repository<EntraIDConfig>(lazy, 'entraid_configs'),
 	skPenempatan: new Repository<SKPenempatan>(lazy, 'sk_penempatan'),
+	oidcSigningKeys: new Repository<OidcSigningKey>(lazy, 'oidc_signing_keys'),
+	realmRoles: new Repository<RealmRole>(lazy, 'realm_roles'),
+	clientRoles: new Repository<ClientRole>(lazy, 'client_roles'),
 };

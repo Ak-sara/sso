@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
+	import { deserialize } from '$app/forms';
 	import FormModal from '$lib/components/FormModal.svelte';
 	import Input from '$lib/components/Input.svelte';
 	import { showNotif } from '$lib/stores/notif.svelte';
@@ -7,8 +8,10 @@
 
 	const log = useLogger({ module: 'app:clients-scim' });
 
-	interface Props { client?: any; }
-	let { client = $bindable() }: Props = $props();
+	interface Props { client?: any; onCreated?: (result: { clientId: string; plainSecret: string }) => void; }
+	let { client = $bindable(), onCreated }: Props = $props();
+
+	const isNew = $derived(!client?.clientId);
 
 	const scopeOptions = {
 		'read:users': 'read:users', 'write:users': 'write:users', 'delete:users': 'delete:users',
@@ -24,40 +27,70 @@
 		client.ipWhitelist = client.ipWhitelist.filter((_: any, i: number) => i !== index);
 	}
 
+	async function createClient() {
+		if (!client.clientName?.trim()) { showNotif('error', 'Client name is required'); return; }
+
+		const fd = new FormData();
+		fd.append('clientName', client.clientName);
+		fd.append('description', client.description || '');
+		fd.append('contactEmail', client.contactEmail || '');
+		fd.append('scopes', JSON.stringify(client.scopes || []));
+		fd.append('rateLimit', String(client.rateLimit || 100));
+		fd.append('ipWhitelist', (client.ipWhitelist || []).filter(Boolean).join('\n'));
+
+		const res = await fetch('?/create', { method: 'POST', body: fd });
+		const result: any = deserialize(await res.text());
+
+		if (result.type === 'failure' || result.type === 'error') {
+			showNotif('error', result.data?.error ?? 'Failed to create client');
+			return;
+		}
+
+		showNotif('success', 'Client created — copy the secret now, it will not be shown again');
+		await invalidate('app:pagination');
+		onCreated?.({ clientId: result.data.client.clientId, plainSecret: result.data.plainSecret });
+		client = null;
+	}
+
+	async function updateClient() {
+		const res = await fetch(`/api/scim-clients/${client.clientId}`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				clientName: client.clientName,
+				description: client.description || '',
+				contactEmail: client.contactEmail || '',
+				scopes: client.scopes || [],
+				rateLimit: client.rateLimit || 100,
+				ipWhitelist: client.ipWhitelist || [],
+				isActive: client.isActive
+			})
+		});
+		if (res.ok) {
+			showNotif('success', 'Client updated');
+			await invalidate('app:pagination');
+			client = null;
+		} else {
+			showNotif('error', (await res.json()).error ?? 'Failed to update client');
+		}
+	}
+
 	async function save() {
 		if (!client) return;
 		try {
-			const res = await fetch(`/api/scim-clients/${client.clientId}`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					clientName: client.clientName,
-					description: client.description || '',
-					contactEmail: client.contactEmail || '',
-					scopes: client.scopes || [],
-					rateLimit: client.rateLimit || 100,
-					ipWhitelist: client.ipWhitelist || [],
-					isActive: client.isActive
-				})
-			});
-			if (res.ok) {
-				showNotif('success', 'Client updated');
-				await invalidate('app:pagination');
-				client = null;
-			} else {
-				showNotif('error', (await res.json()).error ?? 'Failed to update client');
-			}
+			if (isNew) await createClient();
+			else await updateClient();
 		} catch (err) {
-			log.error('Error updating client', { error: err });
-			showNotif('error', 'Failed to update client');
+			log.error('Error saving client', { error: err });
+			showNotif('error', 'Failed to save client');
 		}
 	}
 </script>
 
 <FormModal
 	onClose={() => (client = null)}
-	title={client?.clientName || 'SCIM Client'}
-	subtitle={`Client ID: ${client?.clientId ?? ''}`}>
+	title={client?.clientName || (isNew ? 'New SCIM Client' : 'SCIM Client')}
+	subtitle={isNew ? '' : `Client ID: ${client?.clientId ?? ''}`}>
 
 	<div class="p-4 space-y-2">
 		<Input type="text"     label="Client Name"               bind:value={client.clientName} />
@@ -65,7 +98,9 @@
 		<Input type="email"    label="Contact Email"             bind:value={client.contactEmail} />
 		<Input type="number"   label="Rate Limit (req/min)"      bind:value={client.rateLimit} min={1} max={1000} />
 		<Input type="multi-select" label="Scopes" options={scopeOptions} bind:value={client.scopes} />
-		<Input type="checkbox" label="Client Active"             bind:value={client.isActive} />
+		{#if !isNew}
+			<Input type="checkbox" label="Client Active"         bind:value={client.isActive} />
+		{/if}
 
 		<div>
 			<div class="flex justify-between items-center mt-1 ml-1 mb-1">
@@ -93,7 +128,7 @@
 		<button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
 			type="button" onclick={() => (client = null)}>Cancel</button>
 		<button class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-			type="button" onclick={save}>Save Changes</button>
+			type="button" onclick={save}>{isNew ? 'Create Client' : 'Save Changes'}</button>
 	</div>
 
 </FormModal>

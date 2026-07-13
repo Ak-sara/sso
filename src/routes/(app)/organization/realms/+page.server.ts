@@ -1,9 +1,20 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { listOrganizations, createOrganization, deleteOrganization, updateOrganization } from '$lib/services/organization-service';
+import { db } from '$lib/db/db';
+import { ObjectId } from 'mongodb';
+import { parseJsonArrayField } from '$lib/utils/form-json';
 
 export const load: PageServerLoad = async () => {
-	return { realms: await listOrganizations(true) };
+	const [realms, clients] = await Promise.all([
+		listOrganizations(true),
+		db.oauthClients.find({}, { clientName: 1 })
+	]);
+
+	return {
+		realms,
+		clients: clients.map((c: any) => ({ clientId: c.clientId, clientName: c.clientName }))
+	};
 };
 
 export const actions: Actions = {
@@ -71,5 +82,59 @@ export const actions: Actions = {
 		const result = await deleteOrganization(code);
 		if (!result.ok) return fail(result.status || 400, { error: result.error });
 		return { success: true };
+	},
+
+	// Realm Roles — app-access bundles scoped to one realm (organization)
+	createRealmRole: async ({ locals }) => {
+		const body = locals.body;
+		const organizationId = (body?.organizationId as string || '').trim();
+		const name = (body?.name as string || '').trim();
+		const description = (body?.description as string) || undefined;
+		const allowedClientIds = parseJsonArrayField(body?.allowedClientIds);
+
+		if (!organizationId) return fail(400, { error: 'Organization is required' });
+		if (!name) return fail(400, { error: 'Role name is required' });
+
+		await db.realmRoles.insertOne({
+			organizationId, name, description,
+			allowedClientIds,
+			isActive: true
+		} as any);
+
+		return { success: 'Realm role created' };
+	},
+
+	updateRealmRole: async ({ locals }) => {
+		const body = locals.body;
+		const id = body?._id as string;
+		if (!id || !ObjectId.isValid(id)) return fail(400, { error: 'Invalid role id' });
+
+		const name = (body?.name as string || '').trim();
+		const description = (body?.description as string) || undefined;
+		const isActive = body?.isActive === 'true' || body?.isActive === true;
+		const allowedClientIds = parseJsonArrayField(body?.allowedClientIds);
+
+		if (!name) return fail(400, { error: 'Role name is required' });
+
+		const updated = await db.realmRoles.updateById(id, {
+			name, description,
+			allowedClientIds,
+			isActive,
+			updatedAt: new Date()
+		} as any);
+		if (!updated) return fail(404, { error: 'Realm role not found' });
+
+		return { success: 'Realm role updated' };
+	},
+
+	deleteRealmRole: async ({ locals }) => {
+		const body = locals.body;
+		const id = body?._id as string;
+		if (!id || !ObjectId.isValid(id)) return fail(400, { error: 'Invalid role id' });
+
+		const deleted = await db.realmRoles.deleteById(id);
+		if (!deleted) return fail(404, { error: 'Realm role not found' });
+
+		return { success: 'Realm role deleted' };
 	}
 };

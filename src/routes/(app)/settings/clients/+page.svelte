@@ -40,6 +40,13 @@
 			}
 		},
 		{
+			key: 'organizationName',
+			label: 'Realm',
+			sortable: true,
+			render: (value: string | null) =>
+				value ? `<span class="text-sm text-gray-700">${value}</span>` : '<span class="text-xs text-gray-400">Realm-agnostic</span>'
+		},
+		{
 			key: 'allowedScopes',
 			label: 'Scopes',
 			sortable: false,
@@ -112,7 +119,7 @@
 			},{
 				text: '+ Add New Client',
 				class: 'px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors',
-				action: () => { actClient = { clientName: '', redirectUris: [], allowedScopes: [], grantTypes: [], isActive: false }; }
+				action: () => { actClient = { clientName: '', redirectUris: [''], allowedScopes: ['openid'], grantTypes: [], isActive: false, organizationId: '' }; }
 			}
 		]}
 		searchPlaceholder="Find client (name, client ID)..."
@@ -128,9 +135,10 @@
 		An OAuth Client is an application that can use SSO for authentication. Each client has a
 		<strong>Client ID</strong> and <strong>Client Secret</strong> used for the OAuth 2.0 flow.
 		You need to configure <code class="bg-blue-100 px-1 rounded">Redirect URIs</code> and
-		<code class="bg-blue-100 px-1 rounded">Allowed Scopes</code> for security.
+		<code class="bg-blue-100 px-1 rounded">Allowed Scopes</code> for security.<br>
+		Certificate Url: https://sso.ias.id/.well-known/jwks.json
 	</p>' />
 
 {#if actClient}
-	<OAuthClientModal bind:client={actClient} />
+	<OAuthClientModal bind:client={actClient} organizations={data.organizations} />
 {/if}

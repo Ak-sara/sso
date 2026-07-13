@@ -1,5 +1,14 @@
 # OFM SCIM Integration Guide
 
+> **Scope note:** this guide is the **inbound/pull** pattern — OFM is a
+> system we control, so it's written to actively call *into* this SSO's SCIM
+> API and receive its webhook notifications. It is **not** a template for
+> connecting pre-built, third-party SCIM consumers (Cloudflare Access,
+> Okta-as-SP, etc.) — those generate their own endpoint + token and expect
+> this app to push to *them*, which requires an outbound SCIM client that
+> doesn't exist yet. See `SCIM_COMPLETE_GUIDE.md` §6.5 for the full
+> distinction before assuming this pattern applies elsewhere.
+
 ## Overview
 
 This guide walks you through integrating OFM (Operational Field Management) with Aksara SSO using SCIM 2.0 protocol for automatic employee and organizational structure synchronization.

@@ -6,6 +6,7 @@
 	import PageHints from '$lib/components/PageHints.svelte';
 	import RealmModal from './RealmModal.svelte';
 	import BrandingModal from './BrandingModal.svelte';
+	import RealmRolesModal from './RealmRolesModal.svelte';
 	import { formEnhance } from '$lib/utils/form-enhance';
 
 	let { data }: { data: PageData } = $props();
@@ -13,6 +14,7 @@
 	let showPageHints = $state(false);
 	let actEdit: any = $state(null);
 	let actBranding: any = $state(null);
+	let actRoles: any = $state(null);
 	let deleteFormEl: HTMLFormElement;
 	let pendingDeleteCode = $state('');
 
@@ -70,6 +72,7 @@
 	actions={(row) => [
 		{ label: 'Edit', onClick: () => { actEdit = { ...row }; }, class: 'text-indigo-600 hover:text-indigo-800' },
 		{ label: 'Branding', onClick: () => { actBranding = { ...row }; }, class: 'text-purple-600 hover:text-purple-800' },
+		{ label: 'Realm Roles', onClick: () => { actRoles = { ...row }; }, class: 'text-emerald-600 hover:text-emerald-800' },
 		{ label: 'Delete', onClick: () => handleDelete(row), class: 'text-red-600 hover:text-red-800' }
 	]}
 	emptyMessage="No realms yet. Add a new realm to get started."
@@ -94,4 +97,7 @@
 {/if}
 {#if actBranding}
 	<BrandingModal bind:form={actBranding} />
+{/if}
+{#if actRoles}
+	<RealmRolesModal bind:realm={actRoles} clients={data.clients} />
 {/if}
