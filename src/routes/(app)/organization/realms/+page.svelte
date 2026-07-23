@@ -1,20 +1,14 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { invalidate } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
 	import { tick } from 'svelte';
 	import DataTable from '$lib/components/DataTable.svelte';
 	import PageHints from '$lib/components/PageHints.svelte';
-	import RealmModal from './RealmModal.svelte';
-	import BrandingModal from './BrandingModal.svelte';
-	import RealmRolesModal from './RealmRolesModal.svelte';
 	import { formEnhance } from '$lib/utils/form-enhance';
 
 	let { data }: { data: PageData } = $props();
 
 	let showPageHints = $state(false);
-	let actEdit: any = $state(null);
-	let actBranding: any = $state(null);
-	let actRoles: any = $state(null);
 	let deleteFormEl: HTMLFormElement;
 	let pendingDeleteCode = $state('');
 
@@ -64,17 +58,13 @@
 	header_actions={() => [
 		{ text: 'ℹ️', class: 'px-2 py-0 text-2xl inline-block transition-transform duration-200 hover:-rotate-12 cursor-pointer', action: () => (showPageHints = true) },
 		{ text: '+ Add Realm', class: 'px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors',
-			action: () => { actEdit = { code: '', name: '', legalName: '', type: 'subsidiary', description: '', isActive: true, allowedEmailDomains: [] }; } }
+			action: () => goto('/organization/realms/new') }
 	]}
 	searchable={true}
 	searchPlaceholder="Search realm (name, code)..."
 	searchKeys={['name', 'code']}
-	actions={(row) => [
-		{ label: 'Edit', onClick: () => { actEdit = { ...row }; }, class: 'text-indigo-600 hover:text-indigo-800' },
-		{ label: 'Branding', onClick: () => { actBranding = { ...row }; }, class: 'text-purple-600 hover:text-purple-800' },
-		{ label: 'Realm Roles', onClick: () => { actRoles = { ...row }; }, class: 'text-emerald-600 hover:text-emerald-800' },
-		{ label: 'Delete', onClick: () => handleDelete(row), class: 'text-red-600 hover:text-red-800' }
-	]}
+	onEdit={(row) => goto(`/organization/realms/${row.code}`)}
+	onDelete={handleDelete}
 	emptyMessage="No realms yet. Add a new realm to get started."
 />
 
@@ -91,13 +81,3 @@
 	use:formEnhance={{ success: 'Realm deleted successfully', onSuccess: async () => { await invalidate('app:pagination'); } }} >
 	<input type="hidden" name="code" value={pendingDeleteCode} />
 </form>
-
-{#if actEdit}
-	<RealmModal bind:form={actEdit} />
-{/if}
-{#if actBranding}
-	<BrandingModal bind:form={actBranding} />
-{/if}
-{#if actRoles}
-	<RealmRolesModal bind:realm={actRoles} clients={data.clients} />
-{/if}
