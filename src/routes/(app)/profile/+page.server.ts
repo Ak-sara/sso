@@ -1,5 +1,5 @@
 import type { PageServerLoad, Actions } from './$types';
-import { getIdentityById, updateIdentity, upsertAssignment, deleteAssignment } from '$lib/services/identity-service';
+import { getIdentityById, updateIdentity } from '$lib/services/identity-service';
 import { listOrganizations } from '$lib/services/organization-service';
 import { listOrgUnits } from '$lib/services/org-unit-service';
 import { listPositions } from '$lib/services/position-service';
@@ -22,13 +22,14 @@ const sessions = new Repository(lazy, 'sessions');
 
 export const load: PageServerLoad = async ({ locals }) => {
 
-	const [identityResult, organizations, orgUnits, positions] = await Promise.all([
+	const [identityResult, organizations, orgUnits, positions, realmRoles] = await Promise.all([
 		getIdentityById( locals.user!.userId  ),
 		listOrganizations(),
 		listOrgUnits(),
 		listPositions(),
+		db.realmRoles.find({}, { name: 1 }),
 	]);
-	const session = locals.session;	
+	const session = locals.session;
 	const status2FA = await get2FAStatus(session!.userId);
 
 	return {
@@ -36,9 +37,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		orgs: datamap(organizations),
 		ous: datamap(orgUnits),
 		pos: datamap(positions, 'code', 'name'),
-		organizations: organizations.map(o => ({ _id: String(o._id), name: o.name, code: o.code })),
-		orgUnits: orgUnits.map(u => ({ _id: String(u._id), name: u.name, code: u.code })),
-		positions: positions.map(p => ({ _id: String(p._id), name: p.name, code: p.code })),
+		realmRoleNames: datamap((realmRoles as any[]).map(r => ({ _id: r._id.toString(), name: r.name }))),
 		appName: env.APPNAME,
 		currentEmail: !session ? null : session.email,
 		status2FA: !session ? null : status2FA
@@ -343,24 +342,6 @@ export const actions: Actions = {
 		const result = await updateIdentity(locals.user.userId, updates);
 		if (!result.ok) return fail(result.status || 500, { error: result.error });
 		return { success: true };
-	},
-
-	upsertAssignment: async ({ locals }) => {
-		if (!locals.user) return fail(401, { error: 'Unauthorized' });
-		const body = locals.body;
-		body.startDate = String(body.startDate);
-		const result = await upsertAssignment(locals.user.userId, body);
-		if (!result.ok) return fail(result.status || 500, { error: result.error });
-		return {};
-	},
-
-	deleteAssignment: async ({ locals }) => {
-		if (!locals.user) return fail(401, { error: 'Unauthorized' });
-		const assignmentId = locals.body?.assignmentId as string;
-		if (!assignmentId) return fail(400, { error: 'Missing assignmentId' });
-		const result = await deleteAssignment(locals.user.userId, assignmentId);
-		if (!result.ok) return fail(result.status || 500, { error: result.error });
-		return {};
 	},
 
 };

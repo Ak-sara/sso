@@ -48,7 +48,12 @@ const realmRoleOptions = $derived(Object.fromEntries(orgRealmRoles.map((r) => [r
 const allowedClientIds = $derived(
 	new Set(orgRealmRoles.filter((r) => realmRoleIds.includes(r._id)).flatMap((r) => r.allowedClientIds))
 );
-const availableClientRoles = $derived(clientRoles.filter((r) => allowedClientIds.has(r.clientId)));
+const availableClientRoles = $derived(
+	clientRoles
+		.filter((r) => allowedClientIds.has(r.clientId))
+		.slice()
+		.sort((a, b) => a.clientName.localeCompare(b.clientName) || a.name.localeCompare(b.name))
+);
 const clientRoleOptions = $derived(Object.fromEntries(availableClientRoles.map((r) => [r._id, `${r.clientName}: ${r.name}`])));
 </script>
 

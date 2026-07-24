@@ -9,7 +9,7 @@ export const GET: RequestHandler = async () => {
 		const allFields = new Set<string>();
 		identities.forEach((identity) => extractFields(identity, '', allFields));
 
-		const systemFields = ['_id', 'password', 'identityType', 'isActive', 'roles', 'emailVerified', 'createdAt', 'updatedAt', 'organizationId', 'orgUnitId', 'positionId', 'managerId', 'employmentType', 'employmentStatus', 'workLocation'];
+		const systemFields = ['_id', 'password', 'identityType', 'isActive', 'isAdmin', 'emailVerified', 'createdAt', 'updatedAt', 'organizationId', 'orgUnitId', 'positionId', 'managerId', 'employmentType', 'employmentStatus', 'workLocation'];
 		const maskableFields = Array.from(allFields).filter((f) => !systemFields.includes(f)).sort();
 
 		return json({ fields: maskableFields, categorized: categorizeFields(maskableFields), sampleSize: identities.length });

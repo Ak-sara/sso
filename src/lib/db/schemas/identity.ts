@@ -14,7 +14,9 @@ export const IdentitySchema = z.object({
 	// Status
 	isActive: z.boolean().default(true), // true = can login, false = account disabled
 	emailVerified: z.boolean().default(false),
-	roles: z.array(z.string()).default(['user']), // user, admin, hr, manager, etc
+	// Full platform access across all realms. Everyone else is read-only on /organization/*,
+	// scoped to their own realm — per-app access is granted via Realm Roles instead.
+	isAdmin: z.boolean().default(false),
 
 	// Personal info (ALL types)
 	firstName: z.string(),

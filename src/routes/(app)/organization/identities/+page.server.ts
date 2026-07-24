@@ -78,7 +78,7 @@ export const actions: Actions = {
 
 		const base: any = {
 			identityType, email: email || undefined, password: hashedPassword,
-			isActive: true, emailVerified: false, roles: ['user'],
+			isActive: true, emailVerified: false, isAdmin: false,
 			firstName, lastName, fullName: `${firstName} ${lastName}`, organizationId
 		};
 

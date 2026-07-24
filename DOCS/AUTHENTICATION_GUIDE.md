@@ -58,16 +58,21 @@ const isValid = await verify(identity.password, submittedPassword);
 **Session Structure**:
 ```typescript
 {
-  _id: "session_uuid",
-  identityId: ObjectId,
+  sessionId: "hex_string",
+  userId: "identity_id",
+  email: 'user@example.com',
+  username: 'user@example.com',
+  firstName: 'Jane',
+  lastName: 'Doe',
+  // 'admin' if identity.isAdmin, otherwise empty — this is the ONLY value the
+  // array can hold. See "Role-Based Access Control" below for what actually
+  // gates access (Realm Roles / Client Roles), which live on the identity's
+  // assignment, not in this session array.
+  roles: ['admin'] /* or [] */,
+  organizationId: "org_id",
+  createdAt: Date,
   expiresAt: Date,
-  data: {
-    identityType: 'employee',
-    email: 'user@example.com',
-    roles: ['user', 'hr'],
-    lastActivity: Date
-  },
-  createdAt: Date
+  lastActivity: Date
 }
 ```
 
@@ -345,68 +350,111 @@ curl -X POST https://sso.ias.co.id/oauth/token \
 
 ## Role-Based Access Control (RBAC)
 
-### Roles
+There is no free-form roles array on the identity anymore. Access is split
+into three independent layers that answer three different questions:
 
-Roles are assigned at the identity level:
+| Layer | Question it answers | Where it lives | Enforced by |
+|---|---|---|---|
+| `isAdmin` | Can this identity manage the SSO admin console itself, across every realm? | `identity.isAdmin: boolean` | `access-control.ts` / `access-control.server.ts` |
+| Realm Role | Can this identity even authenticate to a given OAuth client at all? | Assignment's `realmRoleIds`, resolved via the Realm Role's `allowedClientIds` | `canIdentityAccessClient()` — blocks login if false |
+| Client Role (App Role) | What in-app permission label should this specific client see for this identity? | Assignment's `clientRoleIds`, scoped per client | **Not enforced here** — just handed to the RP as a claim |
+
+### 1. `isAdmin` — SSO admin console access
+
+A single boolean on the identity ([identity.ts](../src/lib/db/schemas/identity.ts)).
+`true` grants full access to every realm in this admin console; anyone else is
+a **restricted user**: read-only on `/organization/*`, scoped to their own
+realm(s), and redirected to `/profile` for everything else.
 
 ```typescript
-{
-  email: 'user@example.com',
-  roles: ['user', 'hr', 'admin'],
-  identityType: 'employee',
-  ...
+// src/lib/auth/access-control.ts
+const ELEVATED_ROLES = ['admin']; // the only value session.roles can hold
+
+export function isRestrictedUser(roles: string[] | undefined): boolean {
+  return !roles?.some((r) => ELEVATED_ROLES.includes(r));
 }
 ```
 
-### Common Roles
+`getAccessibleRealmIds()` (`access-control.server.ts`) resolves which realms a
+restricted user may see — their primary `organizationId` plus any
+`secondaryAssignments` — and is used both by the realm switcher
+(`+layout.server.ts`) and by `/api/realm/switch` to reject switching into a
+realm the user isn't actually assigned to.
 
-1. **user** - Basic authenticated user
-2. **employee** - Regular employee access
-3. **manager** - Manager-level permissions
-4. **hr** - HR department access
-5. **admin** - System administrator
-6. **super_admin** - Full system access
+This layer has **nothing to do with OAuth clients or connected apps** — it
+only governs this SSO's own console.
 
-### Permission Checks
+### 2. Realm Role — gates which OAuth clients an identity may use
 
-**Server-Side (SvelteKit hooks)**:
+A Realm Role is an organization-scoped bundle: it names a list of
+`allowedClientIds` (which registered OAuth clients/apps it grants access to).
+It's assigned to an identity via a specific assignment's `realmRoleIds`, so
+access follows that assignment — end it and the granted apps go with it.
+
 ```typescript
-export async function handle({ event, resolve }) {
-  const session = await getSession(event.cookies);
+// src/lib/auth/realm-access.ts
+export async function canIdentityAccessClient(identityId: string, clientId: string): Promise<boolean> {
+  const client = await db.oauthClients.findOne({ clientId });
+  if (!client.organizationId) return true; // realm-agnostic client — open to any authenticated identity
 
-  if (!session) {
-    throw redirect(303, '/login');
-  }
+  const assignments = activeAssignments(identity, client.organizationId);
+  const realmRoleIds = assignments.flatMap((a) => a.realmRoleIds || []);
+  const realmRoles = await db.realmRoles.find({ _id: { $in: toObjectIds(realmRoleIds) }, isActive: true });
 
-  const identity = await db.collection('identities').findOne({
-    _id: session.identityId
-  });
-
-  // Check roles
-  if (requiredRole && !identity.roles.includes(requiredRole)) {
-    throw error(403, 'Forbidden');
-  }
-
-  event.locals.identity = identity;
-  return resolve(event);
+  return realmRoles.some((role) => role.allowedClientIds.includes(clientId));
 }
 ```
 
-**Client-Side (Svelte components)**:
-```svelte
-<script>
-  export let data;
-  const { identity } = data;
-</script>
+**This is a hard gate.** It's checked at `/oauth/authorize` (both on page load
+if already logged in, and after the login form submits) and again at
+`/oauth/token` on both code exchange and refresh. If it returns `false`, the
+user gets a `403 "Your account is not authorized to access this application"`
+— login to that client is blocked outright, regardless of any Client Role.
 
-{#if identity.roles.includes('admin')}
-  <AdminPanel />
-{/if}
+### 3. Client Role (App Role) — a claim, not a gate
 
-{#if identity.roles.includes('hr')}
-  <EmployeeManagement />
-{/if}
+Client Roles are named, in-app permissions defined **per OAuth client** (e.g.
+`employee` / `driver` / `admin` for one app, `sase` for another) — configured
+in `/settings/clients` → a client's **App Roles**. They're assigned to an
+identity via the assignment's `clientRoleIds`, and surfaced as a `roles` claim
+in that client's ID token and userinfo response:
+
+```typescript
+// src/lib/auth/realm-access.ts
+export async function getClientRoleNames(identityId: string, clientId: string): Promise<string[]> {
+  const assignments = client.organizationId
+    ? activeAssignments(identity, client.organizationId)
+    : (identity.assignments || []);
+  const clientRoleIds = assignments.flatMap((a) => a.clientRoleIds || []);
+  const roles = await db.clientRoles.find({ _id: { $in: toObjectIds(clientRoleIds) }, clientId });
+  return roles.map((r) => r.name);
+}
 ```
+
+**Nothing in this SSO reads or blocks on this value.** It only appears in the
+token if the requested `scope` includes `openid`, and it's included in
+`/oauth/userinfo` only when non-empty. Whether a missing/wrong Client Role
+actually denies access to something is entirely up to the **relying party**:
+
+- **OFM** (`../ofm`) matches Client Role names 1:1 against its own
+  `roles` collection (keyed by `roleId` — e.g. `employee`/`driver`/`admin`),
+  via `resolveSsoRoles()` in `src/lib/services/roles-service.ts`. Unknown
+  names from the SSO are dropped, not trusted blindly. Roles resolved this
+  way are stored separately as `session.ssoRoles` (additive to OFM's own
+  locally-managed `roleIds`, not a replacement) and unioned into OFM's
+  permission resolution in `hooks.server.ts`. Re-validated on every OAuth
+  token refresh, not just at login — so a role revoked in the SSO takes
+  effect on OFM's next token refresh rather than lingering until the user's
+  next full login.
+- **Cloudflare Access** would need its own Access Policy rule (e.g. "require
+  OIDC claim `roles` contains `sase`") to actually deny users lacking that
+  Client Role — the SSO login itself succeeds either way as long as Realm
+  Role access (layer 2 above) passes.
+
+**Important**: for a relying party to use this at all, its Client Role
+*names* must exactly match whatever identifiers that app's own role system
+expects (e.g. OFM's `roles.roleId` values) — the SSO doesn't know or care what
+those strings mean, it just passes them through.
 
 ---
 
@@ -633,10 +681,16 @@ signature.
   "iss": "https://sso.example.com",
   "email": "user@example.com",
   "name": "Full Name",
+  "roles": ["driver"],
   "iat": 1699000000,
   "exp": 1699003600
 }
 ```
+
+> `roles` is the **Client Role** claim — only present when non-empty (see
+> [Role-Based Access Control](#role-based-access-control-rbac) above). It's
+> resolved fresh per client via `getClientRoleNames()`, not stored on the
+> identity itself.
 
 **Header** includes a `kid` matching a key published at
 `/.well-known/jwks.json`:

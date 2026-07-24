@@ -1,12 +1,10 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import MailerModal from './MailerModal.svelte';
 	import Input from '$lib/components/Input.svelte';
 	import { formEnhance } from '$lib/utils/form-enhance';
 
 	let { data }: { data: PageData } = $props();
 	let editedSettings: Record<string, any> = $state({});
-	let actMailer: any = $state(null);
 
 	// Helper to convert duration to appropriate unit
 	function getDurationValue(seconds: number, preferredUnit: 'days' | 'hours' | 'minutes' | 'seconds' = 'hours'): number {
@@ -162,57 +160,3 @@
 		</div>
 	</form>
 </div>
-
-<!-- Email: per-realm mailer config table -->
-<div class="bg-white shadow rounded-lg p-4 my-2">
-	<div class="flex items-center justify-between mb-2">
-		<div>
-			<h3 class="text-lg font-medium text-gray-900">Email Transport</h3>
-			<p class="text-xs text-gray-500 mt-0.5">
-				Fallback chain: realm transport → Email Settings above → none.
-			</p>
-		</div>
-	</div>
-	<table class="w-full text-sm">
-		<thead>
-			<tr class="border-b border-gray-200 text-xs text-gray-500 uppercase">
-				<th class="text-left py-2 pr-4 font-medium">Code</th>
-				<th class="text-left py-2 pr-4 font-medium">Realm</th>
-				<th class="text-left py-2 pr-4 font-medium">Provider</th>
-				<th class="text-left py-2 font-medium">From</th>
-				<th></th>
-			</tr>
-		</thead>
-		<tbody class="divide-y divide-gray-100">
-			{#each data.realms as realm}
-				{@const transport = (realm as any).emailTransport}
-				{@const branding = (realm as any).branding}
-				<tr class="hover:bg-gray-50">
-					<td class="py-2 pr-4">
-						<span class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-mono">{realm.code}</span>
-					</td>
-					<td class="py-2 pr-4 font-medium text-gray-900">{realm.name}</td>
-					<td class="py-2 pr-4">
-						{#if transport?.provider}
-							<span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium capitalize">
-								{transport.provider.replace('_', ' ')}
-							</span>
-						{:else}
-							<span class="text-gray-400 text-xs">not Configured</span>
-						{/if}
-					</td>
-					<td class="py-2 text-gray-500 text-xs">
-						{branding?.emailFromAddress || '—'}
-					</td>
-					<td class="py-2 text-right">
-						<button class="text-indigo-600 hover:text-indigo-800 text-xs font-medium"
-							onclick={() => { actMailer = { ...realm }; }} > Configure </button>
-					</td>
-				</tr>
-			{/each}
-		</tbody>
-	</table>
-</div>
-{#if actMailer}
-	<MailerModal bind:form={actMailer} />
-{/if}

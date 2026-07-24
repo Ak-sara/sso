@@ -17,7 +17,12 @@
       "Bash(bunx svelte-check *)",
       "Read(//tmp/**)",
       "Read(//Users/HERIAWAN/Project/_mya/jss/AO/**)",
-      "Bash(bun link *)"
+      "Bash(bun link *)",
+      "Bash(awk 'NR==168,NR==176' \"/Users/HERIAWAN/Project/_mya/jss/sso/src/routes/\\(app\\)/organization/realms/[code]/+page.svelte\")",
+      "Bash(python3 -)",
+      "Bash(mkdir -p \"/Users/HERIAWAN/Project/_mya/jss/sso/src/routes/\\(app\\)/organization/realms/[code]\")",
+      "Bash(git -C \"/Users/HERIAWAN/Project/_mya/jss/sso\" mv \"src/routes/\\(app\\)/settings/MailerModal.svelte\" \"src/routes/\\(app\\)/organization/realms/[code]/MailerModal.svelte\")",
+      "Bash(xargs -I{} sh -c 'echo ==={}===; cat {}')"
     ],
     "deny": [],
     "ask": []

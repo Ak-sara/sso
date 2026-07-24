@@ -30,14 +30,11 @@
 		"consultant":"Consultant",
 		"contractor":"Contractor",
 		"supplier":"Supplier", }
-	const roles={
-		"user":"User",
-		"admin":"Admin",
-		"hr":"HR",
-		"manager":"Manager", }
+	let isAdmin = $state(data.identity?.isAdmin ?? false);
 	const orgmap:Record<string,string>=datamap(data.organizations);
-	const unitmap:Record<string,string>=datamap(data.orgUnits);	
-	const positionmap:Record<string,string>=datamap(data.positions,"code","name");	
+	const unitmap:Record<string,string>=datamap(data.orgUnits);
+	const positionmap:Record<string,string>=datamap(data.positions,"code","name");
+	const realmRoleMap:Record<string,string>=datamap(data.realmRoles);
 
 	let selectedAssignment: any = $state(null);
 
@@ -50,18 +47,23 @@
 				</div>`
 		}, {
 			key: 'organizationId', label: 'Realm',
-			render: (value: string) => `<code class="bg-yellow-100 px-2 py-1 rounded text-xs">${value}</code>`
+			render: (value: string) => `<code class="bg-yellow-100 px-2 py-1 rounded text-xs">${orgmap[value] || value}</code>`
 		}, {
-			key: 'orgUnitId', label: 'Org Unit', 
-			render: (value: string) => `<code class="bg-gray-100 px-2 py-1 rounded text-xs">${value}</code>`
+			key: 'orgUnitId', label: 'Org Unit',
+			render: (value: string) => `<code class="bg-gray-100 px-2 py-1 rounded text-xs">${unitmap[value] || value}</code>`
 		}, {
 			key: 'positionId', label: 'Position',
-			render: (value: string) => `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">${value}</span>`
+			render: (value: string) => `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">${positionmap[value] || value}</span>`
+		}, {
+			key: 'realmRoleIds', label: 'Realm Roles',
+			render: (value: string[]) => (value || []).map((id) =>
+				`<span class="px-2 py-0.5 mr-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">${realmRoleMap[id] || id}</span>`
+			).join('') || '<span class="text-gray-400 text-xs">-</span>'
 		},
 		{	key: 'startDate', label: 'from', render: (value: string) => formatDate(value) },
 		{ 	key: 'endDate', label: 'to', render: (value: string) => formatDate(value) },
 		{
-			key: 'isRemote', label: 'Remote', 
+			key: 'isRemote', label: 'Remote',
 			render: (value: boolean) => {
 				const cls = value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
 				return `<span class="px-2 py-1 text-xs font-semibold rounded-full ${cls}">${value ? 'Remote' : 'On-Site'}</span>`;
@@ -160,7 +162,11 @@
 				<!-- Phone -->
 				<Input type="text" label="Phone" name="phone" value={data.identity?.phone}  />
 				<div class="grid grid-cols-2 gap-4 items-center">
-					<Input type="multi-select" label="Role" name="roles" value={data.identity?.roles} options={roles} />
+					<div>
+						<input type="hidden" name="isAdmin" value={isAdmin ? 'true' : 'false'} />
+						<Input type="checkbox" name="isAdmin_check" label="Admin (full access to all realms)" bind:value={isAdmin} />
+						<p class="text-xs text-gray-500 ml-1">Everyone else is read-only on Organization pages, scoped to their own realm. Per-app access is granted via Realm Roles.</p>
+					</div>
 					<div>
 						{#if data.identity?.lastLogin}
 							<Input type="info" label="Last Login" value=": {formatDate(data.identity?.lastLogin)}" />

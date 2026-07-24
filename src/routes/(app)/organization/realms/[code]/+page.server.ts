@@ -1,6 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { error, fail, redirect, isRedirect } from '@sveltejs/kit';
 import { getOrganizationByCode, createOrganization, updateOrganization } from '$lib/services/organization-service';
+import { testEmailConfig } from '$lib/email/email-service';
 import { db } from '$lib/db/db';
 import { ObjectId } from 'mongodb';
 import { parseJsonArrayField } from '$lib/utils/form-json';
@@ -56,13 +57,25 @@ export const actions: Actions = {
 				throw redirect(303, `/organization/realms/${code}`);
 			} else {
 				const code = params.code;
+
+				const existing = await getOrganizationByCode(code);
+				const currentBranding = (existing.ok ? (existing.data as any)?.branding : undefined) ?? {};
+				const branding = {
+					...currentBranding,
+					emailFromName: formData?.emailFromName || '',
+					emailFromAddress: formData?.emailFromAddress || '',
+					supportEmail: formData?.supportEmail || '',
+					supportUrl: formData?.supportUrl || ''
+				};
+
 				const result = await updateOrganization(code, {
 					name,
 					legalName: formData?.legalName || name,
 					type: formData?.type as any,
 					description: formData?.description || '',
 					isActive: formData?.isActive === 'true',
-					allowedEmailDomains
+					allowedEmailDomains,
+					branding
 				});
 				if (!result.ok) return fail(result.status || 400, { error: result.error });
 				throw redirect(303, `/organization/realms/${code}`);
@@ -77,16 +90,20 @@ export const actions: Actions = {
 		const formData = locals.body;
 		const code = params.code;
 
+		const existing = await getOrganizationByCode(code);
+		const currentBranding = (existing.ok ? (existing.data as any)?.branding : undefined) ?? {};
+
 		const branding: any = {
 			appName: formData?.appName || '',
 			primaryColor: formData?.primaryColor || '#4f46e5',
 			secondaryColor: formData?.secondaryColor || '#7c3aed',
 			accentColor: formData?.accentColor || '#06b6d4',
 			textColor: formData?.textColor || '#ffffff',
-			emailFromName: formData?.emailFromName || '',
-			emailFromAddress: formData?.emailFromAddress || '',
-			supportEmail: formData?.supportEmail || '',
-			supportUrl: formData?.supportUrl || ''
+			// email fields are owned by the Realm Info form (?/upsertRealm) — preserve them here
+			emailFromName: currentBranding.emailFromName || '',
+			emailFromAddress: currentBranding.emailFromAddress || '',
+			supportEmail: currentBranding.supportEmail || '',
+			supportUrl: currentBranding.supportUrl || ''
 		};
 		if (formData?.logoBase64) branding.logoBase64 = formData.logoBase64;
 		if (formData?.loginBackgroundBase64) branding.loginBackgroundBase64 = formData.loginBackgroundBase64;
@@ -94,6 +111,49 @@ export const actions: Actions = {
 		const result = await updateOrganization(code, { branding });
 		if (!result.ok) return fail(result.status || 400, { error: result.error });
 		return { success: true };
+	},
+
+	updateRealmMailer: async ({ locals }) => {
+		// Read raw formData to avoid sanitizeObject mangling the JSON config string
+		const fd = locals.body;
+		const code = fd.code as string;
+		const provider = fd.provider as string;
+		const configRaw = fd.config.replaceAll('&quot;', '"') as string;
+
+		if (!code || !provider) return fail(400, { error: 'Code and provider are required' });
+
+		try {
+			const cfg = JSON.parse(configRaw);
+			const emailTransport = { provider, [provider]: cfg };
+			const result = await updateOrganization(code, { emailTransport } as any);
+			if (!result.ok) return fail(result.status || 400, { error: result.error });
+			return { success: `Mailer for ${code} updated` };
+		} catch (err: any) {
+			return fail(500, { error: err.message || 'Failed to update realm mailer' });
+		}
+	},
+
+	testEmail: async ({ locals }) => {
+		// Read raw formData to avoid sanitizeObject mangling the JSON config string
+		const fd = locals.body;
+		const provider = fd.provider as string;
+		const configRaw = fd.config.replaceAll('&quot;', '"') as string;
+		const testEmailAddr = fd.testEmail as string;
+
+		if (!provider || !configRaw || !testEmailAddr)
+			return fail(400, { testError: 'Missing required fields' });
+
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(testEmailAddr))
+			return fail(400, { testError: 'Invalid email address' });
+
+		try {
+			const cfg = JSON.parse(configRaw);
+			await testEmailConfig(provider, cfg, testEmailAddr);
+			return { testSuccess: `Test email sent to ${testEmailAddr}` };
+		} catch (err: any) {
+			return fail(500, { testError: err.message || 'Failed to send test email' });
+		}
 	},
 
 	// Realm Roles — app-access bundles scoped to one realm (organization)

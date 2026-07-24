@@ -1,8 +1,13 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/db/db';
+import { getAccessibleRealmIds } from '$lib/auth/access-control.server';
 
 export const POST: RequestHandler = async ({ locals, cookies }) => {
+	if (!locals.user) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
 	const { realmId } = locals.body as {realmId:any};
 
 	if (!realmId || typeof realmId !== 'string') {
@@ -13,6 +18,12 @@ export const POST: RequestHandler = async ({ locals, cookies }) => {
 	const org = await db.organizations.findById(realmId);
 	if (!org) {
 		return json({ error: 'Realm not found' }, { status: 404 });
+	}
+
+	// Restricted (non-admin) users may only switch into a realm they're actually assigned to
+	const accessible = await getAccessibleRealmIds(locals.user);
+	if (accessible !== 'all' && !accessible.has(realmId)) {
+		return json({ error: 'Forbidden: realm not accessible' }, { status: 403 });
 	}
 
 	// Set cookie (30 days)

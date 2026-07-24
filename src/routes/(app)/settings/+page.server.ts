@@ -1,16 +1,10 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import { listOrganizations, updateOrganization } from '$lib/services/organization-service';
 import { loadSettings, updateSettings, updateEmailProvider } from '$lib/services/settings-service';
-import { testEmailConfig } from '$lib/email/email-service';
 
 export const load: PageServerLoad = async () => {
-	const [realms, settings] = await Promise.all([
-		listOrganizations(true),
-		loadSettings()
-	]);
+	const settings = await loadSettings();
 	return {
-		realms,
 		settings: settings.map((s: any) => ({ ...s, _id: s._id?.toString() }))
 	};
 };
@@ -41,49 +35,6 @@ export const actions: Actions = {
 			return { success: 'Email provider updated' };
 		} catch (err: any) {
 			return fail(500, { error: err.message || 'Failed to update email provider' });
-		}
-	},
-
-	updateRealmMailer: async ({ locals }) => {
-		// Read raw formData to avoid sanitizeObject mangling the JSON config string
-		const fd = locals.body;
-		const code = fd.code as string;
-		const provider = fd.provider as string;
-		const configRaw = fd.config.replaceAll('&quot;','"') as string;
-
-		if (!code || !provider) return fail(400, { error: 'Code and provider are required' });
-
-		try {
-			const cfg = JSON.parse(configRaw);
-			const emailTransport = { provider, [provider]: cfg };
-			const result = await updateOrganization(code, { emailTransport } as any);
-			if (!result.ok) return fail(result.status || 400, { error: result.error });
-			return { success: `Mailer for ${code} updated` };
-		} catch (err: any) {
-			return fail(500, { error: err.message || 'Failed to update realm mailer' });
-		}
-	},
-
-	testEmail: async ({ locals }) => {
-		// Read raw formData to avoid sanitizeObject mangling the JSON config string
-		const fd = locals.body;
-		const provider = fd.provider as string;
-		const configRaw = fd.config.replaceAll('&quot;','"') as string;
-		const testEmailAddr = fd.testEmail as string;
-
-		if (!provider || !configRaw || !testEmailAddr)
-			return fail(400, { testError: 'Missing required fields' });
-
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		if (!emailRegex.test(testEmailAddr))
-			return fail(400, { testError: 'Invalid email address' });
-
-		try {
-			const cfg = JSON.parse(configRaw);
-			await testEmailConfig(provider, cfg, testEmailAddr);
-			return { testSuccess: `Test email sent to ${testEmailAddr}` };
-		} catch (err: any) {
-			return fail(500, { testError: err.message || 'Failed to send test email' });
 		}
 	}
 

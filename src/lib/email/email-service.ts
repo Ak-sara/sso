@@ -7,8 +7,10 @@ const log = useLogger({ module: 'email:service' });
 // ── Provider implementations ───────────────────────────────────────────────
 
 async function sendViaResend(config: any, to: string, subject: string, html: string, text?: string, from?: EmailFrom) {
-	const fromEmail = config.fromEmail || from?.fromEmail;
-	const fromName  = config.fromName || from?.fromName;
+	// realm branding (`from`) overrides transport config when set — matches sendViaMicrosoftGraph
+	// and the generic FBA dispatch path below.
+	const fromEmail = from?.fromEmail || config.fromEmail;
+	const fromName  = from?.fromName  || config.fromName;
 	const fromStr   = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
 
 	const res = await fetch('https://api.resend.com/emails', {

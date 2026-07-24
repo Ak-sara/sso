@@ -68,7 +68,7 @@ export const actions: Actions = {
 				phone: formData.phone || undefined,
 				isActive: formData.isActive === 'true',
 				organizationId: formData.organizationId || undefined,
-				roles: ['user'],
+				isAdmin: formData.isAdmin === 'true',
 				emailVerified: false,
 			};
 
@@ -109,14 +109,9 @@ export const actions: Actions = {
 		const id = locals.routes.id as string;
 		const ipAddress = getClientAddress();
 		const performedBy = locals.user?.userId?.toString() || 'system';
-		
-		if (typeof updates.roles === 'string') {
-			try { updates.roles = JSON.parse(updates.roles.replaceAll('&quot;', '"')); }
-			catch {
-				console.error("cant parse roles:", updates.roles);
-				updates.roles = [];
-			}
-		}
+
+		updates.isAdmin = updates.isAdmin === 'true';
+
 		try {
 			const result = await updateIdentity(id, updates);
 			if (!result.ok) throw new Error(result.error);

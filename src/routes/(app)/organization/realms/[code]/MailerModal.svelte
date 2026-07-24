@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import { invalidateAll } from '$app/navigation';
 	import FormModal from '$lib/components/FormModal.svelte';
 	import { showNotif } from '$lib/stores/notif.svelte';
 	import { formEnhance } from '$lib/utils/form-enhance';
@@ -7,13 +7,16 @@
 	interface Props { form?: any; }
 	let { form = $bindable() }: Props = $props();
 
+	// From Name/Email are set once in the realm's Email Configuration (branding) and
+	// take precedence over these when present — see getEmailConfig() in settings-service.ts.
+	// Only providers with no account-tied address need fromEmail here as a baseline.
 	const EMPTY_CONFIG = {
-		gmail:           { user: '', appPassword: '', fromName: '' },
-		microsoft365:    { user: '', appPassword: '', fromName: '' },
-		sendgrid:        { apiKey: '', fromEmail: '', fromName: '' },
-		nodemailer:      { host: '', port: 587, secure: false, user: '', password: '', fromEmail: '', fromName: '' },
-		resend:          { apiKey: '', fromEmail: '', fromName: '' },
-		microsoft_graph: { tenantId: '', clientId: '', clientSecret: '', fromEmail: '', fromName: '' }
+		gmail:           { user: '', appPassword: '' },
+		microsoft365:    { user: '', appPassword: '' },
+		sendgrid:        { apiKey: '', fromEmail: '' },
+		nodemailer:      { host: '', port: 587, secure: false, user: '', password: '', fromEmail: '' },
+		resend:          { apiKey: '', fromEmail: '' },
+		microsoft_graph: { tenantId: '', clientId: '', clientSecret: '', fromEmail: '' }
 	};
 
 	let provider = $state<string>(form?.emailTransport?.provider ?? 'nodemailer');
@@ -26,6 +29,11 @@
 
 <FormModal title="Mailer — {form?.name}" subtitle={form?.code} onClose={() => { form = null; }}>
 	<div class="p-4 space-y-5 overflow-y-auto max-h-[80vh]">
+
+		<p class="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-md p-2">
+			From Name/Email are set once in this realm's <strong>Email Configuration</strong> and are used for all real sends.
+			The From Email below is only a baseline for providers that require one, and is what the "Send Test" button uses.
+		</p>
 
 		<!-- Provider picker -->
 		<div>
@@ -58,24 +66,18 @@
 					<input type="email" bind:value={cfg.user} placeholder="you@gmail.com" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
 				<div><label class="block text-xs font-medium text-gray-700 mb-1">App Password</label>
 					<input type="password" bind:value={cfg.appPassword} placeholder="16-char app password" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
-				<div><label class="block text-xs font-medium text-gray-700 mb-1">From Name</label>
-					<input type="text" bind:value={cfg.fromName} placeholder="Aksara SSO" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
 
 			{:else if provider === 'microsoft365'}
 				<div><label class="block text-xs font-medium text-gray-700 mb-1">M365 Email</label>
 					<input type="email" bind:value={cfg.user} placeholder="you@domain.com" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
 				<div><label class="block text-xs font-medium text-gray-700 mb-1">App Password</label>
 					<input type="password" bind:value={cfg.appPassword} class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
-				<div><label class="block text-xs font-medium text-gray-700 mb-1">From Name</label>
-					<input type="text" bind:value={cfg.fromName} placeholder="Aksara SSO" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
 
 			{:else if provider === 'sendgrid'}
 				<div><label class="block text-xs font-medium text-gray-700 mb-1">API Key</label>
 					<input type="password" bind:value={cfg.apiKey} placeholder="SG.xxxxx" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
 				<div><label class="block text-xs font-medium text-gray-700 mb-1">From Email</label>
 					<input type="email" bind:value={cfg.fromEmail} placeholder="noreply@yourdomain.com" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
-				<div><label class="block text-xs font-medium text-gray-700 mb-1">From Name</label>
-					<input type="text" bind:value={cfg.fromName} placeholder="Aksara SSO" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
 
 			{:else if provider === 'nodemailer'}
 				<div class="grid grid-cols-2 gap-3">
@@ -94,8 +96,6 @@
 					<input type="password" bind:value={cfg.password} class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
 				<div><label class="block text-xs font-medium text-gray-700 mb-1">From Email</label>
 					<input type="email" bind:value={cfg.fromEmail} placeholder="noreply@yourdomain.com" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
-				<div><label class="block text-xs font-medium text-gray-700 mb-1">From Name</label>
-					<input type="text" bind:value={cfg.fromName} placeholder="Aksara SSO" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
 
 			{:else if provider === 'resend'}
 				<div><label class="block text-xs font-medium text-gray-700 mb-1">API Key</label>
@@ -103,8 +103,6 @@
 					<p class="text-xs text-gray-400 mt-0.5">From resend.com dashboard — domain must be verified</p></div>
 				<div><label class="block text-xs font-medium text-gray-700 mb-1">From Email</label>
 					<input type="email" bind:value={cfg.fromEmail} placeholder="noreply@yourdomain.com" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
-				<div><label class="block text-xs font-medium text-gray-700 mb-1">From Name</label>
-					<input type="text" bind:value={cfg.fromName} placeholder="Aksara SSO" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
 
 			{:else if provider === 'microsoft_graph'}
 				<p class="text-xs text-gray-500">Entra ID app registration with <code>Mail.Send</code> permission.</p>
@@ -116,8 +114,6 @@
 					<input type="password" bind:value={cfg.clientSecret} class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
 				<div><label class="block text-xs font-medium text-gray-700 mb-1">From Email <span class="text-gray-400">(licensed M365 mailbox)</span></label>
 					<input type="email" bind:value={cfg.fromEmail} placeholder="noreply@yourdomain.com" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
-				<div><label class="block text-xs font-medium text-gray-700 mb-1">From Name</label>
-					<input type="text" bind:value={cfg.fromName} placeholder="Aksara SSO" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"/></div>
 			{/if}
 		</div>
 
@@ -139,7 +135,7 @@
 		<!-- Save form -->
 		<form method="POST" action="?/updateRealmMailer"
 			use:formEnhance={{ success: 'Mailer configuration saved', onSuccess: async () => {
-				await invalidate('app:pagination');
+				await invalidateAll();
 				form = null;
 			} }}
 			class="flex justify-end gap-3 pt-2 border-t border-gray-200">

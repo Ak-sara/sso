@@ -2,17 +2,11 @@
 	import type { PageData } from './$types';
 	import Input from '$lib/components/Input.svelte';
 	import DataTable from '$lib/components/DataTable.svelte';
-	import AssignmentHistory from '$lib/components/AssignmentHistory.svelte';
 	import ChangeEmail from './ChangeEmail.svelte';
 	import ChangePass from './ChangePass.svelte';
 	import Change2FA from './Change2FA.svelte';
 	import { formEnhance } from '$lib/utils/form-enhance';
 	import { formatDate } from '$lib/utils/format';
-	import { invalidateAll } from '$app/navigation';
-	import { showNotif } from '$lib/stores/notif.svelte';
-	import { useLogger } from '$lib/logger';
-
-	const log = useLogger({ module: 'app:profile' });
 
 	interface Props { data: PageData; }
 	let { data }: Props = $props();
@@ -21,8 +15,9 @@
 	let actPass: any = $state(null);
 	let actEmail: any = $state(null);
 	let act2FA: any = $state(null);
-	let selectedAssignment: any = $state(null);
 
+	// Read-only — assignments (org/unit/position/app access) are managed by an admin
+	// via /organization/identities/[id], not self-service from the profile page.
 	const assignmentColumns = [
 		{ key: 'employeeId', label: 'NIK' },
 		{
@@ -42,6 +37,12 @@
 		{ key: 'organizationId', label: 'Organization', render: (v: string) => data.orgs[v] || v || '-' },
 		{ key: 'orgUnitId',      label: 'Work Unit',   render: (v: string) => data.ous[v]  || v || '-' },
 		{ key: 'positionId',     label: 'Position',    render: (v: string) => data.pos[v]  || v || '-' },
+		{
+			key: 'realmRoleIds', label: 'Realm Roles',
+			render: (v: string[]) => (v || []).map((id) =>
+				`<span class="px-2 py-0.5 mr-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">${data.realmRoleNames[id] || id}</span>`
+			).join('') || '<span class="text-gray-400 text-xs">-</span>'
+		},
 		{ key: 'startDate', label: 'From', render: (v: string) => formatDate(v) },
 		{ key: 'endDate',   label: 'To',   render: (v: string) => formatDate(v) },
 		{
@@ -51,19 +52,6 @@
 				: `<span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">On-Site</span>`
 		}
 	];
-
-	async function deleteAssignment(a: any) {
-		if (!confirm(`Delete assignment for employee "${a.employeeId}"? This action cannot be undone.`)) return;
-		try {
-			const f = new FormData();
-			f.append('assignmentId', a._id?.toString());
-			const res = await fetch('?/deleteAssignment', { method: 'POST', body: f });
-			const result = await res.json();
-			if (result.type === 'failure') { showNotif('error', result.data?.error ?? 'Failed to delete'); return; }
-			showNotif('success', 'Assignment deleted');
-			await invalidateAll();
-		} catch (err) { log.error('Error deleting assignment', { error: err }); }
-	}
 </script>
 
 <svelte:head>
@@ -88,9 +76,9 @@
 					<p class="text-sm text-gray-500">{user?.employeeId || ''} {user?.employeeId ? '·' : ''} {user?.email}</p>
 					<p class="text-sm text-gray-500">{data.orgs[user?.organizationId ?? ''] || user?.organizationId || ''}</p>
 					<div class="flex gap-1 mt-1">
-						{#each (user?.roles ?? []) as role}
-							<span class="px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-800">{role}</span>
-						{/each}
+						{#if user?.isAdmin}
+							<span class="px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-800">Admin</span>
+						{/if}
 					</div>
 				</div>
 			</div>
@@ -141,7 +129,7 @@
 		</form>
 	</div>
 
-	<!-- Assignment History -->
+	<!-- Assignment History (read-only — managed by an admin) -->
 	{#if user?.identityType === 'employee'}
 		<DataTable
 			data={user?.assignments ?? []}
@@ -150,31 +138,9 @@
 			emptyMessage="No assignment history"
 			cssClass="bg-white rounded-lg shadow-sm border border-gray-200 p-2"
 			header_before="<h2 class='ml-5 text-lg font-semibold text-gray-900'>Assignment History</h2>"
-			header_actions={() => [{
-				text: '+ Assignment',
-				class: 'px-4 py-1 bg-indigo-600 hover:bg-indigo-700 hover:cursor-pointer text-white rounded-md transition-colors',
-				action: () => { selectedAssignment = {}; }
-			}]}
-			actions={(row) => [
-				{ label: 'Edit',   onClick: () => { selectedAssignment = row; }, class: 'text-indigo-600 hover:text-indigo-800', icon: '✏️ ' },
-				{ label: 'Delete', onClick: () => deleteAssignment(row),         class: 'text-red-600 hover:text-red-800',    icon: '🗑️' }
-			]}
 		/>
 	{/if}
 </div>
-
-{#if selectedAssignment}
-	<AssignmentHistory
-		bind:assignment={selectedAssignment}
-		orgmap={data.orgs}
-		unitmap={data.ous}
-		positionmap={data.pos}
-		organizations={data.organizations}
-		orgUnits={data.orgUnits}
-		positions={data.positions}
-		onSaved={() => { selectedAssignment = null; }}
-	/>
-{/if}
 
 {#if actEmail}
 	<ChangeEmail {data} bind:form={actEmail} />

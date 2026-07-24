@@ -109,7 +109,7 @@ export const actions: Actions = {
                 identity._id!.toString(),
                 identity.email || identity.employeeId || '',
                 identity.employeeId || identity.email || '',
-                identity.roles,
+                identity.isAdmin ? ['admin'] : [],
                 identity.firstName,
                 identity.lastName,
                 identity.organizationId
